@@ -27,16 +27,6 @@ jobs:
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader --no-scripts
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
-    - name: Install npm dependencies
-      run: npm ci
-      
-    - name: Build assets
-      run: npm run build
       
     - name: Create deployment archive
       run: |
