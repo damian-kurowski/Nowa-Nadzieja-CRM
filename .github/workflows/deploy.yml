@@ -17,7 +17,7 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.2'
+        php-version: '8.4'
         extensions: mbstring, xml, ctype, iconv, intl, pdo_pgsql, gd
         coverage: none
         
@@ -25,7 +25,7 @@ jobs:
       run: composer validate --strict
       
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader
+      run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader --no-scripts
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -92,7 +92,7 @@ jobs:
           cat > .env << 'EOF'
           APP_ENV=prod
           APP_SECRET=${{ secrets.APP_SECRET }}
-          DATABASE_URL="postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}?serverVersion=15&charset=utf8"
+          DATABASE_URL="postgresql://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:${{ secrets.DB_PORT }}/${{ secrets.DB_NAME }}?serverVersion=16&charset=utf8"
           MAILER_DSN=${{ secrets.MAILER_DSN }}
           STRUKTURA_API_KEY=${{ secrets.STRUKTURA_API_KEY }}
           CORS_ALLOW_ORIGIN=^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$
@@ -121,7 +121,7 @@ jobs:
           sudo mv /var/www/nowa-nadzieja-crm-new /var/www/nowa-nadzieja-crm
           
           # Restart services
-          sudo systemctl restart php8.2-fpm
+          sudo systemctl restart php8.4-fpm
           sudo systemctl reload nginx
           
           # Cleanup
