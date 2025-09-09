@@ -38,6 +38,7 @@ jobs:
           --exclude='.env' \
           --exclude='.env.*' \
           --exclude='*.md' \
+          --exclude='deploy.tar.gz' \
           .
           
     - name: Deploy to server
