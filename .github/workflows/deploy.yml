@@ -30,7 +30,7 @@ jobs:
       
     - name: Create deployment archive
       run: |
-        tar -czf deploy.tar.gz \
+        tar -czf ../deploy.tar.gz \
           --exclude='.git' \
           --exclude='.github' \
           --exclude='node_modules' \
@@ -38,8 +38,8 @@ jobs:
           --exclude='.env' \
           --exclude='.env.*' \
           --exclude='*.md' \
-          --exclude='deploy.tar.gz' \
           .
+        mv ../deploy.tar.gz .
           
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
