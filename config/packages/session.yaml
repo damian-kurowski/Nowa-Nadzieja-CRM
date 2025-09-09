@@ -1,0 +1,27 @@
+framework:
+    session:
+        # Use Redis for session storage
+        handler_id: Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler
+        cookie_secure: auto
+        cookie_httponly: true
+        cookie_samesite: strict
+        gc_maxlifetime: 3600  # 1 hour session timeout
+        cookie_lifetime: 0    # Session cookie (expires on browser close)
+        name: NOWA_NADZIEJA_SESSID
+        # Additional security settings (deprecated in PHP 8.4)
+        # sid_length: 48
+        # sid_bits_per_character: 6
+
+services:
+    # Redis session handler configuration
+    Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler:
+        arguments:
+            - '@redis.session.connection'
+            - { prefix: 'nn_session_', ttl: 3600 }
+
+    # Redis connection for sessions (using database 5)
+    redis.session.connection:
+        class: Predis\Client
+        arguments:
+            - '%env(REDIS_URL)%/5'
+            - { parameters: { database: 5 } }

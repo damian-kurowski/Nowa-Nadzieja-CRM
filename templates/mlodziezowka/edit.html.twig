@@ -1,0 +1,294 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edytuj {{ user.fullName }} - Młodzi dla Wolności - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Edytuj członka "Młodzi dla Wolności"{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .edit-header {
+            background: linear-gradient(135deg, #0dcaf0 0%, #6f42c1 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .edit-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .form-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .form-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .form-section h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid;
+            border-image: linear-gradient(135deg, #0dcaf0, #6f42c1) 1;
+            display: flex;
+            align-items: center;
+        }
+        
+        .form-section h6 i {
+            background: linear-gradient(135deg, #0dcaf0, #6f42c1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #0dcaf0;
+            box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0dcaf0 0%, #6f42c1 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(13, 202, 240, 0.3);
+        }
+        
+        .form-text {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        .action-buttons {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Edit Header -->
+    <div class="edit-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center">
+                    <div class="me-3" style="font-size: 2.5rem;">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h1 class="mb-0">Edytuj członka młodzieżówki</h1>
+                        <p class="mb-0 opacity-90 fs-5">{{ user.fullName }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <span class="badge bg-light text-dark fs-6 px-3 py-2">Młodzi dla Wolności</span>
+            </div>
+        </div>
+    </div>
+
+    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': false}}) }}
+    
+    <!-- Personal Information Section -->
+    <div class="form-section">
+        <h6><i class="fas fa-user"></i>Dane osobowe</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.imie) }}
+                    {{ form_widget(form.imie, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.imie) }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form_label(form.drugieImie) }}
+                    {{ form_widget(form.drugieImie, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.drugieImie) }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form_label(form.nazwisko) }}
+                    {{ form_widget(form.nazwisko, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.nazwisko) }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form_label(form.email) }}
+                    {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.email) }}
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.pesel) }}
+                    {{ form_widget(form.pesel, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.pesel) }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form_label(form.dataUrodzenia) }}
+                    {{ form_widget(form.dataUrodzenia, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.dataUrodzenia) }}
+                    <div class="form-text">Członkowie młodzieżówki muszą mieć poniżej 35 lat</div>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form_label(form.plec) }}
+                    {{ form_widget(form.plec, {'attr': {'class': 'form-select'}}) }}
+                    {{ form_errors(form.plec) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact and Organizational Section -->
+    <div class="form-section">
+        <h6><i class="fas fa-sitemap"></i>Dane kontaktowe i organizacyjne</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.telefon) }}
+                    {{ form_widget(form.telefon, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.telefon) }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form_label(form.okreg) }}
+                    {{ form_widget(form.okreg, {'attr': {'class': 'form-select'}}) }}
+                    {{ form_errors(form.okreg) }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form_label(form.oddzial) }}
+                    {{ form_widget(form.oddzial, {'attr': {'class': 'form-select'}}) }}
+                    {{ form_errors(form.oddzial) }}
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.status) }}
+                    {{ form_widget(form.status, {'attr': {'class': 'form-select'}}) }}
+                    {{ form_errors(form.status) }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form_label(form.adresZamieszkania) }}
+                    {{ form_widget(form.adresZamieszkania, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+                    {{ form_errors(form.adresZamieszkania) }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Information Section -->
+    <div class="form-section">
+        <h6><i class="fas fa-graduation-cap"></i>Informacje studenckie i aktywność</h6>
+        <div class="mb-3">
+            {{ form_label(form.zatrudnienieSpolki, 'Uczelnia/Kierunek studiów/Zatrudnienie') }}
+            {{ form_widget(form.zatrudnienieSpolki, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Np. Uniwersytet Warszawski, Politologia, II rok'}}) }}
+            {{ form_errors(form.zatrudnienieSpolki) }}
+        </div>
+        
+        <div class="mb-3">
+            {{ form_label(form.socialMedia, 'Profile w mediach społecznościowych') }}
+            {{ form_widget(form.socialMedia, {'attr': {'class': 'form-control', 'rows': 2, 'placeholder': 'Facebook, Instagram, Twitter, LinkedIn - linki do profili'}}) }}
+            {{ form_errors(form.socialMedia) }}
+        </div>
+        
+        <div class="mb-3">
+            {{ form_label(form.informacjeOmnie, 'O mnie - zainteresowania, aktywność') }}
+            {{ form_widget(form.informacjeOmnie, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Zainteresowania, doświadczenie w organizacjach studenckich, aktywność społeczna itp.'}}) }}
+            {{ form_errors(form.informacjeOmnie) }}
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.zdjecie) }}
+                    {{ form_widget(form.zdjecie, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.zdjecie) }}
+                    {% if user.zdjecie %}
+                        <div class="form-text">
+                            Aktualne zdjęcie: <strong>{{ user.zdjecie }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.cv) }}
+                    {{ form_widget(form.cv, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.cv) }}
+                    {% if user.cv %}
+                        <div class="form-text">
+                            Aktualny CV: <strong>{{ user.cv }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            {{ form_label(form.dodatkoweInformacje) }}
+            {{ form_widget(form.dodatkoweInformacje, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+            {{ form_errors(form.dodatkoweInformacje) }}
+        </div>
+        
+        <div class="mb-3">
+            {{ form_label(form.notatkaWewnetrzna) }}
+            {{ form_widget(form.notatkaWewnetrzna, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+            {{ form_errors(form.notatkaWewnetrzna) }}
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons text-end">
+        <a href="{{ path('mlodziezowka_show', {id: user.id}) }}" class="btn btn-secondary me-2">
+            <i class="fas fa-times me-2"></i>Anuluj
+        </a>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-2"></i>Zapisz zmiany
+        </button>
+    </div>
+
+    {{ form_end(form) }}
+{% endblock %}

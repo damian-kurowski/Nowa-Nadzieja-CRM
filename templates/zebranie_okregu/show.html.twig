@@ -1,0 +1,1754 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Walne Zebranie Członków Okręgu - {{ zebranie.okreg.nazwa }}{% endblock %}
+
+{% block body %}
+<div class="meeting-simulator-container">
+    <!-- Header Section -->
+    <div class="meeting-header">
+        <div class="header-content">
+            <div class="header-main">
+                <div class="meeting-breadcrumb">
+                    <a href="{{ path('zebranie_okregu_index') }}" class="breadcrumb-link">
+                        <i class="fas fa-users-cog"></i>
+                        <span>Zebrania Okręgu</span>
+                    </a>
+                    <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current">{{ zebranie.okreg.nazwa }}</span>
+                </div>
+                <h1 class="meeting-title">
+                    Walne Zebranie Członków Okręgu
+                    <span class="meeting-district">{{ zebranie.okreg.nazwa }}</span>
+                </h1>
+                <div class="meeting-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Rozpoczęte {{ zebranie.dataUtworzenia|date('d.m.Y H:i') }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-user-shield"></i>
+                        <span>{{ zebranie.utworzonyPrzez.imie }} {{ zebranie.utworzonyPrzez.nazwisko }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-status">
+                <div class="status-indicator">
+                    <div class="status-dot status-{{ zebranie.status }}"></div>
+                    <span class="status-text">{{ zebranie.statusDisplayName }}</span>
+                    {% if zebranie.status != 'zakonczone' and zebranie.status != 'anulowane' %}
+                        <div class="step-counter">{{ zebranie.getCurrentStepNumber() }}/8</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 1 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 1 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-play"></i></div>
+            <div class="step-info">
+                <div class="step-title">Rozpoczęcie</div>
+                <div class="step-desc">Zebranie rozpoczęte</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 2 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 2 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-pen"></i></div>
+            <div class="step-info">
+                <div class="step-title">Protokolant</div>
+                <div class="step-desc">Wyznaczenie protokolanta</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 3 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 3 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-user-tie"></i></div>
+            <div class="step-info">
+                <div class="step-title">Prowadzący</div>
+                <div class="step-desc">Wyznaczenie prowadzącego</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 4 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 4 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-crown"></i></div>
+            <div class="step-info">
+                <div class="step-title">Prezes</div>
+                <div class="step-desc">Wybór Prezesa Okręgu</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 5 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 5 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-medal"></i></div>
+            <div class="step-info">
+                <div class="step-title">Wiceprezesi</div>
+                <div class="step-desc">Wybór Wiceprezesów</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 6 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 6 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-signature"></i></div>
+            <div class="step-info">
+                <div class="step-title">Podpisy</div>
+                <div class="step-desc">Składanie podpisów</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 7 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 7 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-check-double"></i></div>
+            <div class="step-info">
+                <div class="step-title">Akceptacja</div>
+                <div class="step-desc">Akceptacja uczestników</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 8 %}completed{% endif %}">
+            <div class="step-icon"><i class="fas fa-flag-checkered"></i></div>
+            <div class="step-info">
+                <div class="step-title">Zakończenie</div>
+                <div class="step-desc">Zebranie zakończone</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="meeting-content">
+        <div class="content-grid">
+            <!-- Left Panel - Participants -->
+            <div class="participants-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-users"></i> Uczestnicy Zebrania</h3>
+                </div>
+                <div class="participants-list">
+                    <!-- Obserwator -->
+                    <div class="participant-card observer">
+                        <div class="participant-avatar">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="participant-info">
+                            <div class="participant-role">Obserwator</div>
+                            <div class="participant-name">{{ zebranie.obserwator.imie }} {{ zebranie.obserwator.nazwisko }}</div>
+                            <div class="participant-status">Wyznaczony przez Sekretarza Partii</div>
+                        </div>
+                        {% if zebranie.status == 'oczekuje_na_akceptacje' %}
+                            <div class="acceptance-indicator {% if zebranie.obserwatorZaakceptowal %}accepted{% else %}pending{% endif %}">
+                                <i class="fas {% if zebranie.obserwatorZaakceptowal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Protokolant -->
+                    <div class="participant-card secretary {% if zebranie.protokolant %}assigned{% else %}unassigned{% endif %}">
+                        <div class="participant-avatar">
+                            <i class="fas {% if zebranie.protokolant %}fa-pen{% else %}fa-hourglass-half{% endif %}"></i>
+                        </div>
+                        <div class="participant-info">
+                            <div class="participant-role">Protokolant Zebrania</div>
+                            <div class="participant-name">
+                                {% if zebranie.protokolant %}
+                                    {{ zebranie.protokolant.imie }} {{ zebranie.protokolant.nazwisko }}
+                                {% else %}
+                                    <em>Oczekuje na wyznaczenie</em>
+                                {% endif %}
+                            </div>
+                            <div class="participant-status">Wyznaczany przez Obserwatora</div>
+                        </div>
+                        {% if zebranie.status == 'oczekuje_na_akceptacje' and zebranie.protokolant %}
+                            <div class="acceptance-indicator {% if zebranie.protokolantZaakceptowal %}accepted{% else %}pending{% endif %}">
+                                <i class="fas {% if zebranie.protokolantZaakceptowal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Prowadzący -->
+                    <div class="participant-card chairman {% if zebranie.prowadzacy %}assigned{% else %}unassigned{% endif %}">
+                        <div class="participant-avatar">
+                            <i class="fas {% if zebranie.prowadzacy %}fa-user-tie{% else %}fa-hourglass-half{% endif %}"></i>
+                        </div>
+                        <div class="participant-info">
+                            <div class="participant-role">Prowadzący Zebranie</div>
+                            <div class="participant-name">
+                                {% if zebranie.prowadzacy %}
+                                    {{ zebranie.prowadzacy.imie }} {{ zebranie.prowadzacy.nazwisko }}
+                                {% else %}
+                                    <em>Oczekuje na wyznaczenie</em>
+                                {% endif %}
+                            </div>
+                            <div class="participant-status">Wyznaczany przez Obserwatora</div>
+                        </div>
+                        {% if zebranie.status == 'oczekuje_na_akceptacje' and zebranie.prowadzacy %}
+                            <div class="acceptance-indicator {% if zebranie.prowadzacyZaakceptowal %}accepted{% else %}pending{% endif %}">
+                                <i class="fas {% if zebranie.prowadzacyZaakceptowal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if zebranie.isManagementComplete %}
+                    <div class="management-results">
+                        <div class="panel-header">
+                            <h4><i class="fas fa-crown"></i> Wybrany Zarząd Okręgu</h4>
+                        </div>
+                        <div class="management-list">
+                            <div class="management-card president">
+                                <div class="management-avatar">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="management-info">
+                                    <div class="management-role">Prezes Okręgu</div>
+                                    <div class="management-name">{{ zebranie.prezesOkregu.imie }} {{ zebranie.prezesOkregu.nazwisko }}</div>
+                                </div>
+                            </div>
+                            <div class="management-card vice-president">
+                                <div class="management-avatar">
+                                    <i class="fas fa-medal"></i>
+                                </div>
+                                <div class="management-info">
+                                    <div class="management-role">Wiceprezes I</div>
+                                    <div class="management-name">{{ zebranie.wiceprezes1.imie }} {{ zebranie.wiceprezes1.nazwisko }}</div>
+                                </div>
+                            </div>
+                            {% if zebranie.wiceprezes2 %}
+                                <div class="management-card vice-president">
+                                    <div class="management-avatar">
+                                        <i class="fas fa-medal"></i>
+                                    </div>
+                                    <div class="management-info">
+                                        <div class="management-role">Wiceprezes II</div>
+                                        <div class="management-name">{{ zebranie.wiceprezes2.imie }} {{ zebranie.wiceprezes2.nazwisko }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Panel - Actions -->
+            <div class="actions-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-tasks"></i> Akcje Zebrania</h3>
+                </div>
+
+                <!-- Current Step Actions -->
+                {% if zebranie.nextStepDescription %}
+                    <div class="current-step-info">
+                        <div class="step-guidance">
+                            <div class="guidance-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="guidance-content">
+                                <div class="guidance-title">Następny krok</div>
+                                <div class="guidance-text">{{ zebranie.nextStepDescription }}</div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Signature Collection Section -->
+                {% if zebranie.status == 'skladanie_podpisow' %}
+                    <div class="signatures-collection-section">
+                        <h5><i class="fas fa-signature"></i> Składanie Podpisów</h5>
+                        <p class="text-muted mb-3">Każdy uczestnik musi złożyć podpis przed wygenerowaniem dokumentów.</p>
+                        
+                        <div class="participant-signatures">
+                            <div class="signature-item {% if zebranie.obserwatorPodpisal %}signed{% else %}pending{% endif %}">
+                                <div class="signature-icon">
+                                    <i class="fas {% if zebranie.obserwatorPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                                </div>
+                                <div class="signature-info">
+                                    <div class="signature-role">Obserwator</div>
+                                    <div class="signature-person">{{ zebranie.obserwator.imie }} {{ zebranie.obserwator.nazwisko }}</div>
+                                    {% if zebranie.obserwatorPodpisal %}
+                                        <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuObserwatora|date('d.m.Y H:i') }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="signature-badge {% if zebranie.obserwatorPodpisal %}signed{% else %}pending{% endif %}">
+                                    {% if zebranie.obserwatorPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="signature-item {% if zebranie.protokolantPodpisal %}signed{% else %}pending{% endif %}">
+                                <div class="signature-icon">
+                                    <i class="fas {% if zebranie.protokolantPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                                </div>
+                                <div class="signature-info">
+                                    <div class="signature-role">Protokolant</div>
+                                    <div class="signature-person">{{ zebranie.protokolant.imie }} {{ zebranie.protokolant.nazwisko }}</div>
+                                    {% if zebranie.protokolantPodpisal %}
+                                        <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuProtokolanta|date('d.m.Y H:i') }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="signature-badge {% if zebranie.protokolantPodpisal %}signed{% else %}pending{% endif %}">
+                                    {% if zebranie.protokolantPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
+                                </div>
+                            </div>
+
+                            <div class="signature-item {% if zebranie.prowadzacyPodpisal %}signed{% else %}pending{% endif %}">
+                                <div class="signature-icon">
+                                    <i class="fas {% if zebranie.prowadzacyPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                                </div>
+                                <div class="signature-info">
+                                    <div class="signature-role">Prowadzący</div>
+                                    <div class="signature-person">{{ zebranie.prowadzacy.imie }} {{ zebranie.prowadzacy.nazwisko }}</div>
+                                    {% if zebranie.prowadzacyPodpisal %}
+                                        <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuProwadzacego|date('d.m.Y H:i') }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="signature-badge {% if zebranie.prowadzacyPodpisal %}signed{% else %}pending{% endif %}">
+                                    {% if zebranie.prowadzacyPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if zebranie.canUserPerformAction(user, 'podpisz_obserwator') or 
+                              zebranie.canUserPerformAction(user, 'podpisz_protokolant') or 
+                              zebranie.canUserPerformAction(user, 'podpisz_prowadzacy') %}
+                            <div class="signature-pad-container">
+                                <h6><i class="fas fa-signature"></i> Twój podpis</h6>
+                                <p class="text-muted small mb-3">Narysuj swój podpis w polu poniżej, a następnie potwierdź.</p>
+                                
+                                <div class="signature-canvas-wrapper">
+                                    <canvas id="signatureCanvas" width="400" height="150"></canvas>
+                                    <div class="canvas-overlay">
+                                        <span class="canvas-instruction">Narysuj tutaj swój podpis</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="signature-controls mt-3">
+                                    <button id="clearSignature" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-eraser"></i> Wyczyść
+                                    </button>
+                                    <button id="signBtn" class="btn btn-primary" disabled>
+                                        <i class="fas fa-check"></i> Potwierdź Podpis
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if zebranie.czyWszyscyPodpisali %}
+                            <div class="alert alert-success mt-3">
+                                <i class="fas fa-check-circle"></i>
+                                Wszyscy uczestnicy złożyli podpisy. Dokumenty zostaną wygenerowane automatycznie.
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <!-- Step-specific Actions -->
+                {% if zebranie.status == 'wyznaczanie_protokolanta' and zebranie.canUserPerformAction(user, 'wyznacz_protokolanta') %}
+                    <div class="action-section">
+                        <h4>Wyznacz Protokolanta</h4>
+                        <form id="protokolantForm">
+                            <div class="form-group mb-3">
+                                <label for="protokolant_id" class="form-label">Wybierz protokolanta spośród członków okręgu:</label>
+                                <select class="form-select" id="protokolant_id" name="protokolant_id" required>
+                                    <option value="">-- Wybierz protokolanta --</option>
+                                    {% for member in usersInOkreg %}
+                                        <option value="{{ member.id }}">{{ member.imie }} {{ member.nazwisko }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Wyznacz Protokolanta
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+
+                {% if zebranie.status == 'wyznaczanie_prowadzacego' and zebranie.canUserPerformAction(user, 'wyznacz_prowadzacego') %}
+                    <div class="action-section">
+                        <h4>Wyznacz Prowadzącego</h4>
+                        <form id="prowadzacyForm">
+                            <div class="form-group mb-3">
+                                <label for="prowadzacy_id" class="form-label">Wybierz prowadzącego spośród członków okręgu:</label>
+                                <select class="form-select" id="prowadzacy_id" name="prowadzacy_id" required>
+                                    <option value="">-- Wybierz prowadzącego --</option>
+                                    {% for member in usersInOkreg %}
+                                        <option value="{{ member.id }}">{{ member.imie }} {{ member.nazwisko }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Wyznacz Prowadzącego
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+
+                {% if zebranie.status == 'wybor_prezesa' and zebranie.canUserPerformAction(user, 'wybor_prezesa') %}
+                    <div class="action-section">
+                        <h4>Wybór Prezesa Okręgu</h4>
+                        <p class="text-muted mb-3">Prowadzący i Protokolant wspólnie wskazują kandydata na Prezesa Okręgu.</p>
+                        <form id="prezesForm">
+                            <div class="form-group mb-3">
+                                <label for="prezes_okregu_id" class="form-label">Wybierz Prezesa Okręgu:</label>
+                                <select class="form-select" id="prezes_okregu_id" name="prezes_okregu_id" required>
+                                    <option value="">-- Wybierz prezesa --</option>
+                                    {% for member in usersInOkreg %}
+                                        <option value="{{ member.id }}">{{ member.imie }} {{ member.nazwisko }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-crown"></i> Wybierz Prezesa
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+
+                {% if zebranie.status == 'wybor_wiceprezesow' and zebranie.canUserPerformAction(user, 'wybor_wiceprezesow') %}
+                    <div class="action-section">
+                        <h4>Wybór Wiceprezesów Okręgu</h4>
+                        <p class="text-muted mb-3">Prowadzący i Protokolant wybierają do dwóch Wiceprezesów.</p>
+                        <form id="wiceprezesiForm">
+                            <div class="form-group mb-3">
+                                <label for="wiceprezes1_id" class="form-label">Wiceprezes I:</label>
+                                <select class="form-select" id="wiceprezes1_id" name="wiceprezes1_id" required>
+                                    <option value="">-- Wybierz wiceprezesa I --</option>
+                                    {% for member in usersInOkreg %}
+                                        <option value="{{ member.id }}">{{ member.imie }} {{ member.nazwisko }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="wiceprezes2_id" class="form-label">Wiceprezes II:</label>
+                                <select class="form-select" id="wiceprezes2_id" name="wiceprezes2_id" required>
+                                    <option value="">-- Wybierz wiceprezesa II --</option>
+                                    {% for member in usersInOkreg %}
+                                        <option value="{{ member.id }}">{{ member.imie }} {{ member.nazwisko }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-medal"></i> Wybierz Wiceprezesów
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+
+                {% if zebranie.status == 'oczekuje_na_akceptacje' %}
+                    <div class="action-section">
+                        <h4>Akceptacja Wyników Zebrania</h4>
+                        <p class="text-muted mb-3">Wszyscy uczestnicy muszą zaakceptować przebieg zebrania.</p>
+                        
+                        <div class="acceptance-status mb-4">
+                            <div class="acceptance-item {% if zebranie.obserwatorZaakceptowal %}accepted{% else %}pending{% endif %}">
+                                <div class="acceptance-icon">
+                                    <i class="fas {% if zebranie.obserwatorZaakceptowal %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                                </div>
+                                <div class="acceptance-info">
+                                    <div class="acceptance-role">Obserwator</div>
+                                    <div class="acceptance-name">{{ zebranie.obserwator.imie }} {{ zebranie.obserwator.nazwisko }}</div>
+                                </div>
+                                <div class="acceptance-badge {% if zebranie.obserwatorZaakceptowal %}accepted{% else %}pending{% endif %}">
+                                    {% if zebranie.obserwatorZaakceptowal %}Zaakceptował{% else %}Oczekuje{% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="acceptance-item {% if zebranie.protokolantZaakceptowal %}accepted{% else %}pending{% endif %}">
+                                <div class="acceptance-icon">
+                                    <i class="fas {% if zebranie.protokolantZaakceptowal %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                                </div>
+                                <div class="acceptance-info">
+                                    <div class="acceptance-role">Protokolant</div>
+                                    <div class="acceptance-name">{{ zebranie.protokolant.imie }} {{ zebranie.protokolant.nazwisko }}</div>
+                                </div>
+                                <div class="acceptance-badge {% if zebranie.protokolantZaakceptowal %}accepted{% else %}pending{% endif %}">
+                                    {% if zebranie.protokolantZaakceptowal %}Zaakceptował{% else %}Oczekuje{% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="acceptance-item {% if zebranie.prowadzacyZaakceptowal %}accepted{% else %}pending{% endif %}">
+                                <div class="acceptance-icon">
+                                    <i class="fas {% if zebranie.prowadzacyZaakceptowal %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                                </div>
+                                <div class="acceptance-info">
+                                    <div class="acceptance-role">Prowadzący</div>
+                                    <div class="acceptance-name">{{ zebranie.prowadzacy.imie }} {{ zebranie.prowadzacy.nazwisko }}</div>
+                                </div>
+                                <div class="acceptance-badge {% if zebranie.prowadzacyZaakceptowal %}accepted{% else %}pending{% endif %}">
+                                    {% if zebranie.prowadzacyZaakceptowal %}Zaakceptował{% else %}Oczekuje{% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+
+                        {% if zebranie.canUserPerformAction(user, 'akceptuj_obserwator') or 
+                              zebranie.canUserPerformAction(user, 'akceptuj_protokolant') or 
+                              zebranie.canUserPerformAction(user, 'akceptuj_prowadzacy') %}
+                            <button id="acceptBtn" class="btn btn-success">
+                                <i class="fas fa-check-double"></i> Akceptuję Wyniki Zebrania
+                            </button>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                {% if zebranie.status == 'zakonczone' %}
+                    <div class="completed-section">
+                        <div class="completion-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h4>Zebranie Zakończone</h4>
+                        <p class="text-success">Zebranie zostało pomyślnie zakończone {{ zebranie.dataZakonczenia|date('d.m.Y H:i') }}.</p>
+                        
+                        {% if zebranie.dokumenty|length > 0 %}
+                            <div class="documents-section">
+                                <h5>Wygenerowane dokumenty:</h5>
+                                <div class="documents-list">
+                                    {% for dokument in zebranie.dokumenty %}
+                                        <div class="document-item">
+                                            <i class="fas fa-file-alt"></i>
+                                            <span>{{ dokument.tytul }}</span>
+                                            <a href="{{ path('dokument_show', {id: dokument.id}) }}" class="btn btn-sm btn-outline-primary">Pokaż</a>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form handlers for step-by-step actions
+document.addEventListener('DOMContentLoaded', function() {
+    // Protokolant form
+    const protokolantForm = document.getElementById('protokolantForm');
+    if (protokolantForm) {
+        protokolantForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('protokolant_id', document.getElementById('protokolant_id').value);
+            
+            fetch('{{ path('zebranie_okregu_wyznacz_protokolanta', {id: zebranie.id}) }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.error || 'Wystąpił błąd');
+                }
+            });
+        });
+    }
+
+    // Prowadzący form
+    const prowadzacyForm = document.getElementById('prowadzacyForm');
+    if (prowadzacyForm) {
+        prowadzacyForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('prowadzacy_id', document.getElementById('prowadzacy_id').value);
+            
+            fetch('{{ path('zebranie_okregu_wyznacz_prowadzacego', {id: zebranie.id}) }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.error || 'Wystąpił błąd');
+                }
+            });
+        });
+    }
+
+    // Prezes form
+    const prezesForm = document.getElementById('prezesForm');
+    if (prezesForm) {
+        prezesForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('prezes_okregu_id', document.getElementById('prezes_okregu_id').value);
+            
+            fetch('{{ path('zebranie_okregu_wybor_prezesa', {id: zebranie.id}) }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.error || 'Wystąpił błąd');
+                }
+            });
+        });
+    }
+
+    // Wiceprezesi form
+    const wiceprezesiForm = document.getElementById('wiceprezesiForm');
+    if (wiceprezesiForm) {
+        wiceprezesiForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('wiceprezes1_id', document.getElementById('wiceprezes1_id').value);
+            formData.append('wiceprezes2_id', document.getElementById('wiceprezes2_id').value);
+            
+            fetch('{{ path('zebranie_okregu_wybor_wiceprezesow', {id: zebranie.id}) }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.error || 'Wystąpił błąd');
+                }
+            });
+        });
+    }
+
+    // Accept button
+    const acceptBtn = document.getElementById('acceptBtn');
+    if (acceptBtn) {
+        acceptBtn.addEventListener('click', function() {
+            fetch('{{ path('zebranie_okregu_akceptuj', {id: zebranie.id}) }}', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.error || 'Wystąpił błąd');
+                }
+            });
+        });
+    }
+
+    // Signature Canvas functionality
+    const signatureCanvas = document.getElementById('signatureCanvas');
+    const clearSignatureBtn = document.getElementById('clearSignature');
+    const signBtn = document.getElementById('signBtn');
+    const canvasOverlay = document.querySelector('.canvas-overlay');
+    
+    if (signatureCanvas) {
+        const ctx = signatureCanvas.getContext('2d');
+        let isDrawing = false;
+        let hasDrawn = false;
+        
+        // Set up canvas drawing style
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        // Mouse events
+        signatureCanvas.addEventListener('mousedown', startDrawing);
+        signatureCanvas.addEventListener('mousemove', draw);
+        signatureCanvas.addEventListener('mouseup', stopDrawing);
+        signatureCanvas.addEventListener('mouseout', stopDrawing);
+        
+        // Touch events for mobile
+        signatureCanvas.addEventListener('touchstart', handleTouch);
+        signatureCanvas.addEventListener('touchmove', handleTouch);
+        signatureCanvas.addEventListener('touchend', stopDrawing);
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = signatureCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            
+            if (!hasDrawn) {
+                hasDrawn = true;
+                canvasOverlay.classList.add('hidden');
+                signBtn.disabled = false;
+            }
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = signatureCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+        
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                ctx.beginPath();
+            }
+        }
+        
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            signatureCanvas.dispatchEvent(mouseEvent);
+        }
+        
+        // Clear signature
+        if (clearSignatureBtn) {
+            clearSignatureBtn.addEventListener('click', function() {
+                ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+                hasDrawn = false;
+                canvasOverlay.classList.remove('hidden');
+                signBtn.disabled = true;
+            });
+        }
+        
+        // Submit signature
+        if (signBtn) {
+            signBtn.addEventListener('click', function() {
+                if (!hasDrawn) {
+                    showAlert('warning', 'Najpierw narysuj swój podpis');
+                    return;
+                }
+                
+                // Add loading state
+                const originalContent = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Składam podpis...';
+                this.disabled = true;
+                
+                // Get signature data as base64
+                const signatureData = signatureCanvas.toDataURL('image/png');
+                
+                // Get CSRF token for this specific action
+                const formData = new FormData();
+                formData.append('_token', '{{ csrf_token('sign_' ~ zebranie.id) }}');
+                formData.append('signature', signatureData);
+                
+                fetch('{{ path('zebranie_okregu_zloz_podpis', {id: zebranie.id}) }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', data.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showAlert('danger', data.error || 'Wystąpił błąd podczas składania podpisu');
+                        // Restore button state
+                        this.innerHTML = originalContent;
+                        this.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'Wystąpił błąd podczas składania podpisu');
+                    // Restore button state
+                    this.innerHTML = originalContent;
+                    this.disabled = false;
+                });
+            });
+        }
+    }
+});
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+
+<style>
+/* Meeting Simulator Styles */
+.meeting-simulator-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 0;
+    color: white;
+}
+
+.meeting-header {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding: 2rem;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.meeting-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.breadcrumb-link {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+    color: white;
+}
+
+.breadcrumb-separator {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.5);
+}
+
+.breadcrumb-current {
+    color: white;
+    font-weight: 500;
+}
+
+.meeting-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.meeting-district {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.9);
+    margin-top: 0.2rem;
+}
+
+.meeting-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.8rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.meta-item i {
+    color: rgba(255,255,255,0.6);
+}
+
+.header-status {
+    text-align: right;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: rgba(255,255,255,0.15);
+    padding: 0.8rem 1.2rem;
+    border-radius: 10px;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-rozpoczete { background: #06b6d4; }
+.status-wyznaczanie_protokolanta,
+.status-wyznaczanie_prowadzacego { background: #fbbf24; }
+.status-wybor_prezesa,
+.status-wybor_wiceprezesow { background: #3b82f6; }
+.status-skladanie_podpisow { background: #8b5cf6; }
+.status-oczekuje_na_akceptacje { background: #10b981; }
+.status-zakonczone { background: #10b981; }
+.status-anulowane { background: #ef4444; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.status-text {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.step-counter {
+    background: rgba(255,255,255,0.2);
+    padding: 0.3rem 0.6rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Progress Steps */
+.progress-steps {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-x: auto;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 120px;
+    position: relative;
+    margin: 0 0.5rem;
+}
+
+.step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 70%;
+    width: 60%;
+    height: 2px;
+    background: rgba(255,255,255,0.2);
+}
+
+.step.completed:not(:last-child)::after {
+    background: #10b981;
+}
+
+.step-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 0.8rem;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    z-index: 2;
+}
+
+.step.completed .step-icon {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+.step.active .step-icon {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    animation: activeStep 2s infinite;
+}
+
+@keyframes activeStep {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.step-info {
+    text-align: center;
+}
+
+.step-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+}
+
+.step.active .step-title {
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+.step.completed .step-title {
+    color: #10b981;
+}
+
+.step-desc {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.3;
+}
+
+/* Main Content */
+.meeting-content {
+    padding: 0 2rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.participants-panel,
+.actions-panel {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.panel-header {
+    margin-bottom: 1.5rem;
+}
+
+.panel-header h3,
+.panel-header h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Participants */
+.participants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.participant-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    position: relative;
+    border-left: 4px solid transparent;
+}
+
+.participant-card.observer {
+    border-left-color: #06b6d4;
+}
+
+.participant-card.secretary.assigned {
+    border-left-color: #10b981;
+}
+
+.participant-card.chairman.assigned {
+    border-left-color: #8b5cf6;
+}
+
+.participant-card.unassigned {
+    border-left-color: #fbbf24;
+    opacity: 0.7;
+}
+
+.participant-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.participant-info {
+    flex: 1;
+}
+
+.participant-role {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-bottom: 0.2rem;
+}
+
+.participant-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.2rem;
+}
+
+.participant-status {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+}
+
+.acceptance-indicator {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.acceptance-indicator.accepted {
+    background: #10b981;
+    color: white;
+}
+
+.acceptance-indicator.pending {
+    background: #fbbf24;
+    color: white;
+}
+
+/* Management Results */
+.management-results {
+    margin-top: 2rem;
+}
+
+.management-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.management-card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    border-left: 4px solid transparent;
+}
+
+.management-card.president {
+    border-left-color: #f59e0b;
+}
+
+.management-card.vice-president {
+    border-left-color: #8b5cf6;
+}
+
+.management-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.management-card.president .management-avatar {
+    background: #f59e0b;
+}
+
+.management-card.vice-president .management-avatar {
+    background: #8b5cf6;
+}
+
+.management-role {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-bottom: 0.1rem;
+}
+
+.management-name {
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Actions Panel */
+.current-step-info {
+    margin-bottom: 2rem;
+}
+
+.step-guidance {
+    background: rgba(251,191,36,0.15);
+    border-left: 4px solid #fbbf24;
+    border-radius: 6px;
+    padding: 1rem;
+}
+
+.guidance-icon {
+    width: 20px;
+    height: 20px;
+    background: #fbbf24;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+    margin-right: 0.5rem;
+}
+
+.guidance-title {
+    font-weight: 600;
+    color: #fde68a;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.guidance-text {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.action-section {
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.action-section h4 {
+    margin: 0 0 1rem 0;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.form-group label {
+    color: rgba(255,255,255,0.9);
+    font-weight: 500;
+}
+
+.form-select {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+}
+
+.form-select:focus {
+    background: rgba(255,255,255,0.15);
+    border-color: #3b82f6;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(59,130,246,0.25);
+}
+
+.form-select option {
+    background: #1a202c;
+    color: white;
+}
+
+/* Acceptance Status */
+.acceptance-status {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.acceptance-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    border-left: 4px solid transparent;
+}
+
+.acceptance-item.accepted {
+    border-left-color: #10b981;
+    background: rgba(16,185,129,0.15);
+}
+
+.acceptance-item.pending {
+    border-left-color: #fbbf24;
+    background: rgba(251,191,36,0.15);
+}
+
+.acceptance-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.acceptance-item.accepted .acceptance-icon {
+    background: #10b981;
+    color: white;
+}
+
+.acceptance-item.pending .acceptance-icon {
+    background: #fbbf24;
+    color: white;
+}
+
+.acceptance-info {
+    flex: 1;
+}
+
+.acceptance-role {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-bottom: 0.2rem;
+}
+
+.acceptance-name {
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.acceptance-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.acceptance-badge.accepted {
+    background: rgba(16,185,129,0.3);
+    color: #6ee7b7;
+}
+
+.acceptance-badge.pending {
+    background: rgba(251,191,36,0.3);
+    color: #fde68a;
+}
+
+/* Signature Collection Section */
+.signatures-collection-section {
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border-left: 4px solid #8b5cf6;
+}
+
+.signatures-collection-section h5 {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.signatures-collection-section h5 i {
+    color: #8b5cf6;
+}
+
+.participant-signatures {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.document-signing-card {
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.document-info {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.document-icon {
+    width: 40px;
+    height: 40px;
+    background: #3b82f6;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.document-title {
+    font-weight: 600;
+    color: white;
+    font-size: 0.95rem;
+    margin-bottom: 0.2rem;
+}
+
+.document-type {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.document-signatures {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.signature-status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    flex: 1;
+}
+
+.signature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.8rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+}
+
+.signature-item.signed {
+    border-left-color: #10b981;
+    background: rgba(16,185,129,0.1);
+}
+
+.signature-item.pending {
+    border-left-color: #fbbf24;
+    background: rgba(251,191,36,0.1);
+}
+
+.signature-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.signature-item.signed .signature-icon {
+    background: #10b981;
+    color: white;
+}
+
+.signature-item.pending .signature-icon {
+    background: #fbbf24;
+    color: white;
+}
+
+.signature-info {
+    flex: 1;
+}
+
+.signature-role {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.signature-person {
+    font-size: 0.9rem;
+    color: white;
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+}
+
+.signature-time {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.6);
+}
+
+.signature-name {
+    font-size: 0.9rem;
+    color: white;
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+}
+
+.signature-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.signature-badge.signed {
+    background: rgba(16,185,129,0.3);
+    color: #6ee7b7;
+}
+
+.signature-badge.pending {
+    background: rgba(251,191,36,0.3);
+    color: #fde68a;
+}
+
+.sign-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.sign-btn:hover {
+    transform: translateY(-1px);
+}
+
+.document-status-badge {
+    align-self: flex-start;
+}
+
+.document-status-badge .badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 15px;
+    font-weight: 500;
+}
+
+.signing-progress {
+    background: rgba(255,255,255,0.05);
+    border-radius: 6px;
+    padding: 1rem;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.progress-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.progress-text {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.9);
+    font-weight: 500;
+}
+
+.progress {
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.3s ease;
+}
+
+/* Completed Section */
+.completed-section {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(16,185,129,0.15);
+    border-radius: 8px;
+    border: 2px solid #10b981;
+}
+
+.completion-icon {
+    width: 60px;
+    height: 60px;
+    background: #10b981;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem;
+}
+
+.documents-section {
+    margin-top: 1.5rem;
+    text-align: left;
+}
+
+.documents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+.document-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+}
+
+.document-item i {
+    color: #3b82f6;
+    font-size: 1.1rem;
+}
+
+/* Dark Mode Support */
+[data-bs-theme="dark"] .meeting-simulator-container {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+/* Signature Pad Styles */
+.signature-pad-container {
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border-left: 4px solid #8b5cf6;
+}
+
+.signature-pad-container h6 {
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.signature-pad-container h6 i {
+    color: #8b5cf6;
+}
+
+.signature-canvas-wrapper {
+    position: relative;
+    display: inline-block;
+    background: white;
+    border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.2);
+    margin-bottom: 1rem;
+}
+
+#signatureCanvas {
+    display: block;
+    border-radius: 4px;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.canvas-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background: rgba(0,0,0,0.05);
+    border-radius: 4px;
+    transition: opacity 0.3s ease;
+}
+
+.canvas-overlay.hidden {
+    opacity: 0;
+}
+
+.canvas-instruction {
+    color: #666;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.signature-controls {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+}
+
+.signature-controls .btn {
+    transition: all 0.2s ease;
+}
+
+.signature-controls .btn:hover {
+    transform: translateY(-1px);
+}
+
+.signature-controls .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    
+    .progress-steps {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .meeting-content {
+        padding: 0 1rem 2rem;
+    }
+    
+    .meeting-header {
+        padding: 1.5rem 1rem;
+    }
+    
+    .signature-canvas-wrapper {
+        max-width: 100%;
+        overflow: hidden;
+    }
+    
+    #signatureCanvas {
+        max-width: 100%;
+        height: auto;
+    }
+}
+</style>
+{% endblock %}

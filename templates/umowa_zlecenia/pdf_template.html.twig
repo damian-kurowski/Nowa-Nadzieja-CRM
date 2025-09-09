@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Umowa Zlecenia {{ umowa.numerUmowy }}</title>
+    <style>
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 12pt;
+            line-height: 1.4;
+            margin: 0;
+            padding: 20px;
+            color: #000;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 20px 0 30px 0;
+            text-transform: uppercase;
+        }
+        
+        .header-info {
+            text-align: center;
+            margin-bottom: 30px;
+            line-height: 1.2;
+        }
+        
+        .contract-parties {
+            margin-bottom: 25px;
+            text-align: justify;
+            line-height: 1.5;
+        }
+        
+        .paragraph {
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        
+        .paragraph-title {
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .paragraph-content {
+            margin-left: 0;
+        }
+        
+        .list-item {
+            margin-bottom: 8px;
+            margin-left: 15px;
+        }
+        
+        .signatures {
+            margin-top: 40px;
+            width: 100%;
+        }
+        
+        .signature-section {
+            width: 48%;
+            display: inline-block;
+            vertical-align: top;
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #000;
+            margin-top: 40px;
+            padding-top: 5px;
+            font-size: 10pt;
+        }
+        
+        .account-number {
+            font-family: 'DejaVu Sans Mono', 'Courier New', monospace;
+            font-weight: bold;
+        }
+        
+        .amount {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        
+        .date-place {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+        
+        
+        .period-info {
+            font-weight: bold;
+        }
+        
+        .scope-description {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-left: 3px solid #007bff;
+            margin: 10px 0;
+            font-style: italic;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 15px;
+            }
+            .signatures {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Umowa Zlecenia</h1>
+    
+    <div class="date-place">
+        Warszawa, dnia {{ dataGenerowania|date('d.m.Y') }} r.
+    </div>
+    
+    <div class="contract-parties">
+        <p>Niniejszą umowę zawarli:</p>
+        
+        <p><strong>Nowa Nadzieja</strong>, ul. Piękna 3/8, 00-539 Warszawa, NIP 9522138920, reprezentowana przez 
+        <strong>Sławomira Mentzena – Prezesa</strong> i 
+        {% if sekretarz %}
+            <strong>{{ sekretarz.imie }} {{ sekretarz.nazwisko }} – Sekretarza</strong>
+        {% else %}
+            <strong>[Imię i Nazwisko sekretarza partii]</strong>
+        {% endif %}
+        , zwana dalej <strong>Zleceniodawcą</strong>,</p>
+        
+        <p>oraz</p>
+        
+        <p><strong>{{ umowa.zleceniobiorca.imie }} {{ umowa.zleceniobiorca.nazwisko }}</strong>, 
+        adres: 
+        {% if umowa.zleceniobiorca.adresZamieszkania %}
+            {{ umowa.zleceniobiorca.adresZamieszkania }}
+        {% else %}
+            [adres pobierany z systemu]
+        {% endif %}, 
+        PESEL: 
+        {% if umowa.zleceniobiorca.pesel %}
+            {{ umowa.zleceniobiorca.pesel }}
+        {% else %}
+            [pobierany z systemu]
+        {% endif %}
+        zwany dalej <strong>Zleceniobiorcą</strong>.</p>
+        
+        <p><strong>Strony postanawiają, co następuje:</strong></p>
+    </div>
+    
+    <div class="paragraph">
+        <span class="paragraph-title">§ 1 - Przedmiot umowy</span>
+        <div class="paragraph-content">
+            <div class="list-item">1. Zleceniobiorca zobowiązuje się świadczyć na rzecz Zleceniodawcy usługi w zakresie: 
+                <strong>{{ umowa.zakresLabel }}</strong>
+                <div class="scope-description">
+                    {{ umowa.opisZakresu|nl2br }}
+                </div>
+            </div>
+            <div class="list-item">2. Umowa zostaje zawarta na okres 
+                <span class="period-info">{{ umowa.okresDisplay }}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="paragraph">
+        <span class="paragraph-title">§ 2 – Wynagrodzenie</span>
+        <div class="paragraph-content">
+            <div class="list-item">1. Zleceniodawca zobowiązuje się zapłacić Zleceniobiorcy wynagrodzenie w wysokości 
+                <span class="amount">{{ umowa.formattedWynagrodzenie }}</span>.
+            </div>
+            <div class="list-item">2. Wynagrodzenie będzie płatne w formie przelewu bankowego na rachunek wskazany przez Zleceniobiorcę: 
+                {% if umowa.numerKonta %}
+                    <span class="account-number">{{ umowa.numerKonta }}</span>
+                {% elseif umowa.pobranieKontaZSkladek %}
+                    <em>[numer konta pobrany z systemu składkowego]</em>
+                {% else %}
+                    <em>[numer konta do uzupełnienia]</em>
+                {% endif %}
+            </div>
+            <div class="list-item">3. Wynagrodzenie może być zapłacone w częściach w terminach ustalonych przez strony</div>
+            <div class="list-item">4. 
+                {% if umowa.czyStudent %}
+                    Zleceniobiorca oświadcza, że jest studentem i nie ukończył 26 roku życia.
+                {% else %}
+                    Zleceniobiorca oświadcza, że nie jest studentem lub ukończył 26 rok życia.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="paragraph">
+        <span class="paragraph-title">§ 3 - Podwykonawcy</span>
+        <div class="paragraph-content">
+            Zleceniobiorca nie może powierzyć ani w całości, ani w części wykonania zlecenia innym osobom bez uprzedniej pisemnej zgody Zleceniodawcy
+        </div>
+    </div>
+    
+    <div class="paragraph">
+        <span class="paragraph-title">§ 4 - Zachowanie poufności</span>
+        <div class="paragraph-content">
+            <div class="list-item">1. Zleceniobiorca jest zobowiązany do nieujawniania osobom trzecim jakichkolwiek informacji związanych z działalnością Zleceniodawcy, o ile nie są to informacje powszechnie dostępne.</div>
+            <div class="list-item">2. Obowiązek zachowania poufności wiąże Zleceniobiorcę również po rozwiązaniu niniejszej umowy przez okres 10 lat.</div>
+        </div>
+    </div>
+    
+    <div class="paragraph">
+        <span class="paragraph-title">§ 5 – Prawa autorskie</span>
+        <div class="paragraph-content">
+            <p>W wypadku, gdy przy wykonywaniu zlecenia powstanie utwór, Zleceniobiorca przenosi na Zleceniodawcę całość autorskich praw majątkowych do dzieła. Prawa autorskie zostają przeniesione na następujących polach eksploatacji:</p>
+            <div class="list-item">1. w zakresie utrwalania i zwielokrotniania Utworu - wytwarzanie egzemplarzy Utworu każdą znaną w dniu zawarcia niniejszej umowy techniką, w tym techniką drukarską, reprograficzną, zapisu magnetycznego oraz techniką cyfrową;</div>
+            <div class="list-item">2. w zakresie obrotu oryginałem albo egzemplarzami, na których Utwór utrwalono - wprowadzanie do obrotu, użyczenie lub najem oryginału albo egzemplarzy;</div>
+            <div class="list-item">3. w zakresie rozpowszechniania Utworu w sposób inny niż określony w pkt b) – publiczne wykonanie, wystawienie, wyświetlenie, odtworzenie oraz nadawanie i reemitowanie, a także publiczne udostępnianie utworu w taki sposób, aby każdy mógł mieć do niego dostęp w miejscu i w czasie przez siebie wybranym.</div>
+        </div>
+    </div>
+    
+    <div class="paragraph">
+        <span class="paragraph-title">§ 6 - Postanowienia końcowe</span>
+        <div class="paragraph-content">
+            <div class="list-item">1. Każda ze stron może w każdym czasie wypowiedzieć umowę.</div>
+            <div class="list-item">2. Wszelkie zmiany lub uzupełnienia umowy wymagają formy pisemnej pod rygorem nieważności.</div>
+            <div class="list-item">3. W sprawach nieuregulowanych w umowie stosuje się przepisy prawa polskiego.</div>
+            <div class="list-item">4. Wszelkie umowy łączące strony przed dniem wejścia w życie niniejszej umowy ulegają rozwiązaniu w dniu wejścia umowy w życie.</div>
+        </div>
+    </div>
+    
+    {% if umowa.uwagi %}
+    <div class="paragraph">
+        <span class="paragraph-title">§ 7 - Uwagi dodatkowe</span>
+        <div class="paragraph-content">
+            {{ umowa.uwagi|nl2br }}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="signatures">
+        <div class="signature-section" style="float: left;">
+            <div class="signature-line">
+                <strong>ZLECENIODAWCA</strong><br>
+                Nowa Nadzieja<br>
+                <br><br>
+                ..................................<br>
+                <small>Sławomir Mentzen - Prezes</small>
+                <br><br>
+                ..................................<br>
+                <small>
+                {% if sekretarz %}
+                    {{ sekretarz.imie }} {{ sekretarz.nazwisko }} - Sekretarz
+                {% else %}
+                    [Sekretarz Partii]
+                {% endif %}
+                </small>
+            </div>
+        </div>
+        
+        <div class="signature-section" style="float: right;">
+            <div class="signature-line">
+                <strong>ZLECENIOBIORCA</strong><br>
+                <br><br><br>
+                ..................................<br>
+                <small>{{ umowa.zleceniobiorca.imie }} {{ umowa.zleceniobiorca.nazwisko }}</small>
+            </div>
+        </div>
+        
+        <div style="clear: both;"></div>
+    </div>
+</body>
+</html>

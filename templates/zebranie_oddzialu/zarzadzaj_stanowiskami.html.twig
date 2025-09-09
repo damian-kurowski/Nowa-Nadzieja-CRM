@@ -1,0 +1,743 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Zarządzaj Stanowiskami - {{ zebranie.oddzial.nazwa }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Zarządzanie Stanowiskami w Oddziale{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .step-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .management-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+
+        .function-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .function-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .function-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .function-limit {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            background: rgba(102, 126, 234, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .current-holder {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .current-holder:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .holder-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .holder-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .holder-details h6 {
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        .holder-details small {
+            color: var(--text-secondary);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .btn-sm-enhanced {
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger-gradient {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+            border: none;
+        }
+
+        .btn-danger-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+            color: white;
+        }
+
+        .btn-success-gradient {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+        }
+
+        .btn-success-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+
+        .member-selection {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .member-selection.show {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .candidate-card {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+        }
+
+        .candidate-card:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .candidate-card.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .candidate-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f8f9fa;
+        }
+
+        .candidate-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 0.75rem;
+        }
+
+        .meeting-info {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-item i {
+            width: 30px;
+            color: #667eea;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-available {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+
+        .status-occupied {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.2);
+        }
+
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="step-header">
+        <h1 class="mb-2">
+            <i class="fas fa-users-cog me-2"></i>
+            Krok 3: Zarządzanie Stanowiskami
+        </h1>
+        <p class="mb-0 opacity-90">
+            Oddział: <strong>{{ zebranie.oddzial.nazwa }}</strong> | 
+            Protokolant: <strong>{{ zebranie.protokolant.fullName }}</strong> | 
+            Prowadzący: <strong>{{ zebranie.prowadzacy.fullName }}</strong>
+        </p>
+    </div>
+
+    <div class="meeting-info">
+        <h5 class="mb-3">Uprawnienia do zarządzania</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="info-item">
+                    <i class="fas fa-check-circle text-success"></i>
+                    <span>Możesz powoływać osoby na stanowiska</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-item">
+                    <i class="fas fa-check-circle text-success"></i>
+                    <span>Możesz odwoływać osoby ze stanowisk</span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="info-item">
+                    <i class="fas fa-info-circle text-info"></i>
+                    <span>Dokumenty będą automatycznie generowane</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="info-item">
+                    <i class="fas fa-signature text-warning"></i>
+                    <span>Wymagane podpisy: Protokolant + Prowadzący</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="management-card">
+        <h3 class="mb-4">
+            <i class="fas fa-sitemap me-2"></i>
+            Stanowiska w Oddziale {{ zebranie.oddzial.nazwa }}
+        </h3>
+
+        <!-- Przewodniczący Oddziału -->
+        <div class="function-section">
+            <div class="function-header">
+                <h5 class="function-title">
+                    <i class="fas fa-crown me-2 text-warning"></i>
+                    Przewodniczący Oddziału
+                </h5>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="function-limit">Maksymalnie: 1 osoba</span>
+                    {% set przewodniczacy = current_functions.przewodniczacy ?? null %}
+                    {% if przewodniczacy %}
+                        <span class="status-indicator status-occupied">
+                            <i class="fas fa-user me-1"></i>Obsadzone
+                        </span>
+                    {% else %}
+                        <span class="status-indicator status-available">
+                            <i class="fas fa-plus me-1"></i>Dostępne
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if przewodniczacy %}
+                <div class="current-holder">
+                    <div class="holder-info">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            <div class="holder-avatar">
+                                {{ przewodniczacy.imie|first|upper }}{{ przewodniczacy.nazwisko|first|upper }}
+                            </div>
+                            <div class="holder-details">
+                                <h6>{{ przewodniczacy.fullName }}</h6>
+                                <small>
+                                    {% if przewodniczacy.email %}
+                                        <i class="fas fa-envelope me-1"></i>{{ przewodniczacy.email }}
+                                    {% endif %}
+                                    {% if przewodniczacy.telefon %}
+                                        <i class="fas fa-phone ms-2 me-1"></i>{{ przewodniczacy.telefon }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-sm-enhanced btn-danger-gradient" 
+                                    onclick="dismissFunction('przewodniczacy', {{ przewodniczacy.id }}, '{{ przewodniczacy.fullName }}')">
+                                <i class="fas fa-user-minus me-1"></i>Odwołaj
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted mb-3">Stanowisko Przewodniczącego Oddziału jest wolne</p>
+                    <button type="button" class="btn btn-success-gradient btn-sm-enhanced" 
+                            onclick="showAppointment('przewodniczacy')">
+                        <i class="fas fa-user-plus me-1"></i>Powołaj Przewodniczącego
+                    </button>
+                </div>
+                <div id="appointment-przewodniczacy" class="member-selection">
+                    <h6 class="mb-3">Wybierz kandydata na Przewodniczącego Oddziału</h6>
+                    <div id="candidates-przewodniczacy" class="candidates-list" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Candidates will be loaded via AJAX -->
+                    </div>
+                    <div class="mt-3 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                onclick="hideAppointment('przewodniczacy')">
+                            Anuluj
+                        </button>
+                        <button type="button" class="btn btn-primary-gradient btn-sm" 
+                                onclick="appointToFunction('przewodniczacy')" disabled>
+                            <i class="fas fa-check me-1"></i>Powołaj
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Zastępcy Przewodniczącego -->
+        <div class="function-section">
+            <div class="function-header">
+                <h5 class="function-title">
+                    <i class="fas fa-user-tie me-2 text-info"></i>
+                    Zastępcy Przewodniczącego
+                </h5>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="function-limit">Maksymalnie: 2 osoby</span>
+                    {% set zastepcy = current_functions.zastepcy ?? [] %}
+                    {% if zastepcy|length >= 2 %}
+                        <span class="status-indicator status-occupied">
+                            <i class="fas fa-users me-1"></i>Obsadzone ({{ zastepcy|length }}/2)
+                        </span>
+                    {% else %}
+                        <span class="status-indicator status-available">
+                            <i class="fas fa-plus me-1"></i>Dostępne ({{ zastepcy|length }}/2)
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if zastepcy|length > 0 %}
+                {% for zastepca in zastepcy %}
+                    <div class="current-holder">
+                        <div class="holder-info">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <div class="holder-avatar">
+                                    {{ zastepca.imie|first|upper }}{{ zastepca.nazwisko|first|upper }}
+                                </div>
+                                <div class="holder-details">
+                                    <h6>{{ zastepca.fullName }}</h6>
+                                    <small>
+                                        {% if zastepca.email %}
+                                            <i class="fas fa-envelope me-1"></i>{{ zastepca.email }}
+                                        {% endif %}
+                                        {% if zastepca.telefon %}
+                                            <i class="fas fa-phone ms-2 me-1"></i>{{ zastepca.telefon }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="action-buttons">
+                                <button type="button" class="btn btn-sm-enhanced btn-danger-gradient" 
+                                        onclick="dismissFunction('zastepca', {{ zastepca.id }}, '{{ zastepca.fullName }}')">
+                                    <i class="fas fa-user-minus me-1"></i>Odwołaj
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if zastepcy|length < 2 %}
+                <div class="text-center py-3">
+                    <p class="text-muted mb-3">
+                        {% if zastepcy|length == 0 %}
+                            Brak zastępców przewodniczącego
+                        {% else %}
+                            Można powołać jeszcze {{ 2 - zastepcy|length }} zastępcę
+                        {% endif %}
+                    </p>
+                    <button type="button" class="btn btn-success-gradient btn-sm-enhanced" 
+                            onclick="showAppointment('zastepca')">
+                        <i class="fas fa-user-plus me-1"></i>Powołaj Zastępcę
+                    </button>
+                </div>
+                <div id="appointment-zastepca" class="member-selection">
+                    <h6 class="mb-3">Wybierz kandydata na Zastępcę Przewodniczącego</h6>
+                    <div id="candidates-zastepca" class="candidates-list" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Candidates will be loaded via AJAX -->
+                    </div>
+                    <div class="mt-3 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                onclick="hideAppointment('zastepca')">
+                            Anuluj
+                        </button>
+                        <button type="button" class="btn btn-primary-gradient btn-sm" 
+                                onclick="appointToFunction('zastepca')" disabled>
+                            <i class="fas fa-check me-1"></i>Powołaj
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sekretarz Oddziału -->
+        <div class="function-section">
+            <div class="function-header">
+                <h5 class="function-title">
+                    <i class="fas fa-clipboard me-2 text-success"></i>
+                    Sekretarz Oddziału
+                </h5>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="function-limit">Maksymalnie: 1 osoba</span>
+                    {% set sekretarz = current_functions.sekretarz ?? null %}
+                    {% if sekretarz %}
+                        <span class="status-indicator status-occupied">
+                            <i class="fas fa-user me-1"></i>Obsadzone
+                        </span>
+                    {% else %}
+                        <span class="status-indicator status-available">
+                            <i class="fas fa-plus me-1"></i>Dostępne
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if sekretarz %}
+                <div class="current-holder">
+                    <div class="holder-info">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            <div class="holder-avatar">
+                                {{ sekretarz.imie|first|upper }}{{ sekretarz.nazwisko|first|upper }}
+                            </div>
+                            <div class="holder-details">
+                                <h6>{{ sekretarz.fullName }}</h6>
+                                <small>
+                                    {% if sekretarz.email %}
+                                        <i class="fas fa-envelope me-1"></i>{{ sekretarz.email }}
+                                    {% endif %}
+                                    {% if sekretarz.telefon %}
+                                        <i class="fas fa-phone ms-2 me-1"></i>{{ sekretarz.telefon }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button type="button" class="btn btn-sm-enhanced btn-danger-gradient" 
+                                    onclick="dismissFunction('sekretarz', {{ sekretarz.id }}, '{{ sekretarz.fullName }}')">
+                                <i class="fas fa-user-minus me-1"></i>Odwołaj
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted mb-3">Stanowisko Sekretarza Oddziału jest wolne</p>
+                    <button type="button" class="btn btn-success-gradient btn-sm-enhanced" 
+                            onclick="showAppointment('sekretarz')">
+                        <i class="fas fa-user-plus me-1"></i>Powołaj Sekretarza
+                    </button>
+                </div>
+                <div id="appointment-sekretarz" class="member-selection">
+                    <h6 class="mb-3">Wybierz kandydata na Sekretarza Oddziału</h6>
+                    <div id="candidates-sekretarz" class="candidates-list" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Candidates will be loaded via AJAX -->
+                    </div>
+                    <div class="mt-3 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                onclick="hideAppointment('sekretarz')">
+                            Anuluj
+                        </button>
+                        <button type="button" class="btn btn-primary-gradient btn-sm" 
+                                onclick="appointToFunction('sekretarz')" disabled>
+                            <i class="fas fa-check me-1"></i>Powołaj
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <a href="{{ path('zebranie_wizard', {id: zebranie.id}) }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Powrót do kreatora
+        </a>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        let selectedCandidate = null;
+        let currentFunction = null;
+
+        // Show appointment form
+        function showAppointment(functionType) {
+            const appointmentDiv = document.getElementById(`appointment-${functionType}`);
+            appointmentDiv.classList.add('show');
+            currentFunction = functionType;
+            loadCandidates(functionType);
+        }
+
+        // Hide appointment form
+        function hideAppointment(functionType) {
+            const appointmentDiv = document.getElementById(`appointment-${functionType}`);
+            appointmentDiv.classList.remove('show');
+            selectedCandidate = null;
+            currentFunction = null;
+        }
+
+        // Load candidates via AJAX
+        function loadCandidates(functionType) {
+            const candidatesDiv = document.getElementById(`candidates-${functionType}`);
+            candidatesDiv.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin"></i> Ładowanie kandydatów...</div>';
+
+            fetch(`{{ path('zebranie_api_candidates', {id: zebranie.id}) }}?function=${functionType}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderCandidates(candidatesDiv, data.candidates, functionType);
+                    } else {
+                        candidatesDiv.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+                    }
+                })
+                .catch(error => {
+                    candidatesDiv.innerHTML = '<div class="alert alert-danger">Błąd podczas ładowania kandydatów</div>';
+                });
+        }
+
+        // Render candidates list
+        function renderCandidates(container, candidates, functionType) {
+            if (candidates.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="text-muted mb-2">
+                            <i class="fas fa-user-slash fa-2x"></i>
+                        </div>
+                        <h6 class="text-muted">Brak dostępnych kandydatów</h6>
+                        <small class="text-muted">Wszyscy członkowie oddziału są już powołani lub mają konflikty ról</small>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            candidates.forEach(candidate => {
+                const isDisabled = candidate.disabled ? 'disabled' : '';
+                const disabledReason = candidate.disabled ? ` title="${candidate.reason}"` : '';
+                
+                html += `
+                    <div class="candidate-card ${isDisabled}" 
+                         data-id="${candidate.id}" 
+                         data-name="${candidate.fullName.toLowerCase()}"
+                         ${disabledReason}
+                         onclick="${!candidate.disabled ? `selectCandidate(${candidate.id}, '${candidate.fullName}', '${functionType}')` : ''}">
+                        <div class="d-flex align-items-center">
+                            <div class="candidate-avatar">
+                                ${candidate.imie.charAt(0).toUpperCase()}${candidate.nazwisko.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">${candidate.fullName}</h6>
+                                <small class="text-muted">
+                                    ${candidate.email ? `<i class="fas fa-envelope me-1"></i>${candidate.email}` : ''}
+                                    ${candidate.telefon ? `<i class="fas fa-phone ms-2 me-1"></i>${candidate.telefon}` : ''}
+                                </small>
+                                ${candidate.roles.length > 1 ? `
+                                    <div class="mt-1">
+                                        ${candidate.roles.map(role => {
+                                            if (role === 'ROLE_PRZEWODNICZACY_ODDZIALU') return '<span class="badge bg-primary">Przewodniczący Oddziału</span>';
+                                            if (role === 'ROLE_ZASTEPCA_PRZEWODNICZACEGO_ODDZIALU') return '<span class="badge bg-info">Zastępca Przewodniczącego</span>';
+                                            if (role === 'ROLE_SEKRETARZ_ODDZIALU') return '<span class="badge bg-success">Sekretarz Oddziału</span>';
+                                            return '';
+                                        }).join(' ')}
+                                    </div>
+                                ` : ''}
+                                ${candidate.disabled ? `<div class="mt-1"><small class="text-danger">${candidate.reason}</small></div>` : ''}
+                            </div>
+                            ${!candidate.disabled ? `
+                                <div>
+                                    <input type="radio" name="candidate-${functionType}" value="${candidate.id}" class="form-check-input">
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Select candidate
+        function selectCandidate(candidateId, candidateName, functionType) {
+            // Remove previous selection
+            document.querySelectorAll(`#candidates-${functionType} .candidate-card`).forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Select current card
+            const selectedCard = document.querySelector(`#candidates-${functionType} .candidate-card[data-id="${candidateId}"]`);
+            if (selectedCard && !selectedCard.classList.contains('disabled')) {
+                selectedCard.classList.add('selected');
+                const radio = selectedCard.querySelector('input[type="radio"]');
+                if (radio) radio.checked = true;
+
+                selectedCandidate = candidateId;
+                
+                // Enable appoint button
+                const appointButton = document.querySelector(`#appointment-${functionType} .btn-primary-gradient`);
+                appointButton.disabled = false;
+            }
+        }
+
+        // Appoint to function
+        function appointToFunction(functionType) {
+            if (!selectedCandidate) {
+                alert('Wybierz kandydata');
+                return;
+            }
+
+            const appointButton = document.querySelector(`#appointment-${functionType} .btn-primary-gradient`);
+            appointButton.disabled = true;
+            appointButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Powołuję...';
+
+            const formData = new FormData();
+            formData.append('function', functionType);
+            formData.append('candidate', selectedCandidate);
+
+            fetch(`{{ path('zebranie_api_appoint', {id: zebranie.id}) }}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh page to show updated appointments
+                } else {
+                    alert(data.message);
+                    appointButton.disabled = false;
+                    appointButton.innerHTML = '<i class="fas fa-check me-1"></i>Powołaj';
+                }
+            })
+            .catch(error => {
+                alert('Błąd podczas powoływania');
+                appointButton.disabled = false;
+                appointButton.innerHTML = '<i class="fas fa-check me-1"></i>Powołaj';
+            });
+        }
+
+        // Dismiss from function
+        function dismissFunction(functionType, userId, userName) {
+            if (!confirm(`Czy na pewno chcesz odwołać ${userName} z funkcji?`)) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('function', functionType);
+            formData.append('user', userId);
+
+            fetch(`{{ path('zebranie_api_dismiss', {id: zebranie.id}) }}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload(); // Refresh page to show updated appointments
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                alert('Błąd podczas odwoływania');
+            });
+        }
+    </script>
+{% endblock %}

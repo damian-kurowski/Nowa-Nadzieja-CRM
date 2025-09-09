@@ -8,6 +8,10 @@ doctrine:
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        
+        # Logging for security monitoring
+        logging: '%kernel.debug%'
+        profiling: '%kernel.debug%'
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
@@ -44,11 +48,16 @@ when@prod:
             result_cache_driver:
                 type: pool
                 pool: doctrine.result_cache_pool
+            metadata_cache_driver:
+                type: pool
+                pool: doctrine.metadata_cache_pool
 
     framework:
         cache:
             pools:
                 doctrine.result_cache_pool:
-                    adapter: cache.app
+                    adapter: cache.doctrine
                 doctrine.system_cache_pool:
-                    adapter: cache.system
+                    adapter: cache.doctrine
+                doctrine.metadata_cache_pool:
+                    adapter: cache.doctrine

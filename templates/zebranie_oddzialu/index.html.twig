@@ -1,0 +1,834 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Zebrania Członków Oddziałów{% endblock %}
+
+{% block body %}
+<div class="premium-container">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-badge">
+                    <i class="fas fa-building"></i>
+                    <span>Zarządzanie Oddziałami</span>
+                </div>
+                <h1 class="hero-title">Zebrania Członków Oddziałów</h1>
+                <p class="hero-description">Profesjonalne zarządzanie zebraniami i wyborem zarządów oddziałów partii</p>
+            </div>
+            {% if is_granted('ROLE_SEKRETARZ_OKREGU') %}
+                <div class="hero-action">
+                    <a href="{{ path('zebranie_wyznacz_obserwatora') }}" class="btn-premium">
+                        <span class="btn-icon">
+                            <i class="fas fa-plus"></i>
+                        </span>
+                        <span class="btn-text">Nowe Zebranie</span>
+                        <div class="btn-shine"></div>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        <div class="hero-decoration">
+            <div class="decoration-circle circle-1"></div>
+            <div class="decoration-circle circle-2"></div>
+            <div class="decoration-circle circle-3"></div>
+        </div>
+    </div>
+
+    <!-- Statistics Dashboard -->
+    <div class="stats-dashboard">
+        <div class="stats-grid">
+            <div class="stat-card stat-primary">
+                <div class="stat-glow"></div>
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="stat-number">{{ zebrania|length }}</div>
+                    <div class="stat-label">Wszystkie</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-success">
+                <div class="stat-glow"></div>
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-number">
+                        {% set completed = 0 %}
+                        {% for zebranie in zebrania %}
+                            {% if zebranie.status == 'zakonczone' %}
+                                {% set completed = completed + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ completed }}
+                    </div>
+                    <div class="stat-label">Zakończone</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-warning">
+                <div class="stat-glow"></div>
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="stat-number">
+                        {% set active = 0 %}
+                        {% for zebranie in zebrania %}
+                            {% if zebranie.isAktywne() %}
+                                {% set active = active + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ active }}
+                    </div>
+                    <div class="stat-label">Aktywne</div>
+                </div>
+            </div>
+
+            <div class="stat-card stat-danger">
+                <div class="stat-glow"></div>
+                <div class="stat-content">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-number">
+                        {% set cancelled = 0 %}
+                        {% for zebranie in zebrania %}
+                            {% if zebranie.status == 'anulowane' %}
+                                {% set cancelled = cancelled + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ cancelled }}
+                    </div>
+                    <div class="stat-label">Anulowane</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meetings Section -->
+    {% if zebrania|length > 0 %}
+        <div class="meetings-section">
+            <div class="section-header">
+                <h2 class="section-title">Aktywne Zebrania</h2>
+                <div class="section-divider"></div>
+            </div>
+            
+            <div class="meetings-grid">
+                {% for zebranie in zebrania %}
+                    <div class="meeting-card">
+                        <div class="card-glow"></div>
+                        <div class="card-header">
+                            <div class="meeting-status">
+                                <div class="status-dot status-{{ zebranie.status }}"></div>
+                                <span class="status-text">{{ zebranie.statusDisplayName }}</span>
+                                {% if zebranie.status != 'zakonczone' and zebranie.status != 'anulowane' %}
+                                    <div class="step-indicator">
+                                        <span class="current-step">{{ zebranie.getCurrentStepNumber() }}</span>
+                                        <span class="step-separator">/</span>
+                                        <span class="total-steps">7</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="meeting-badge">
+                                <i class="fas fa-building"></i>
+                            </div>
+                        </div>
+
+                        <div class="card-body">
+                            <h3 class="meeting-title">{{ zebranie.oddzial.nazwa }}</h3>
+                            <div class="meeting-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar-plus"></i>
+                                    <span>{{ zebranie.dataRozpoczecia|date('d.m.Y H:i') }}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-user-shield"></i>
+                                    <span>{{ zebranie.obserwator.imie }} {{ zebranie.obserwator.nazwisko }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Participants Timeline -->
+                            <div class="participants-timeline">
+                                <div class="timeline-item completed">
+                                    <div class="timeline-dot">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-title">Obserwator</div>
+                                        <div class="timeline-name">{{ zebranie.obserwator.imie }} {{ zebranie.obserwator.nazwisko }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="timeline-item {% if zebranie.protokolant %}completed{% else %}pending{% endif %}">
+                                    <div class="timeline-dot">
+                                        <i class="fas {% if zebranie.protokolant %}fa-pen{% else %}fa-hourglass-half{% endif %}"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-title">Protokolant</div>
+                                        <div class="timeline-name">
+                                            {% if zebranie.protokolant %}
+                                                {{ zebranie.protokolant.imie }} {{ zebranie.protokolant.nazwisko }}
+                                            {% else %}
+                                                <em>Oczekuje na wyznaczenie</em>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="timeline-item {% if zebranie.prowadzacy %}completed{% else %}pending{% endif %}">
+                                    <div class="timeline-dot">
+                                        <i class="fas {% if zebranie.prowadzacy %}fa-user-tie{% else %}fa-hourglass-half{% endif %}"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <div class="timeline-title">Prowadzący</div>
+                                        <div class="timeline-name">
+                                            {% if zebranie.prowadzacy %}
+                                                {{ zebranie.prowadzacy.imie }} {{ zebranie.prowadzacy.nazwisko }}
+                                            {% else %}
+                                                <em>Oczekuje na wyznaczenie</em>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if zebranie.dataZakonczenia %}
+                                <div class="completion-badge">
+                                    <i class="fas fa-check-double"></i>
+                                    <span>Zakończone {{ zebranie.dataZakonczenia|date('d.m.Y H:i') }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="card-footer">
+                            <a href="{{ path('zebranie_oddzialu_show', {id: zebranie.id}) }}" class="btn-enter">
+                                <span class="btn-text">Przejdź do Zebrania</span>
+                                <span class="btn-arrow">
+                                    <i class="fas fa-arrow-right"></i>
+                                </span>
+                                <div class="btn-ripple"></div>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <!-- Premium Empty State -->
+        <div class="empty-state">
+            <div class="empty-illustration">
+                <div class="illustration-bg"></div>
+                <div class="illustration-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="illustration-particles">
+                    <div class="particle particle-1"></div>
+                    <div class="particle particle-2"></div>
+                    <div class="particle particle-3"></div>
+                </div>
+            </div>
+            <div class="empty-content">
+                <h3 class="empty-title">Brak Aktywnych Zebrań</h3>
+                <p class="empty-description">
+                    {% if is_granted('ROLE_SEKRETARZ_OKREGU') %}
+                        Rozpocznij proces zarządzania strukturami oddziału tworząc pierwsze zebranie.
+                    {% else %}
+                        Obecnie nie uczestniczysz w żadnych zebraniach oddziałów.
+                    {% endif %}
+                </p>
+                {% if is_granted('ROLE_SEKRETARZ_OKREGU') %}
+                    <a href="{{ path('zebranie_wyznacz_obserwatora') }}" class="btn-create">
+                        <span class="btn-icon">
+                            <i class="fas fa-rocket"></i>
+                        </span>
+                        <span class="btn-text">Rozpocznij Pierwsze Zebranie</span>
+                        <div class="btn-glow"></div>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+/* Premium Design System - Identical to ZebranieOkregu */
+:root {
+    /* Colors */
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    --danger-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+    
+    /* Glass Effects */
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    
+    /* Animations */
+    --smooth-transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --bounce-transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    
+    /* Spacing */
+    --section-spacing: 2rem;
+    --card-spacing: 1.5rem;
+}
+
+/* Premium Container */
+.premium-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 1rem;
+    position: relative;
+}
+
+/* Hero Section */
+.hero-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.hero-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255,255,255,0.15);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+}
+
+.hero-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: white;
+    margin: 0 0 0.6rem 0;
+    letter-spacing: -0.01em;
+}
+
+.hero-description {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.85);
+    margin: 0;
+    line-height: 1.4;
+    max-width: 450px;
+}
+
+/* Premium Button */
+.btn-premium {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    color: #333;
+    padding: 0.7rem 1.4rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+.btn-premium:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    color: #333;
+}
+
+.btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    background: #667eea;
+    color: white;
+    border-radius: 4px;
+    font-size: 0.7rem;
+}
+
+/* Statistics Dashboard */
+.stats-dashboard {
+    margin-bottom: 1.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.8rem;
+}
+
+.stat-card {
+    background: rgba(255,255,255,0.12);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.18);
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.stat-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: white;
+    margin-bottom: 0.3rem;
+}
+
+.stat-primary .stat-icon { background: #667eea; }
+.stat-success .stat-icon { background: #10b981; }
+.stat-warning .stat-icon { background: #f59e0b; }
+.stat-danger .stat-icon { background: #ef4444; }
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.9);
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Section Headers */
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.section-divider {
+    width: 60px;
+    height: 2px;
+    background: rgba(255,255,255,0.3);
+    margin: 0;
+    border-radius: 1px;
+}
+
+/* Meetings Grid */
+.meetings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+}
+
+/* Meeting Cards */
+.meeting-card {
+    background: rgba(255,255,255,0.12);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.meeting-card:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.18);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.card-header {
+    padding: 1.2rem 1.2rem 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.meeting-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-rozpoczete { background: #06b6d4; }
+.status-oczekuje_na_protokolanta,
+.status-oczekuje_na_prowadzacego,
+.status-wybor_przewodniczacego,
+.status-wybor_zastepcow,
+.status-wybor_zarzadu,
+.status-oczekuje_na_podpisy { background: #fbbf24; }
+.status-zakonczone { background: #10b981; }
+.status-anulowane { background: #ef4444; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.status-text {
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-left: 0.5rem;
+    background: rgba(255,255,255,0.15);
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.9);
+}
+
+.current-step {
+    font-weight: 600;
+    color: white;
+}
+
+.step-separator {
+    color: rgba(255,255,255,0.6);
+}
+
+.total-steps {
+    color: rgba(255,255,255,0.8);
+}
+
+.meeting-badge {
+    width: 32px;
+    height: 32px;
+    background: #667eea;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.card-body {
+    padding: 0 1.2rem 1.2rem;
+}
+
+.meeting-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.6rem;
+}
+
+.meeting-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.9rem;
+}
+
+.meta-item i {
+    width: 16px;
+    color: rgba(255,255,255,0.6);
+}
+
+/* Participants Timeline */
+.participants-timeline {
+    margin-bottom: 1.2rem;
+}
+
+.timeline-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.timeline-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 26px;
+    width: 1px;
+    height: 16px;
+    background: rgba(255,255,255,0.2);
+}
+
+.timeline-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.timeline-item.completed .timeline-dot {
+    background: #10b981;
+    color: white;
+}
+
+.timeline-item.pending .timeline-dot {
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.timeline-content {
+    flex: 1;
+}
+
+.timeline-title {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.2rem;
+}
+
+.timeline-name {
+    color: white;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+/* Completion Badge */
+.completion-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16,185,129,0.15);
+    color: #6ee7b7;
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* Card Footer */
+.card-footer {
+    padding: 1rem 1.2rem;
+    background: rgba(255,255,255,0.05);
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.btn-enter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: #667eea;
+    color: white;
+    padding: 0.7rem 1.2rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.btn-enter:hover {
+    background: #5a67d8;
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-arrow {
+    transition: transform 0.2s ease;
+}
+
+.btn-enter:hover .btn-arrow {
+    transform: translateX(2px);
+}
+
+/* Premium Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1.5rem;
+}
+
+.empty-illustration {
+    margin: 0 auto 1.5rem;
+}
+
+.illustration-icon {
+    width: 60px;
+    height: 60px;
+    background: #667eea;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin: 0 auto;
+}
+
+.empty-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.8rem;
+}
+
+.empty-description {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 1.5rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.5;
+}
+
+.btn-create {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #667eea;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.btn-create:hover {
+    transform: translateY(-1px);
+    background: #5a67d8;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .meetings-grid {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .premium-container {
+        padding: 1rem;
+    }
+    
+    .hero-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 2rem;
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.8rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+    }
+    
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+    }
+    
+    .meetings-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .meeting-card {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-title {
+        font-size: 2rem;
+    }
+    
+    .section-title {
+        font-size: 1.8rem;
+    }
+    
+    .card-header,
+    .card-body,
+    .card-footer {
+        padding: 1.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        padding: 0.8rem;
+    }
+    
+    .stat-number {
+        font-size: 1.6rem;
+    }
+    
+    .stat-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}

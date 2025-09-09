@@ -1,0 +1,550 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Wystąpienie medialne - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Szczegóły wystąpienia medialnego{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Enhanced Media Appearance Details */
+        .media-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .media-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1rem;
+        }
+        
+        /* Enhanced Cards */
+        .enhanced-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .enhanced-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .enhanced-card-header {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(19, 132, 150, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .enhanced-card-header h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .enhanced-card-header .header-icon-small {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+        
+        .info-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .info-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-label i {
+            margin-right: 0.5rem;
+            width: 16px;
+            text-align: center;
+        }
+        
+        .info-value {
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+        
+        .info-value.empty {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        /* Status Badge Enhanced */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .status-badge.planned {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: white;
+        }
+        
+        .status-badge.completed {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+        }
+        
+        /* Speaker Tags */
+        .speaker-tag {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin: 0.25rem;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(23, 162, 184, 0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .speaker-tag:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+        }
+        
+        .speaker-tag i {
+            margin-right: 0.5rem;
+        }
+        
+        /* Enhanced Buttons */
+        .btn-enhanced {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .btn-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-enhanced:hover::before {
+            left: 100%;
+        }
+        
+        .btn-success-gradient {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            color: white;
+        }
+        
+        .btn-success-gradient:hover {
+            color: white;
+            box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary-gradient:hover {
+            color: white;
+            box-shadow: 0 4px 16px rgba(23, 162, 184, 0.3);
+        }
+        
+        .btn-danger-gradient {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border: none;
+            color: white;
+        }
+        
+        .btn-danger-gradient:hover {
+            color: white;
+            box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+        }
+        
+        /* Topics Section */
+        .topics-section {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.05), rgba(19, 132, 150, 0.02));
+            border: 1px solid rgba(23, 162, 184, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .topics-content {
+            color: var(--text-primary);
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+        
+        /* Stats Info */
+        .stats-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .stats-item:last-child {
+            border-bottom: none;
+        }
+        
+        .stats-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .stats-value {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-left: auto;
+        }
+        
+        /* Link Button Enhanced */
+        .link-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+        }
+        
+        .link-btn:hover {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+            text-decoration: none;
+        }
+        
+        .link-btn i {
+            margin-right: 0.5rem;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Media Header -->
+    <div class="media-header">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="header-icon me-3">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <div>
+                            <h1 class="mb-0">{{ wystep.nazwaMediaRedakcji ?: 'Wystąpienie medialne' }}</h1>
+                            <p class="mb-0 opacity-90 fs-5">
+                                {% if wystep.nazwaProgramu %}
+                                    {{ wystep.nazwaProgramu }}
+                                {% else %}
+                                    Szczegóły wystąpienia medialnego
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    {% if is_granted('EDIT', wystep) %}
+                    <a href="{{ path('wystep_medialny_edit', {'id': wystep.id}) }}" class="btn btn-enhanced btn-success-gradient">
+                        <i class="fas fa-edit me-2"></i>Edytuj
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Main Information Card -->
+            <div class="enhanced-card mb-4">
+                <div class="enhanced-card-header">
+                    <h6>
+                        <div class="header-icon-small">
+                            <i class="fas fa-tv"></i>
+                        </div>
+                        Informacje o medium
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-calendar-alt"></i>Data i godzina
+                                </div>
+                                <div class="info-value">{{ wystep.dataIGodzina|date('d.m.Y H:i') }}</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-broadcast-tower"></i>Nazwa media/redakcji
+                                </div>
+                                <div class="info-value {{ not wystep.nazwaMediaRedakcji ? 'empty' : '' }}">{{ wystep.nazwaMediaRedakcji ?: 'Nie podano' }}</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-film"></i>Nazwa programu
+                                </div>
+                                <div class="info-value {{ not wystep.nazwaProgramu ? 'empty' : '' }}">{{ wystep.nazwaProgramu ?: 'Nie podano' }}</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-user-tie"></i>Dziennikarz prowadzący
+                                </div>
+                                <div class="info-value {{ not wystep.dziennikarzProwadzacy ? 'empty' : '' }}">{{ wystep.dziennikarzProwadzacy ?: 'Nie podano' }}</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-users"></i>Mówcy
+                                </div>
+                                <div class="info-value">
+                                    {% if wystep.mowcy|length > 0 %}
+                                        <div class="d-flex flex-wrap mt-2">
+                                            {% for mowca in wystep.mowcy %}
+                                                <span class="speaker-tag">
+                                                    <i class="fas fa-user"></i>{{ mowca.fullName }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="empty">Nie przypisano</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-phone"></i>Numer telefonu
+                                </div>
+                                <div class="info-value {{ not wystep.numerTelefonu ? 'empty' : '' }}">{{ wystep.numerTelefonu ?: 'Nie podano' }}</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-link"></i>Link do nagrania
+                                </div>
+                                <div class="info-value">
+                                    {% if wystep.linkDoNagrania %}
+                                        <a href="{{ wystep.linkDoNagrania }}" target="_blank" class="link-btn">
+                                            <i class="fas fa-external-link-alt"></i>Otwórz nagranie
+                                        </a>
+                                    {% else %}
+                                        <span class="empty">Brak linku</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-user-plus"></i>Zgłaszający
+                                </div>
+                                <div class="info-value">{{ wystep.zglaszajacy.fullName }}</div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-clock"></i>Data zgłoszenia
+                                </div>
+                                <div class="info-value">{{ wystep.dataZgloszenia|date('d.m.Y H:i') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if wystep.tematyRozmowy %}
+            <!-- Topics Section -->
+            <div class="enhanced-card">
+                <div class="enhanced-card-header">
+                    <h6>
+                        <div class="header-icon-small">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        Tematy rozmowy
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="topics-section">
+                        <div class="topics-content">{{ wystep.tematyRozmowy|nl2br }}</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <!-- Actions Card -->
+            <div class="enhanced-card mb-4">
+                <div class="enhanced-card-header">
+                    <h6>
+                        <div class="header-icon-small">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        Akcje
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-3">
+                        {% if is_granted('EDIT', wystep) %}
+                        <a href="{{ path('wystep_medialny_edit', {'id': wystep.id}) }}" class="btn btn-enhanced btn-primary-gradient">
+                            <i class="fas fa-edit me-2"></i>Edytuj wystąpienie
+                        </a>
+                        {% endif %}
+
+                        {% if wystep.linkDoNagrania %}
+                        <a href="{{ wystep.linkDoNagrania }}" target="_blank" class="btn btn-enhanced btn-success-gradient">
+                            <i class="fas fa-play me-2"></i>Zobacz nagranie
+                        </a>
+                        {% endif %}
+
+                        <a href="{{ path('wystep_medialny_index') }}" class="btn btn-enhanced btn-outline-secondary">
+                            <i class="fas fa-list me-2"></i>Wszystkie wystąpienia
+                        </a>
+
+                        {% if is_granted('ROLE_RZECZNIK_PRASOWY') %}
+                        <hr class="my-3">
+                        <form method="post" action="{{ path('wystep_medialny_delete', {'id': wystep.id}) }}" 
+                              onsubmit="return confirm('Czy na pewno chcesz usunąć to wystąpienie?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ wystep.id) }}">
+                            <button type="submit" class="btn btn-enhanced btn-danger-gradient w-100">
+                                <i class="fas fa-trash me-2"></i>Usuń wystąpienie
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Information Card -->
+            <div class="enhanced-card">
+                <div class="enhanced-card-header">
+                    <h6>
+                        <div class="header-icon-small">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        Status i informacje
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="stats-item">
+                        <span class="stats-label">Status wystąpienia:</span>
+                        <span class="status-badge {{ wystep.dataIGodzina > 'now'|date('Y-m-d H:i:s') ? 'planned' : 'completed' }}">
+                            {{ wystep.dataIGodzina > 'now'|date('Y-m-d H:i:s') ? 'Planowane' : 'Zakończone' }}
+                        </span>
+                    </div>
+                    
+                    <div class="stats-item">
+                        <span class="stats-label">Utworzone:</span>
+                        <span class="stats-value">{{ wystep.dataZgloszenia|date('d.m.Y') }}</span>
+                    </div>
+
+                    {% if wystep.mowcy|length > 0 %}
+                    <div class="stats-item">
+                        <span class="stats-label">Liczba mówców:</span>
+                        <span class="stats-value">{{ wystep.mowcy|length }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="stats-item">
+                        <span class="stats-label">ID wystąpienia:</span>
+                        <span class="stats-value">#{{ wystep.id }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

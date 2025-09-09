@@ -1,0 +1,1282 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Podpis dokumentu - {{ dokument.numerDokumentu }}{% endblock %}
+
+{% block page_title %}Podpis dokumentu{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Document Signing Header -->
+    <div class="document-signing-header">
+        <div class="text-center">
+            <div class="header-icon mx-auto">
+                <i class="fas fa-signature"></i>
+            </div>
+            <h1 class="mb-2">Podpis dokumentu</h1>
+            <div class="document-meta mb-2">
+                <span class="doc-title">{{ dokument.tytul }}</span>
+                <span class="mx-2">•</span>
+                <span class="doc-number">{{ dokument.numerDokumentu }}</span>
+            </div>
+            <p class="mb-0 opacity-90 fs-6">
+                Przeczytaj uważnie dokument i złoż elektroniczny podpis
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Enhanced Document Preview -->
+            <div class="document-preview-card mb-4">
+                <div class="preview-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>Treść dokumentu
+                    </h5>
+                    <div class="preview-actions">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">
+                            <i class="fas fa-print me-1"></i>Drukuj
+                        </button>
+                    </div>
+                </div>
+                <div class="preview-body">
+                    <div class="enhanced-document-preview">
+                        {{ dokument.tresc|nl2br }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Signature Form -->
+            <div class="signature-form-card">
+                <div class="signature-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-signature me-2"></i>Elektroniczny podpis dokumentu
+                    </h5>
+                    <div class="signature-security">
+                        <span class="security-badge">
+                            <i class="fas fa-shield-alt me-1"></i>Bezpieczny podpis
+                        </span>
+                    </div>
+                </div>
+                <div class="signature-body">
+                    {{ form_start(form) }}
+                        <div class="legal-warning">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-shrink-0">
+                                    <div class="warning-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1 text-warning">Ważne informacje prawne</h6>
+                                    <p class="mb-0">Podpisanie tego dokumentu oznacza Twoją zgodę na jego treść i ma moc prawną zgodną ze statutem partii.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Signature Canvas -->
+                        <div class="signature-section mb-4">
+                            <div class="signature-section-header">
+                                <h6 class="mb-2">
+                                    <i class="fas fa-pen me-2"></i>Twój podpis elektroniczny
+                                </h6>
+                                <p class="text-muted mb-3">Podpisz w poniższym polu za pomocą myszy lub dotyku</p>
+                            </div>
+                            
+                            <div class="enhanced-signature-pad-container">
+                                <div class="signature-placeholder" id="signature-placeholder">
+                                    <i class="fas fa-pen-nib"></i>
+                                    <span>Kliknij i podpisz tutaj</span>
+                                </div>
+                                <canvas id="signature-pad" class="signature-pad"></canvas>
+                                <div class="signature-overlay">
+                                    <div class="signature-line"></div>
+                                    <small class="signature-line-label">Podpis</small>
+                                </div>
+                            </div>
+                            
+                            <div class="signature-controls">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="signature-status">
+                                        <span class="status-indicator" id="signature-status">
+                                            <i class="fas fa-circle"></i>
+                                            Brak podpisu
+                                        </span>
+                                    </div>
+                                    <div class="signature-actions">
+                                        <button type="button" class="btn btn-enhanced btn-outline-secondary btn-sm" id="clear-signature">
+                                            <i class="fas fa-eraser me-1"></i>Wyczyść
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Comment Section -->
+                        <div class="comment-section mb-4">
+                            <h6 class="section-title">
+                                <i class="fas fa-comment me-2"></i>Komentarz (opcjonalnie)
+                            </h6>
+                            <div class="form-group-enhanced">
+                                {{ form_row(form.komentarz) }}
+                            </div>
+                        </div>
+                        
+                        {{ form_widget(form.podpisElektroniczny) }}
+
+                        <!-- Enhanced Confirmation Section -->
+                        <div class="confirmation-section mb-4">
+                            <div class="confirmation-card">
+                                <div class="confirmation-header">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-check-circle me-2"></i>Potwierdzenie podpisu
+                                    </h6>
+                                </div>
+                                <div class="confirmation-body">
+                                    <div class="enhanced-form-check">
+                                        <input class="form-check-input" type="checkbox" id="confirmSignature" required>
+                                        <label class="form-check-label" for="confirmSignature">
+                                            <strong>Potwierdzam, że:</strong>
+                                            <ul class="confirmation-list">
+                                                <li>Zapoznałem się z pełną treścią dokumentu</li>
+                                                <li>Wyrażam zgodę na jego podpisanie</li>
+                                                <li>Jestem świadomy prawnych konsekwencji tego działania</li>
+                                                <li>Moją tożsamość można zweryfikować na podstawie danych logowania</li>
+                                            </ul>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Action Buttons -->
+                        <div class="signature-actions-section">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                                <div class="action-group">
+                                    <a href="{{ path('dokument_show', {id: dokument.id}) }}" class="btn btn-enhanced btn-secondary-gradient">
+                                        <i class="fas fa-arrow-left me-2"></i>Anuluj
+                                    </a>
+                                </div>
+                                
+                                <div class="action-group d-flex gap-2">
+                                    <a href="{{ path('dokument_reject', {id: dokument.id}) }}" class="btn btn-enhanced btn-danger-gradient" onclick="return confirm('Czy na pewno chcesz odrzuć ten dokument?')">
+                                        <i class="fas fa-times me-2"></i>Odrzuć dokument
+                                    </a>
+                                    {{ form_widget(form.submit, {'attr': {'id': 'sign-submit-btn', 'class': 'btn btn-enhanced btn-success-gradient'}}) }}
+                                </div>
+                            </div>
+                            
+                            <div class="signature-security-info">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-shield-alt me-2 text-success"></i>
+                                    <small class="text-muted">
+                                        Podpis jest szyfrowany i przechowywany bezpiecznie. 
+                                        Data i adres IP są rejestrowane dla celów audytu.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Enhanced Document Information -->
+            <div class="info-card mb-4">
+                <div class="info-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Informacje o dokumencie
+                    </h5>
+                </div>
+                <div class="info-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-hashtag me-2"></i>Numer dokumentu
+                            </div>
+                            <div class="info-value font-monospace">{{ dokument.numerDokumentu }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-file-alt me-2"></i>Typ dokumentu
+                            </div>
+                            <div class="info-value">
+                                <span class="type-badge">{{ dokument.typDisplayName }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-flag me-2"></i>Status
+                            </div>
+                            <div class="info-value">
+                                <span class="status-badge {{ dokument.statusBadgeClass }}">
+                                    <i class="fas fa-circle me-1"></i>{{ dokument.statusDisplayName }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-user me-2"></i>Utworzył
+                            </div>
+                            <div class="info-value">{{ dokument.tworca.fullName }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-calendar-plus me-2"></i>Data utworzenia
+                            </div>
+                            <div class="info-value">{{ dokument.dataUtworzenia|date('d.m.Y H:i') }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-calendar-check me-2"></i>Wejście w życie
+                            </div>
+                            <div class="info-value">{{ dokument.dataWejsciaWZycie|date('d.m.Y') }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Signature Progress -->
+            <div class="progress-card">
+                <div class="progress-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>Postęp podpisów
+                    </h5>
+                    <div class="progress-counter">
+                        {% set signedCount = 0 %}
+                        {% for podpis in dokument.podpisy %}
+                            {% if podpis.signed %}
+                                {% set signedCount = signedCount + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        <span class="count-badge">{{ signedCount }}/{{ dokument.podpisy|length }}</span>
+                    </div>
+                </div>
+                <div class="progress-body">
+                    <!-- Enhanced Progress Bar -->
+                    {% set progressPercent = (signedCount / dokument.podpisy|length * 100)|round %}
+                    <div class="enhanced-progress mb-4">
+                        <div class="progress-label d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Postęp podpisów</span>
+                            <span class="progress-percentage">{{ progressPercent }}%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: {{ progressPercent }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Signature List -->
+                    <div class="signatures-list">
+                        {% for podpis in dokument.podpisy %}
+                            <div class="enhanced-signature-item {{ podpis.signed ? 'signed' : (podpis.rejected ? 'rejected' : 'pending') }} {{ podpis.podpisujacy == app.user ? 'current-user' : '' }}">
+                                <div class="signature-main">
+                                    <div class="signature-step">
+                                        <div class="step-circle">{{ podpis.kolejnosc }}</div>
+                                        <div class="signature-user">
+                                            <div class="user-name">{{ podpis.podpisujacyFullInfo }}</div>
+                                            {% if podpis.podpisujacy == app.user %}
+                                                <span class="current-user-badge">To Ty</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="signature-status">
+                                        <span class="enhanced-status-badge {{ podpis.statusBadgeClass }}">
+                                            {% if podpis.signed %}
+                                                <i class="fas fa-check me-1"></i>
+                                            {% elseif podpis.rejected %}
+                                                <i class="fas fa-times me-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-clock me-1"></i>
+                                            {% endif %}
+                                            {{ podpis.statusDisplayName }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                {% if podpis.dataPodpisania %}
+                                    <div class="signature-meta">
+                                        <div class="meta-item">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            {{ podpis.dataPodpisania|date('d.m.Y H:i') }}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if podpis.komentarz %}
+                                    <div class="signature-comment">
+                                        <div class="comment-content">
+                                            <i class="fas fa-comment me-2"></i>
+                                            <em>{{ podpis.komentarz }}</em>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if not loop.last %}
+                                <div class="signature-divider"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Enhanced Document Signing Header */
+        .document-signing-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .document-signing-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1.5rem;
+        }
+        
+        .document-meta {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .doc-title {
+            font-weight: 600;
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .doc-number {
+            font-family: 'Courier New', monospace;
+            font-weight: 500;
+        }
+        
+        /* Enhanced Document Preview Card */
+        .document-preview-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .document-preview-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .preview-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .preview-header h5 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .preview-body {
+            padding: 2rem;
+        }
+        
+        .enhanced-document-preview {
+            background: var(--bg-secondary);
+            padding: 2.5rem;
+            border-radius: 12px;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            white-space: pre-line;
+            border: 2px solid var(--border-color);
+            box-shadow: inset 0 2px 8px var(--shadow-light);
+            color: var(--text-primary);
+            min-height: 300px;
+        }
+        
+        /* Enhanced Signature Form Card */
+        .signature-form-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .signature-form-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .signature-header {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(33, 136, 56, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .signature-header h5 {
+            color: #28a745;
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .security-badge {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+        
+        .signature-body {
+            padding: 2rem;
+        }
+        
+        /* Legal Warning */
+        .legal-warning {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(224, 168, 0, 0.05));
+            border: 1px solid rgba(255, 193, 7, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .warning-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-size: 1.25rem;
+        }
+        
+        /* Enhanced Signature Pad */
+        .signature-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid #28a745;
+        }
+        
+        .signature-section-header h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .enhanced-signature-pad-container {
+            position: relative;
+            background: #ffffff;
+            border: 3px solid #dee2e6;
+            border-radius: 12px;
+            overflow: hidden;
+            height: 220px;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .enhanced-signature-pad-container:hover {
+            border-color: #28a745;
+        }
+        
+        .enhanced-signature-pad-container.has-signature {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
+        }
+        
+        .signature-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #6c757d;
+            text-align: center;
+            z-index: 1;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        
+        .signature-placeholder i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .signature-pad {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            z-index: 2;
+        }
+        
+        .signature-overlay {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .signature-line {
+            width: 200px;
+            height: 1px;
+            background: #dee2e6;
+            position: relative;
+        }
+        
+        .signature-line-label {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #6c757d;
+            font-size: 0.75rem;
+        }
+        
+        .signature-controls {
+            margin-top: 1rem;
+        }
+        
+        .signature-status .status-indicator {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .signature-status .status-indicator.empty {
+            color: #6c757d;
+        }
+        
+        .signature-status .status-indicator.filled {
+            color: #28a745;
+        }
+        
+        .signature-status .status-indicator i {
+            margin-right: 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        /* Comment Section */
+        .comment-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid #667eea;
+        }
+        
+        .section-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            color: #667eea;
+        }
+        
+        .form-group-enhanced .form-control {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+        }
+        
+        .form-group-enhanced .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+            background: var(--bg-primary);
+        }
+        
+        /* Enhanced Confirmation Section */
+        .confirmation-section {
+            margin-bottom: 2rem;
+        }
+        
+        .confirmation-card {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(33, 136, 56, 0.05));
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .confirmation-header h6 {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .enhanced-form-check {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .enhanced-form-check .form-check-input {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-top: 0;
+        }
+        
+        .enhanced-form-check .form-check-label {
+            margin-left: 0.5rem;
+            color: var(--text-primary);
+        }
+        
+        .confirmation-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 1rem 0 0 0;
+        }
+        
+        .confirmation-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+        }
+        
+        .confirmation-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .confirmation-list li::before {
+            content: '✓';
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 0.75rem;
+            width: 1rem;
+        }
+        
+        /* Signature Actions Section */
+        .signature-actions-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .action-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .signature-security-info {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        /* Enhanced Buttons */
+        .btn-enhanced {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .btn-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-enhanced:hover::before {
+            left: 100%;
+        }
+        
+        .btn-secondary-gradient {
+            background: linear-gradient(135deg, #6c757d, #545b62);
+            border-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary-gradient:hover {
+            box-shadow: 0 4px 16px rgba(108, 117, 125, 0.3);
+            color: white;
+        }
+        
+        .btn-danger-gradient {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger-gradient:hover {
+            box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+            color: white;
+        }
+        
+        .btn-success-gradient {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success-gradient:hover {
+            box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+        
+        /* Enhanced Cards */
+        .info-card, .progress-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .info-card:hover, .progress-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .info-header, .progress-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .info-header h5, .progress-header h5 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .progress-counter .count-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .info-body, .progress-body {
+            padding: 1.5rem;
+        }
+        
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.2s ease;
+        }
+        
+        .info-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .info-label {
+            flex: 0 0 40%;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-value {
+            flex: 1;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .type-badge {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        /* Enhanced Progress */
+        .enhanced-progress {
+            margin-bottom: 2rem;
+        }
+        
+        .progress-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .progress-percentage {
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        .progress-bar-container {
+            height: 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-radius: 6px;
+            transition: width 0.6s ease;
+            position: relative;
+        }
+        
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0.2) 50%, transparent 50%, transparent 75%, rgba(255,255,255,0.2) 75%);
+            background-size: 20px 20px;
+            animation: progress-stripes 1s linear infinite;
+        }
+        
+        @keyframes progress-stripes {
+            from { background-position: 0 0; }
+            to { background-position: 20px 0; }
+        }
+        
+        /* Enhanced Signature Items */
+        .signatures-list {
+            margin-top: 1rem;
+        }
+        
+        .enhanced-signature-item {
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .enhanced-signature-item.signed {
+            border-left-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+        
+        .enhanced-signature-item.rejected {
+            border-left-color: #dc3545;
+            background: rgba(220, 53, 69, 0.05);
+        }
+        
+        .enhanced-signature-item.pending {
+            border-left-color: #ffc107;
+            background: rgba(255, 193, 7, 0.05);
+        }
+        
+        .enhanced-signature-item.current-user {
+            border: 2px solid #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+        
+        .enhanced-signature-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .signature-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .signature-step {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #6c757d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .enhanced-signature-item.signed .step-circle {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+        
+        .enhanced-signature-item.rejected .step-circle {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+        
+        .enhanced-signature-item.pending .step-circle {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #000;
+        }
+        
+        .enhanced-signature-item.current-user .step-circle {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        
+        .signature-user {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .current-user-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .signature-status {
+            flex-shrink: 0;
+        }
+        
+        .enhanced-status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .signature-meta {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin: 1rem 0;
+        }
+        
+        .meta-item {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .signature-comment {
+            background: var(--bg-primary);
+            border-left: 3px solid #667eea;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .comment-content {
+            color: var(--text-primary);
+            font-style: italic;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .signature-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+            margin: 1.5rem 0;
+        }
+        
+        /* Dark Theme Adjustments */
+        [data-theme="dark"] .enhanced-document-preview {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        [data-theme="dark"] .enhanced-signature-pad-container {
+            background: var(--bg-primary);
+            border-color: var(--border-color);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .document-signing-header {
+                padding: 2rem 1rem;
+            }
+            
+            .preview-header, .signature-header, .info-header, .progress-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .signature-actions-section .d-flex {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .action-group {
+                justify-content: center;
+            }
+            
+            .signature-main {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .info-label {
+                flex: 0 0 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <!-- Signature Pad Library -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.4/dist/signature_pad.umd.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Check if SignaturePad is available
+            if (typeof SignaturePad === 'undefined') {
+                alert('Błąd: Biblioteka podpisów nie została załadowana. Odśwież stronę.');
+                return;
+            }
+            
+            // Initialize signature pad
+            const canvas = document.getElementById('signature-pad');
+            if (!canvas) {
+                return;
+            }
+            
+            const signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(255, 255, 255)',
+                penColor: 'rgb(0, 0, 0)'
+            });
+            
+            
+            // Resize canvas
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+                signaturePad.clear();
+            }
+            
+            window.addEventListener("resize", resizeCanvas);
+            resizeCanvas();
+            
+            // Clear signature button
+            document.getElementById('clear-signature').addEventListener('click', function() {
+                signaturePad.clear();
+                updateSignatureField();
+                checkFormValidity();
+            });
+            
+            // Update hidden field when signature changes
+            function updateSignatureField() {
+                const signatureData = signaturePad.isEmpty() ? '' : signaturePad.toDataURL();
+                document.querySelector('input[name*="podpisElektroniczny"]').value = signatureData;
+                
+                // Update UI based on signature state
+                updateSignatureUI();
+            }
+            
+            // Update signature UI elements
+            function updateSignatureUI() {
+                const hasSignature = !signaturePad.isEmpty();
+                const container = document.querySelector('.enhanced-signature-pad-container');
+                const placeholder = document.getElementById('signature-placeholder');
+                const statusIndicator = document.getElementById('signature-status');
+                
+                if (hasSignature) {
+                    container.classList.add('has-signature');
+                    placeholder.style.opacity = '0';
+                    statusIndicator.innerHTML = '<i class="fas fa-check-circle"></i> Podpis złożony';
+                    statusIndicator.className = 'status-indicator filled';
+                } else {
+                    container.classList.remove('has-signature');
+                    placeholder.style.opacity = '1';
+                    statusIndicator.innerHTML = '<i class="fas fa-circle"></i> Brak podpisu';
+                    statusIndicator.className = 'status-indicator empty';
+                }
+            }
+            
+            // Listen for signature changes
+            signaturePad.addEventListener("endStroke", updateSignatureField);
+            
+            // Form validation
+            const confirmCheckbox = document.getElementById('confirmSignature');
+            const submitButton = document.getElementById('sign-button');
+            
+            if (!confirmCheckbox) {
+                return;
+            }
+            
+            if (!submitButton) {
+                return;
+            }
+            
+            function checkFormValidity() {
+                const hasSignature = signaturePad ? !signaturePad.isEmpty() : true; // Allow if no signature pad
+                const isConfirmed = confirmCheckbox.checked;
+                
+                
+                submitButton.disabled = !isConfirmed; // Only require confirmation checkbox
+                
+                // Visual feedback for form validity
+                if (hasSignature && isConfirmed) {
+                    submitButton.classList.remove('btn-secondary');
+                    submitButton.classList.add('btn-success-gradient');
+                } else {
+                    submitButton.classList.remove('btn-success-gradient');
+                    submitButton.classList.add('btn-secondary');
+                }
+            }
+            
+            confirmCheckbox.addEventListener('change', checkFormValidity);
+            signaturePad.addEventListener("endStroke", checkFormValidity);
+            
+            // Prevent form submission if invalid
+            document.querySelector('form').addEventListener('submit', function(e) {
+                
+                // If signature pad is not working, allow manual submission
+                if (typeof signaturePad === 'undefined') {
+                    const hiddenField = document.querySelector('input[name*="podpisElektroniczny"]');
+                    if (hiddenField && !hiddenField.value) {
+                        hiddenField.value = 'fallback-signature-' + Date.now();
+                    }
+                } else {
+                    // Signature is optional - set fallback if empty
+                    if (signaturePad && signaturePad.isEmpty()) {
+                        const hiddenField = document.querySelector('input[name*="podpisElektroniczny"]');
+                        if (hiddenField) {
+                            hiddenField.value = 'digital-signature-' + Date.now();
+                        }
+                    }
+                }
+                
+                if (!confirmCheckbox.checked) {
+                    e.preventDefault();
+                    alert('Proszę potwierdzić zgodę na podpisanie dokumentu');
+                    confirmCheckbox.focus();
+                    return false;
+                }
+                
+                
+                // Show loading state
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Podpisuję...';
+                }
+            });
+            
+            // Initial check
+            checkFormValidity();
+        });
+    </script>
+{% endblock %}

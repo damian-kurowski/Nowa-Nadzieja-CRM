@@ -1,0 +1,374 @@
+{# Custom Enhanced Pagination Template #}
+{% if pageCount > 1 %}
+<nav aria-label="Pagination" class="enhanced-pagination-wrapper">
+    <div class="enhanced-pagination d-flex justify-content-between align-items-center">
+        <div class="pagination-info">
+            <span class="text-muted">
+                Strona {{ current }} z {{ pageCount }} 
+                <small>({{ totalCount }} {% if totalCount == 1 %}rekord{% elseif totalCount < 5 %}rekordy{% else %}rekordów{% endif %})</small>
+            </span>
+        </div>
+        
+        <ul class="pagination pagination-modern mb-0">
+            {# First page #}
+            {% if current > 1 %}
+                <li class="page-item">
+                    <a class="page-link page-link-first" href="{{ path(route, query|merge({(pageParameterName): 1})) }}" aria-label="Pierwsza strona">
+                        <i class="fas fa-angle-double-left"></i>
+                        <span class="d-none d-sm-inline ms-1">Pierwsza</span>
+                    </a>
+                </li>
+            {% endif %}
+
+            {# Previous page #}
+            {% if previous is defined %}
+                <li class="page-item">
+                    <a class="page-link page-link-prev" href="{{ path(route, query|merge({(pageParameterName): previous})) }}" aria-label="Poprzednia strona">
+                        <i class="fas fa-angle-left"></i>
+                        <span class="d-none d-sm-inline ms-1">Poprzednia</span>
+                    </a>
+                </li>
+            {% endif %}
+
+            {# Page numbers #}
+            {% if startPage > 1 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ path(route, query|merge({(pageParameterName): 1})) }}">1</a>
+                </li>
+                {% if startPage > 2 %}
+                    <li class="page-item disabled">
+                        <span class="page-link page-dots">...</span>
+                    </li>
+                {% endif %}
+            {% endif %}
+
+            {% for page in pagesInRange %}
+                {% if page != current %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ path(route, query|merge({(pageParameterName): page})) }}">{{ page }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item active" aria-current="page">
+                        <span class="page-link page-link-current">{{ page }}</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if endPage < pageCount %}
+                {% if endPage < pageCount - 1 %}
+                    <li class="page-item disabled">
+                        <span class="page-link page-dots">...</span>
+                    </li>
+                {% endif %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ path(route, query|merge({(pageParameterName): pageCount})) }}">{{ pageCount }}</a>
+                </li>
+            {% endif %}
+
+            {# Next page #}
+            {% if next is defined %}
+                <li class="page-item">
+                    <a class="page-link page-link-next" href="{{ path(route, query|merge({(pageParameterName): next})) }}" aria-label="Następna strona">
+                        <span class="d-none d-sm-inline me-1">Następna</span>
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+
+            {# Last page #}
+            {% if current < pageCount %}
+                <li class="page-item">
+                    <a class="page-link page-link-last" href="{{ path(route, query|merge({(pageParameterName): pageCount})) }}" aria-label="Ostatnia strona">
+                        <span class="d-none d-sm-inline me-1">Ostatnia</span>
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+
+        {# Quick jump #}
+        <div class="page-jump d-none d-md-block">
+            <form method="get" class="d-flex align-items-center" style="gap: 0.5rem;">
+                {% for key, value in query %}
+                    {% if key != pageParameterName %}
+                        <input type="hidden" name="{{ key }}" value="{{ value }}">
+                    {% endif %}
+                {% endfor %}
+                <label for="page-jump" class="form-label mb-0 text-muted small">Idź do:</label>
+                <input type="number" 
+                       id="page-jump" 
+                       name="{{ pageParameterName }}" 
+                       class="form-control form-control-sm page-jump-input" 
+                       min="1" 
+                       max="{{ pageCount }}" 
+                       value="{{ current }}"
+                       style="width: 70px;">
+                <button type="submit" class="btn btn-sm btn-outline-primary page-jump-btn">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<style>
+.enhanced-pagination-wrapper {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    box-shadow: 0 2px 8px var(--shadow-light);
+}
+
+.enhanced-pagination {
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.pagination-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.pagination-modern {
+    --bs-pagination-padding-x: 0.75rem;
+    --bs-pagination-padding-y: 0.5rem;
+    --bs-pagination-font-size: 0.9rem;
+    --bs-pagination-color: var(--text-primary);
+    --bs-pagination-bg: var(--bg-primary);
+    --bs-pagination-border-width: 2px;
+    --bs-pagination-border-color: var(--border-color);
+    --bs-pagination-border-radius: 8px;
+    --bs-pagination-hover-color: #ffffff;
+    --bs-pagination-hover-bg: #6f42c1;
+    --bs-pagination-hover-border-color: #6f42c1;
+    --bs-pagination-focus-color: var(--text-primary);
+    --bs-pagination-focus-bg: var(--bg-secondary);
+    --bs-pagination-focus-border-color: #6f42c1;
+    --bs-pagination-focus-box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+    --bs-pagination-active-color: #ffffff;
+    --bs-pagination-active-bg: #6f42c1;
+    --bs-pagination-active-border-color: #6f42c1;
+    --bs-pagination-disabled-color: var(--text-muted);
+    --bs-pagination-disabled-bg: var(--bg-secondary);
+    --bs-pagination-disabled-border-color: var(--border-color);
+    gap: 0.25rem;
+}
+
+.pagination-modern .page-link {
+    transition: all 0.3s ease;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.pagination-modern .page-link:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.pagination-modern .page-link:hover:before {
+    left: 100%;
+}
+
+.pagination-modern .page-item.active .page-link {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    border-color: #6f42c1;
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.3);
+    transform: translateY(-2px);
+}
+
+.pagination-modern .page-link-first,
+.pagination-modern .page-link-last {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+    color: white;
+    font-weight: 600;
+}
+
+.pagination-modern .page-link-first:hover,
+.pagination-modern .page-link-last:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    border-color: #059669;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.pagination-modern .page-link-prev,
+.pagination-modern .page-link-next {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-color: #3b82f6;
+    color: white;
+    font-weight: 600;
+}
+
+.pagination-modern .page-link-prev:hover,
+.pagination-modern .page-link-next:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    border-color: #1d4ed8;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.page-dots {
+    border: none !important;
+    background: transparent !important;
+    color: var(--text-muted);
+    font-weight: 700;
+    cursor: default;
+}
+
+.page-jump {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.page-jump-input {
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.page-jump-input:focus {
+    border-color: #6f42c1;
+    box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
+}
+
+.page-jump-btn {
+    border: 2px solid #6f42c1;
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    padding: 0.375rem 0.75rem;
+}
+
+.page-jump-btn:hover {
+    background: linear-gradient(135deg, #5a32a3 0%, #4c1d95 100%);
+    border-color: #5a32a3;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .enhanced-pagination {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .pagination-modern {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .pagination-info {
+        text-align: center;
+    }
+    
+    .page-jump {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 576px) {
+    .enhanced-pagination-wrapper {
+        padding: 1rem;
+    }
+    
+    .pagination-modern .page-link {
+        padding: 0.375rem 0.5rem;
+        font-size: 0.8rem;
+        min-width: 2rem;
+    }
+    
+    .pagination-modern {
+        --bs-pagination-padding-x: 0.5rem;
+        --bs-pagination-padding-y: 0.375rem;
+        --bs-pagination-font-size: 0.8rem;
+    }
+}
+
+/* Dark mode support */
+[data-bs-theme="dark"] .enhanced-pagination-wrapper {
+    background: #1a1a1a;
+    border-color: #404040;
+}
+
+[data-bs-theme="dark"] .pagination-modern {
+    --bs-pagination-color: #e5e5e5;
+    --bs-pagination-bg: #1a1a1a;
+    --bs-pagination-border-color: #404040;
+    --bs-pagination-hover-color: #ffffff;
+    --bs-pagination-focus-bg: #2a2a2a;
+    --bs-pagination-disabled-color: #666666;
+    --bs-pagination-disabled-bg: #2a2a2a;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced page jump functionality
+    const pageJumpForm = document.querySelector('.page-jump form');
+    if (pageJumpForm) {
+        const pageInput = pageJumpForm.querySelector('.page-jump-input');
+        const maxPage = parseInt(pageInput.getAttribute('max'));
+        
+        pageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const value = parseInt(this.value);
+                if (value >= 1 && value <= maxPage) {
+                    pageJumpForm.submit();
+                } else {
+                    this.value = Math.min(Math.max(1, value), maxPage);
+                    this.classList.add('is-invalid');
+                    setTimeout(() => this.classList.remove('is-invalid'), 2000);
+                }
+            }
+        });
+        
+        pageInput.addEventListener('change', function() {
+            const value = parseInt(this.value);
+            if (value < 1 || value > maxPage) {
+                this.value = Math.min(Math.max(1, value || 1), maxPage);
+            }
+        });
+    }
+    
+    // Add keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey || e.metaKey) {
+            const prevLink = document.querySelector('.page-link-prev');
+            const nextLink = document.querySelector('.page-link-next');
+            
+            if (e.key === 'ArrowLeft' && prevLink) {
+                e.preventDefault();
+                window.location.href = prevLink.href;
+            } else if (e.key === 'ArrowRight' && nextLink) {
+                e.preventDefault();
+                window.location.href = nextLink.href;
+            }
+        }
+    });
+});
+</script>
+{% endif %}

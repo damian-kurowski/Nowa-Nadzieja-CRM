@@ -1,0 +1,971 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dokumenty - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Dokumenty{% if isGlobalView %} - Widok globalny{% endif %}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Enhanced Document Header Styles */
+        .documents-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .documents-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1rem;
+        }
+        
+        /* Enhanced Stats Cards */
+        .enhanced-stat-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 12px var(--shadow-light);
+        }
+        
+        .enhanced-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .enhanced-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gradient-primary);
+        }
+        
+        .enhanced-stat-card.primary::before { background: linear-gradient(180deg, #667eea, #764ba2); }
+        .enhanced-stat-card.warning::before { background: linear-gradient(180deg, #f59e0b, #d97706); }
+        .enhanced-stat-card.success::before { background: linear-gradient(180deg, #10b981, #059669); }
+        .enhanced-stat-card.info::before { background: linear-gradient(180deg, #06b6d4, #0891b2); }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        
+        .stat-icon.primary { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .stat-icon.warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .stat-icon.success { background: linear-gradient(135deg, #10b981, #059669); }
+        .stat-icon.info { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        /* Awaiting Signature Alert */
+        .signature-alert {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(8, 145, 178, 0.05));
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .signature-alert .alert-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .signature-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+        }
+        
+        .signature-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px var(--shadow-light);
+            border-color: #06b6d4;
+        }
+        
+        /* Filter Section */
+        .filter-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            overflow: hidden;
+        }
+        
+        .filter-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .filter-header h5 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        /* Filter Buttons Enhanced */
+        .filter-btn-group .btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .filter-btn-group .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary-gradient:hover {
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* Enhanced Button Styles */
+        .btn-enhanced {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .btn-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-enhanced:hover::before {
+            left: 100%;
+        }
+        
+        .btn-success-gradient {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border: none;
+            color: white;
+        }
+        
+        .btn-success-gradient:hover {
+            color: white;
+            box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-doc-action {
+            padding: 0.4rem 0.6rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-doc-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        /* Enhanced Documents Grid Styles */
+        .documents-grid {
+            margin-top: 2rem;
+        }
+        
+        .document-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .document-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 32px var(--shadow-medium);
+            border-color: rgba(23, 162, 184, 0.3);
+        }
+        
+        .document-header {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .document-number h6 {
+            color: #17a2b8;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .status-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-badge.draft {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            color: white;
+        }
+        
+        .status-badge.pending {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: white;
+        }
+        
+        .status-badge.signed {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+        }
+        
+        .status-badge.rejected {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+        
+        .document-type {
+            margin-bottom: 1rem;
+        }
+        
+        .type-badge {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(19, 132, 150, 0.05));
+            color: #17a2b8;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid rgba(23, 162, 184, 0.2);
+        }
+        
+        .document-content {
+            flex-grow: 1;
+            margin-bottom: 1rem;
+        }
+        
+        .document-title {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+        
+        .document-person,
+        .document-district {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .document-person i,
+        .document-district i {
+            color: #17a2b8;
+            width: 16px;
+        }
+        
+        .signature-progress {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: rgba(40, 167, 69, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(40, 167, 69, 0.1);
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress {
+            height: 6px;
+            border-radius: 3px;
+        }
+        
+        .document-meta {
+            margin-bottom: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+        
+        .meta-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .meta-item i {
+            width: 16px;
+            color: #17a2b8;
+        }
+        
+        .document-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .btn-action {
+            flex: 1;
+            min-width: 80px;
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: none;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .btn-action.btn-primary {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+        
+        .btn-action.btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .btn-action.btn-outline-danger {
+            background: transparent;
+            border: 1px solid #dc3545;
+            color: #dc3545;
+        }
+        
+        .btn-action.btn-outline-danger:hover {
+            background: #dc3545;
+            color: white;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .document-card {
+                margin-bottom: 1rem;
+            }
+            
+            .document-actions {
+                flex-direction: column;
+            }
+            
+            .btn-action {
+                flex: none;
+                width: 100%;
+            }
+        }
+        
+        /* Enhanced Empty State */
+        .enhanced-empty-state {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.02));
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .empty-state-icon {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #667eea;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.1);
+            border: 3px solid rgba(102, 126, 234, 0.1);
+            margin: 0 auto;
+        }
+        
+        .empty-state-title {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .empty-state-description {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            line-height: 1.6;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .empty-state-actions {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        /* Empty State Help */
+        .empty-state-help {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .help-card-inline {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: left;
+        }
+        
+        .help-card-inline h6 {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .help-suggestions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .suggestion-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .suggestion-item i {
+            font-size: 1.25rem;
+            margin-right: 0.75rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .suggestion-item span {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        /* View Toggle Group */
+        .view-toggle-group {
+            display: flex;
+            width: 100%;
+            gap: 0;
+        }
+        
+        .view-toggle-group .btn {
+            flex: 1;
+            border-radius: 0;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .view-toggle-group .btn:first-child {
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+        }
+        
+        .view-toggle-group .btn:last-child {
+            border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;
+        }
+        
+        .view-toggle-group .btn.btn-info {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            border-color: #06b6d4;
+            color: white;
+        }
+        
+        .view-toggle-group .btn.btn-outline-info {
+            background: transparent;
+            border: 2px solid #06b6d4;
+            color: #06b6d4;
+        }
+        
+        .view-toggle-group .btn.btn-outline-info:hover {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: white;
+        }
+        
+        .view-toggle-group .btn.btn-outline-primary {
+            background: transparent;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+        
+        .view-toggle-group .btn.btn-outline-primary:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Documents Header -->
+    <div class="documents-header">
+        <div class="text-center">
+            <div class="header-icon mx-auto">
+                <i class="fas fa-file-signature"></i>
+            </div>
+            <h1 class="mb-2">Dokumenty{% if isGlobalView %} - Widok globalny{% endif %}</h1>
+            <p class="mb-0 opacity-90 fs-5">
+                Zarządzanie dokumentami i podpisami elektronicznymi
+            </p>
+        </div>
+    </div>
+    {% if isGlobalView %}
+        <div class="alert alert-info mb-4" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(8, 145, 178, 0.05)); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 12px;">
+            <i class="fas fa-globe me-2"></i>
+            <strong>Widok globalny:</strong> Przeglądasz wszystkie podpisane dokumenty z całego kraju. 
+            Możesz pobierać pliki PDF, ale nie możesz podpisywać dokumentów z innych okręgów.
+        </div>
+    {% endif %}
+    <!-- Enhanced Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="enhanced-stat-card primary">
+                <div class="stat-icon primary">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-number">{{ stats.total }}</div>
+                <div class="stat-label">Wszystkie dokumenty</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="enhanced-stat-card warning">
+                <div class="stat-icon warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-number">{{ stats.awaiting_signature }}</div>
+                <div class="stat-label">Czeka na podpis</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="enhanced-stat-card success">
+                <div class="stat-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number">{{ stats.signed }}</div>
+                <div class="stat-label">Podpisane</div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="enhanced-stat-card info">
+                <div class="stat-icon info">
+                    <i class="fas fa-signature"></i>
+                </div>
+                <div class="stat-number">{{ stats.my_awaiting }}</div>
+                <div class="stat-label">Oczekują mojego podpisu</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Awaiting Signature Alert -->
+    {% if awaitingMySignature|length > 0 %}
+        <div class="signature-alert">
+            <div class="d-flex align-items-start">
+                <div class="flex-shrink-0">
+                    <div class="alert-icon">
+                        <i class="fas fa-signature"></i>
+                    </div>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <h5 class="mb-1" style="color: var(--text-primary); font-weight: 600;">
+                        Dokumenty oczekujące na Twój podpis
+                    </h5>
+                    <p class="mb-3 text-muted">
+                        Masz <strong>{{ awaitingMySignature|length }}</strong> dokument(ów) oczekujących na podpis
+                    </p>
+                    
+                    <div class="signature-items">
+                        {% for dokument in awaitingMySignature %}
+                            <div class="signature-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1" style="color: var(--text-primary); font-weight: 600;">
+                                        {{ dokument.numerDokumentu }}
+                                    </h6>
+                                    <p class="mb-0 text-muted small">{{ dokument.tytul }}</p>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ path('dokument_show', {id: dokument.id}) }}" 
+                                       class="btn btn-outline-info btn-sm btn-doc-action">
+                                        <i class="fas fa-eye me-1"></i>Zobacz
+                                    </a>
+                                    <a href="{{ path('dokument_pdf', {id: dokument.id}) }}" 
+                                       class="btn btn-outline-danger btn-sm btn-doc-action">
+                                        <i class="fas fa-download me-1"></i>Pobierz
+                                    </a>
+                                    <a href="{{ path('dokument_sign', {id: dokument.id}) }}" 
+                                       class="btn btn-success btn-sm btn-doc-action">
+                                        <i class="fas fa-signature me-1"></i>Podpisz
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Enhanced Filters and Actions -->
+    <div class="filter-card mb-4">
+        <div class="filter-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-filter me-2" style="color: #667eea;"></i>Filtry i akcje
+            </h5>
+            
+            <div>
+                {% if is_granted('ROLE_PREZES_OKREGU') or is_granted('ROLE_PREZES_PARTII') or is_granted('ROLE_SEKRETARZ_OKREGU') or is_granted('ROLE_SEKRETARZ_PARTII') or is_granted('ROLE_SKARBNIK_OKREGU') or is_granted('ROLE_SKARBNIK_PARTII') or is_granted('ROLE_WICEPREZES_OKREGU') or is_granted('ROLE_WICEPREZES_PARTII') or is_granted('ROLE_INFORMATYK_OKREGOWY') or is_granted('ROLE_PELNOMOCNIK_STRUKTUR') or is_granted('ROLE_OKREGOWY_PELNOMOCNIK') %}
+                    <a href="{{ path('dokument_new') }}" class="btn btn-enhanced btn-success-gradient">
+                        <i class="fas fa-plus me-2"></i>Nowy dokument
+                    </a>
+                {% elseif is_granted('ROLE_CZLONEK_PARTII') and not is_granted('ROLE_FUNKCYJNY') %}
+                    <a href="{{ path('dokument_new') }}" class="btn btn-enhanced btn-success-gradient">
+                        <i class="fas fa-plus me-2"></i>Nowy dokument
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- View Toggle Buttons for Functional Users -->
+            {% if canToggleView %}
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="view-toggle-group btn-group w-100" role="group">
+                            <a href="{{ path('dokument_index', app.request.query.all|merge({my_documents: false})) }}" 
+                               class="btn {{ not myDocuments ? 'btn-info' : 'btn-outline-info' }}">
+                                <i class="fas fa-globe me-1"></i>Wszystkie dokumenty
+                            </a>
+                            <a href="{{ path('dokument_index', app.request.query.all|merge({my_documents: true})) }}" 
+                               class="btn {{ myDocuments ? 'btn-primary-gradient' : 'btn-outline-primary' }}">
+                                <i class="fas fa-user me-1"></i>Dokumenty które dotyczą mnie
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Status Filter Buttons -->
+            <div class="filter-btn-group btn-group" role="group">
+                {% set baseParams = myDocuments ? {my_documents: true} : {} %}
+                <a href="{{ path('dokument_index', baseParams) }}" 
+                   class="btn {{ currentStatus is null ? 'btn-primary-gradient' : 'btn-outline-primary' }}">
+                    <i class="fas fa-list me-1"></i>Wszystkie
+                    <span class="badge bg-white text-primary ms-2">{{ stats.total }}</span>
+                </a>
+                <a href="{{ path('dokument_index', baseParams|merge({status: 'pending'})) }}" 
+                   class="btn {{ currentStatus == 'pending' ? 'btn-warning' : 'btn-outline-warning' }}">
+                    <i class="fas fa-clock me-1"></i>Czeka na podpis
+                    <span class="badge bg-white text-warning ms-2">{{ stats.awaiting_signature }}</span>
+                </a>
+                <a href="{{ path('dokument_index', baseParams|merge({status: 'signed'})) }}" 
+                   class="btn {{ currentStatus == 'signed' ? 'btn-success' : 'btn-outline-success' }}">
+                    <i class="fas fa-check me-1"></i>Podpisane
+                    <span class="badge bg-white text-success ms-2">{{ stats.signed }}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Documents Grid -->
+    <div class="documents-grid">
+        {% if pagination.items|length > 0 %}
+            <div class="row">
+                {% for dokument in pagination.items %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="document-card">
+                            <!-- Document Header -->
+                            <div class="document-header">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="document-number">
+                                        <h6 class="mb-1">{{ dokument.numerDokumentu }}</h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            {{ dokument.dataWejsciaWZycie ? dokument.dataWejsciaWZycie|date('d.m.Y') : 'Brak daty' }}
+                                        </small>
+                                    </div>
+                                    <div class="document-status">
+                                        <span class="status-badge {{ dokument.status }}">
+                                            {{ dokument.statusDisplayName }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Document Type -->
+                            <div class="document-type">
+                                <span class="type-badge">
+                                    <i class="fas fa-file-alt me-1"></i>
+                                    {{ dokument.typDisplayName }}
+                                </span>
+                            </div>
+                            
+                            <!-- Document Content -->
+                            <div class="document-content">
+                                <h6 class="document-title">{{ dokument.tytul }}</h6>
+                                
+                                {% if dokument.kandydat %}
+                                <div class="document-person">
+                                    <i class="fas fa-user me-2"></i>
+                                    <span>{{ dokument.kandydat.fullName }}</span>
+                                </div>
+                                {% endif %}
+                                
+                                {% if isGlobalView and dokument.okreg %}
+                                <div class="document-district">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    <span>{{ dokument.okreg.nazwa }} ({{ dokument.okreg.numer }})</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Progress Bar for Signatures -->
+                            {% if dokument.status == 'pending' or dokument.status == 'signed' %}
+                            <div class="signature-progress">
+                                {% set signedCount = 0 %}
+                                {% for podpis in dokument.podpisy %}
+                                    {% if podpis.signed %}
+                                        {% set signedCount = signedCount + 1 %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% set progressPercent = dokument.podpisy|length > 0 ? (signedCount / dokument.podpisy|length * 100)|round : 0 %}
+                                
+                                <div class="progress-header">
+                                    <small class="text-muted">Postęp podpisów</small>
+                                    <small class="text-muted">{{ signedCount }}/{{ dokument.podpisy|length }}</small>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" style="width: {{ progressPercent }}%"></div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Document Meta -->
+                            <div class="document-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-user-edit me-1"></i>
+                                    <small>{{ dokument.tworca.fullName }}</small>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-clock me-1"></i>
+                                    <small>{{ dokument.dataUtworzenia|date('d.m.Y H:i') }}</small>
+                                </div>
+                                {% if dokument.dataPodpisania %}
+                                <div class="meta-item">
+                                    <i class="fas fa-check-circle me-1 text-success"></i>
+                                    <small class="text-success">{{ dokument.dataPodpisania|date('d.m.Y H:i') }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Document Actions -->
+                            <div class="document-actions">
+                                <a href="{{ path('dokument_show', {id: dokument.id}) }}" 
+                                   class="btn btn-action btn-primary">
+                                    <i class="fas fa-eye me-1"></i>Zobacz
+                                </a>
+                                
+                                <a href="{{ path('dokument_pdf', {id: dokument.id}) }}" 
+                                   class="btn btn-action btn-outline-danger">
+                                    <i class="fas fa-download me-1"></i>Pobierz
+                                </a>
+                                
+                                {% if dokument.canUserSign(app.user) %}
+                                <a href="{{ path('dokument_sign', {id: dokument.id}) }}" 
+                                   class="btn btn-action btn-success">
+                                    <i class="fas fa-signature me-1"></i>Podpisz
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+                <!-- Paginacja -->
+                <div class="d-flex justify-content-center mt-4">
+                    {{ knp_pagination_render(pagination) }}
+                </div>
+            {% else %}
+                <div class="enhanced-empty-state">
+                    <div class="empty-state-icon mx-auto mb-4">
+                        <i class="fas fa-file-signature"></i>
+                    </div>
+                    <h4 class="empty-state-title mb-3">
+                        {% if currentStatus %}
+                            Brak dokumentów w kategorii
+                        {% else %}
+                            Brak dokumentów
+                        {% endif %}
+                    </h4>
+                    <p class="empty-state-description mb-4">
+                        {% if currentStatus %}
+                            Nie znaleziono dokumentów o statusie "<strong>{{ currentStatus }}</strong>". <br>
+                            Spróbuj zmienić filtr lub sprawdź inne kategorie dokumentów.
+                        {% else %}
+                            Nie znaleziono żadnych dokumentów w systemie. <br>
+                            Rozpocznij pracę tworząc pierwszy dokument.
+                        {% endif %}
+                    </p>
+                    
+                    <div class="empty-state-actions">
+                        {% if currentStatus %}
+                            <a href="{{ path('dokument_index') }}" class="btn btn-enhanced btn-outline-primary me-2">
+                                <i class="fas fa-list me-2"></i>Zobacz wszystkie dokumenty
+                            </a>
+                        {% endif %}
+                        
+                        {% if is_granted('ROLE_PREZES_OKREGU') or is_granted('ROLE_PREZES_PARTII') or is_granted('ROLE_SEKRETARZ_OKREGU') or is_granted('ROLE_SEKRETARZ_PARTII') or is_granted('ROLE_SKARBNIK_OKREGU') or is_granted('ROLE_SKARBNIK_PARTII') or is_granted('ROLE_WICEPREZES_OKREGU') or is_granted('ROLE_WICEPREZES_PARTII') or is_granted('ROLE_INFORMATYK_OKREGOWY') or is_granted('ROLE_PELNOMOCNIK_STRUKTUR') or is_granted('ROLE_OKREGOWY_PELNOMOCNIK') %}
+                            <a href="{{ path('dokument_new') }}" class="btn btn-enhanced btn-success-gradient">
+                                <i class="fas fa-plus me-2"></i>
+                                {% if currentStatus %}
+                                    Utwórz nowy dokument
+                                {% else %}
+                                    Utwórz pierwszy dokument
+                                {% endif %}
+                            </a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not currentStatus %}
+                        <div class="empty-state-help mt-4">
+                            <div class="help-card-inline">
+                                <h6 class="mb-2">
+                                    <i class="fas fa-lightbulb me-2"></i>Co możesz zrobić?
+                                </h6>
+                                <div class="help-suggestions">
+                                    {% if is_granted('ROLE_PREZES_OKREGU') or is_granted('ROLE_SEKRETARZ_OKREGU') %}
+                                        <div class="suggestion-item">
+                                            <i class="fas fa-user-plus text-success"></i>
+                                            <span>Utwórz dokumenty przyjęcia członków</span>
+                                        </div>
+                                    {% endif %}
+                                    {% if is_granted('ROLE_PREZES_PARTII') %}
+                                        <div class="suggestion-item">
+                                            <i class="fas fa-user-shield text-danger"></i>
+                                            <span>Powołaj członków na funkcje partyjne</span>
+                                        </div>
+                                    {% endif %}
+                                    <div class="suggestion-item">
+                                        <i class="fas fa-signature text-primary"></i>
+                                        <span>Podpisuj i zarządzaj dokumentami</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

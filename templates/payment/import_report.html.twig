@@ -1,0 +1,168 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Raport importu - {{ import.nazwaPliku }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="fas fa-chart-bar"></i> Raport importu</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('app_payment_admin') }}">Panel Skarbnika</a>
+                    </li>
+                    <li class="breadcrumb-item active">Raport importu</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-file-alt"></i> Informacje o imporcie</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Nazwa pliku:</strong></td>
+                                    <td>{{ import.nazwaPliku }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Data importu:</strong></td>
+                                    <td>{{ import.dataImportu|date('d.m.Y H:i:s') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Importowany przez:</strong></td>
+                                    <td>{{ import.importowanyPrzez.imie }} {{ import.importowanyPrzez.nazwisko }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Liczba wierszy:</strong></td>
+                                    <td><span class="badge bg-primary">{{ import.liczbaWierszy }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Dopasowano:</strong></td>
+                                    <td><span class="badge bg-success">{{ import.liczbaDopasowanych }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Błędów:</strong></td>
+                                    <td>
+                                        {% if import.liczbaBlednych > 0 %}
+                                            <span class="badge bg-danger">{{ import.liczbaBlednych }}</span>
+                                        {% else %}
+                                            <span class="badge bg-success">0</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-pie"></i> Statystyki</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h2 class="text-primary">{{ import.liczbaWierszy }}</h2>
+                                <p class="mb-0">Wierszy ogółem</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h2 class="text-success">{{ import.liczbaDopasowanych }}</h2>
+                                <p class="mb-0">Pomyślnie dopasowano</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h2 class="text-danger">{{ import.liczbaBlednych }}</h2>
+                                <p class="mb-0">Błędów</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="border rounded p-3">
+                                <h2 class="{% if import.procentDopasowań > 80 %}text-success{% elseif import.procentDopasowań > 50 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ import.procentDopasowań }}%
+                                </h2>
+                                <p class="mb-0">Skuteczność</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ (import.liczbaDopasowanych / import.liczbaWierszy * 100)|number_format(1) }}%">
+                                    Dopasowane ({{ import.liczbaDopasowanych }})
+                                </div>
+                                {% if import.liczbaBlednych > 0 %}
+                                <div class="progress-bar bg-danger" role="progressbar" 
+                                     style="width: {{ (import.liczbaBlednych / import.liczbaWierszy * 100)|number_format(1) }}%">
+                                    Błędy ({{ import.liczbaBlednych }})
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if import.raportBledow %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Błędy importu</h3>
+                    <a href="{{ path('app_payment_import_errors_download', {id: import.id}) }}" 
+                       class="btn btn-outline-warning">
+                        <i class="fas fa-download"></i> Pobierz raport błędów (CSV)
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle"></i> 
+                        Poniżej znajduje się lista błędów napotkanych podczas importu. 
+                        Sprawdź dane w pliku CSV lub skontaktuj się z administratorem.
+                    </div>
+                    
+                    <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto; background-color: #f8f9fa;">
+                        <pre>{{ import.raportBledow }}</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="{{ path('app_payment_admin') }}" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Powrót do panelu
+            </a>
+            <a href="{{ path('app_payment_import') }}" class="btn btn-success">
+                <i class="fas fa-plus"></i> Nowy import
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

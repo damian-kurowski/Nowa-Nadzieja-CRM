@@ -1,0 +1,210 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Kopiuj fakturę {{ originalFaktura.numerFaktury }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-copy me-2"></i>Kopiuj fakturę {{ originalFaktura.numerFaktury }}
+                </h1>
+                <div>
+                    <a href="{{ path('faktura_show', {id: originalFaktura.id}) }}" class="btn btn-outline-info me-2">
+                        <i class="fas fa-eye me-2"></i>Zobacz oryginał
+                    </a>
+                    <a href="{{ path('faktura_index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Powrót do listy
+                    </a>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-file-invoice me-2"></i>Nowa faktura (kopiowana)
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Kopiowanie faktury</strong><br>
+                                <small>Dane zostały skopiowane z faktury {{ originalFaktura.numerFaktury }}. 
+                                       Wprowadź nowy numer faktury i zmodyfikuj inne dane według potrzeb.</small>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_row(form.numerFaktury) }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_row(form.kwota) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_row(form.numerKonta) }}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_row(form.dataPlatnosci) }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        {{ form_row(form.pilnosc) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_row(form.kategoria) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_row(form.celPlatnosci) }}
+                            </div>
+
+                            <hr class="my-4">
+                            <h6 class="text-muted mb-3">Informacje o dostawcy (opcjonalnie)</h6>
+                            
+                            <div class="mb-3">
+                                {{ form_row(form.nazwaDostaway) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_row(form.adresDostaway) }}
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="{{ path('faktura_show', {id: originalFaktura.id}) }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Anuluj
+                                </a>
+                                {{ form_widget(form.submit, {'attr': {'class': 'btn btn-success'}, 'label': 'Utwórz kopię faktury'}) }}
+                            </div>
+                            
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-file-invoice me-2"></i>Oryginalna faktura
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td><strong>Numer:</strong></td>
+                                    <td>{{ originalFaktura.numerFaktury }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Kwota:</strong></td>
+                                    <td>{{ originalFaktura.kwota }} PLN</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% set statusClass = 'secondary' %}
+                                        {% if originalFaktura.isWprowadzone %}
+                                            {% set statusClass = 'warning' %}
+                                        {% elseif originalFaktura.isZaakceptowane %}
+                                            {% set statusClass = 'success' %}
+                                        {% elseif originalFaktura.isOdrzucone %}
+                                            {% set statusClass = 'danger' %}
+                                        {% elseif originalFaktura.isZrealizowane %}
+                                            {% set statusClass = 'info' %}
+                                        {% endif %}
+                                        <span class="badge bg-{{ statusClass }}">{{ originalFaktura.statusLabel }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Utworzono:</strong></td>
+                                    <td>{{ originalFaktura.dataUtworzenia|date('d.m.Y') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Kategoria:</strong></td>
+                                    <td>{{ originalFaktura.kategoriaLabel }}</td>
+                                </tr>
+                            </table>
+                            
+                            <div class="mt-3">
+                                <a href="{{ path('faktura_show', {id: originalFaktura.id}) }}" class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-eye me-1"></i>Zobacz szczegóły
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-lightbulb me-2"></i>Wskazówki
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <ul class="small mb-0">
+                                <li><strong>Zmień numer faktury</strong> - musi być unikalny</li>
+                                <li><strong>Sprawdź kwotę</strong> - może się różnić od oryginalnej</li>
+                                <li><strong>Ustaw nową datę płatności</strong> - domyślnie +7 dni od dzisiaj</li>
+                                <li><strong>Zmodyfikuj cel płatności</strong> - jeśli potrzeba</li>
+                                <li>Pozostałe dane zostały skopiowane automatycznie</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Automatycznie zaznacz pole numeru faktury do edycji
+    const numerFakturyInput = document.querySelector('input[name="faktura[numerFaktury]"]');
+    if (numerFakturyInput) {
+        numerFakturyInput.focus();
+        numerFakturyInput.select();
+    }
+
+    // Format numeru konta
+    const numerKontaInput = document.querySelector('input[name="faktura[numerKonta]"]');
+    if (numerKontaInput) {
+        numerKontaInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, '');
+            if (value.length > 0) {
+                // Format IBAN - dodaj spacje co 4 znaki
+                value = value.match(/.{1,4}/g).join(' ');
+                e.target.value = value;
+            }
+        });
+    }
+
+    // Walidacja formularza
+    const form = document.querySelector('.needs-validation');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    }
+});
+</script>
+{% endblock %}

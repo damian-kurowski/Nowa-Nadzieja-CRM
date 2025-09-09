@@ -1,0 +1,190 @@
+{% extends 'konferencja_prasowa/new.html.twig' %}
+
+{% block title %}Edytuj konferencję prasową - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Edytuj konferencję prasową{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Form Header -->
+    <div class="form-header">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="header-icon me-3">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="mb-0">Edytuj konferencję prasową</h1>
+                        <p class="mb-0 opacity-90 fs-5">Modyfikacja danych eventu</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Enhanced Form Section -->
+            <div class="form-section">
+                {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': ''}}) }}
+                
+                <div class="row">
+                    <!-- Podstawowe informacje -->
+                    <div class="col-md-6">
+                        <h6>
+                            <i class="fas fa-info-circle"></i>Podstawowe informacje
+                        </h6>
+                        
+                        <div class="mb-3">
+                            {{ form_label(form.tytulKonferencji, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.tytulKonferencji, {'attr': {'class': 'form-control', 'placeholder': 'Wprowadź tytuł konferencji prasowej'}}) }}
+                            {{ form_errors(form.tytulKonferencji) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.dataIGodzina, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.dataIGodzina, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.dataIGodzina) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.miejsceWydarzenia, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.miejsceWydarzenia, {'attr': {'class': 'form-control', 'placeholder': 'np. Sala konferencyjna, Hotel XYZ'}}) }}
+                            {{ form_errors(form.miejsceWydarzenia) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.organizatorWydarzenia, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.organizatorWydarzenia, {'attr': {'class': 'form-control', 'placeholder': 'Nazwa organizatora'}}) }}
+                            {{ form_errors(form.organizatorWydarzenia) }}
+                        </div>
+                    </div>
+
+                    <!-- Szczegóły i kontakt -->
+                    <div class="col-md-6">
+                        <h6>
+                            <i class="fas fa-users"></i>Uczestnicy i szczegóły
+                        </h6>
+
+                        <div class="mb-3">
+                            {{ form_label(form.mowcy, null, {'label_attr': {'class': 'form-label'}}) }}
+                            
+                            <!-- Enhanced Speaker Selection -->
+                            <div class="enhanced-speaker-selection">
+                                <!-- Search and Filter -->
+                                <div class="speaker-controls mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-md-8">
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                                <input type="text" class="form-control" id="speakerSearch" 
+                                                       placeholder="Szukaj po nazwisku lub imieniu...">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <select class="form-select" id="speakerTypeFilter">
+                                                <option value="">Wszyscy</option>
+                                                <option value="czlonek">Członkowie</option>
+                                                <option value="kandydat">Kandydaci</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Selected Speakers -->
+                                <div class="selected-speakers mb-3" id="selectedSpeakers">
+                                    <div class="selected-speakers-header">
+                                        <small class="text-muted">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            Wybrani mówcy (<span id="selectedCount">0</span>):
+                                        </small>
+                                    </div>
+                                    <div class="selected-speakers-list" id="selectedSpeakersList">
+                                        <div class="no-selection text-muted text-center py-2">
+                                            <small>Nie wybrano żadnych mówców</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Available Speakers -->
+                                <div class="available-speakers">
+                                    <div class="available-speakers-header mb-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-users me-1"></i>
+                                            Dostępni mówcy:
+                                        </small>
+                                    </div>
+                                    <div class="speakers-grid" id="speakersGrid">
+                                        <div class="loading-message text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Ładowanie...</span>
+                                            </div>
+                                            <p class="mt-2 text-muted">Ładowanie listy mówców...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Hidden original select for form submission -->
+                                {{ form_widget(form.mowcy, {'attr': {'style': 'display: none;'}}) }}
+                            </div>
+                            
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Kliknij na osobę aby dodać/usunąć ją z listy mówców
+                            </div>
+                            {{ form_errors(form.mowcy) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.numerTelefonu, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.numerTelefonu, {'attr': {'class': 'form-control', 'placeholder': '+48 123 456 789'}}) }}
+                            {{ form_errors(form.numerTelefonu) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(form.linkDoNagrania, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.linkDoNagrania, {'attr': {'class': 'form-control', 'placeholder': 'https://'}}) }}
+                            {{ form_errors(form.linkDoNagrania) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Treść konferencji -->
+                <div class="row">
+                    <div class="col-12">
+                        <h6>
+                            <i class="fas fa-file-alt"></i>Treść i agenda
+                        </h6>
+                        
+                        <div class="mb-4">
+                            {{ form_label(form.trescKonferencji, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.trescKonferencji, {'attr': {'class': 'form-control', 'placeholder': 'Opisz cele konferencji, główne tematy, planowaną agendę...'}}) }}
+                            {{ form_errors(form.trescKonferencji) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Action Buttons -->
+                <div class="action-buttons">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ path('konferencja_prasowa_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Powrót do listy
+                        </a>
+                        <div>
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-save me-2"></i>Zapisz zmiany
+                            </button>
+                            <a href="{{ path('konferencja_prasowa_show', {id: form.vars.data.id}) }}" class="btn btn-outline-info">
+                                <i class="fas fa-eye me-2"></i>Podgląd
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}

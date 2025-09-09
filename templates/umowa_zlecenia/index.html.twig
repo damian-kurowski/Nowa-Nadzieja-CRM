@@ -1,0 +1,640 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Umowy zlecenia{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Enhanced Header -->
+            <div class="page-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="header-content">
+                            <div class="header-icon">
+                                <div class="icon-wrapper">
+                                    <i class="fas fa-file-contract"></i>
+                                </div>
+                            </div>
+                            <div class="header-text">
+                                <h1 class="page-title mb-1">Umowy zlecenia</h1>
+                                <p class="page-subtitle mb-0">
+                                    Zarządzanie umowami zlecenia • {{ statistics.total.count }} umów
+                                    {% if statistics.total.suma > 0 %}
+                                        • Łączna wartość: {{ statistics.total.suma|number_format(2, ',', ' ') }} zł
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="header-actions">
+                            <a href="{{ path('umowa_new') }}" class="btn btn-outline-light btn-lg header-btn">
+                                <i class="fas fa-plus me-2"></i>
+                                <span>Nowa umowa</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Info Bar -->
+                <div class="quick-stats-bar mt-3">
+                    <div class="row">
+                        <div class="col">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="quick-info">
+                                    <div class="info-items">
+                                        <div class="info-item">
+                                            <div class="info-icon">
+                                                <i class="fas fa-file-alt"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <div class="info-label">Projekty</div>
+                                                <div class="info-value">{{ statistics.projekt.count }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="info-separator"></div>
+                                        <div class="info-item">
+                                            <div class="info-icon">
+                                                <i class="fas fa-signature"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <div class="info-label">Podpisane</div>
+                                                <div class="info-value">{{ statistics.podpisana.count }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="info-separator"></div>
+                                        <div class="info-item">
+                                            <div class="info-icon">
+                                                <i class="fas fa-check-circle"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <div class="info-label">Zakończone</div>
+                                                <div class="info-value">{{ statistics.zakonczona.count }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="header-breadcrumb">
+                                    <nav aria-label="breadcrumb">
+                                        <ol class="breadcrumb mb-0">
+                                            <li class="breadcrumb-item">
+                                                <a href="{{ path('dashboard') }}">
+                                                    <i class="fas fa-home me-1"></i>Dashboard
+                                                </a>
+                                            </li>
+                                            <li class="breadcrumb-item active">Umowy zlecenia</li>
+                                        </ol>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards Row -->
+            {% if recentlySigned|length > 0 or expiringSoon|length > 0 or requireAttention|length > 0 %}
+            <div class="row mb-4">
+                {% if recentlySigned|length > 0 %}
+                <div class="col-md-4">
+                    <div class="alert-card alert-success">
+                        <div class="alert-icon">
+                            <i class="fas fa-signature"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h6>Ostatnio podpisane</h6>
+                            <p class="mb-2">{{ recentlySigned|length }} umów podpisanych w ostatnich 7 dniach</p>
+                            <div class="recent-items">
+                                {% for umowa in recentlySigned|slice(0, 3) %}
+                                    <div class="recent-item">
+                                        <a href="{{ path('umowa_show', {id: umowa.id}) }}" class="text-decoration-none">
+                                            {{ umowa.numerUmowy }} - {{ umowa.zleceniobiorca.imie }} {{ umowa.zleceniobiorca.nazwisko }}
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if expiringSoon|length > 0 %}
+                <div class="col-md-4">
+                    <div class="alert-card alert-warning">
+                        <div class="alert-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h6>Kończą się wkrótce</h6>
+                            <p class="mb-2">{{ expiringSoon|length }} umów kończy się w ciągu 30 dni</p>
+                            <div class="recent-items">
+                                {% for umowa in expiringSoon|slice(0, 3) %}
+                                    <div class="recent-item">
+                                        <a href="{{ path('umowa_show', {id: umowa.id}) }}" class="text-decoration-none">
+                                            {{ umowa.numerUmowy }} - do {{ umowa.dataDo|date('d.m.Y') }}
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if requireAttention|length > 0 %}
+                <div class="col-md-4">
+                    <div class="alert-card alert-info">
+                        <div class="alert-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h6>Wymagają uwagi</h6>
+                            <p class="mb-2">{{ requireAttention|length }} projektów starszych niż 7 dni</p>
+                            <div class="recent-items">
+                                {% for umowa in requireAttention|slice(0, 3) %}
+                                    <div class="recent-item">
+                                        <a href="{{ path('umowa_show', {id: umowa.id}) }}" class="text-decoration-none">
+                                            {{ umowa.numerUmowy }} - {{ umowa.dataUtworzenia|date('d.m.Y') }}
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Filters Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-filter me-2"></i>Filtry i wyszukiwanie
+                        </h6>
+                        <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body collapse show" id="filterCollapse">
+                    <form method="GET" action="{{ path('umowa_index') }}" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select">
+                                <option value="">Wszystkie statusy</option>
+                                {% for label, value in statusChoices %}
+                                    <option value="{{ value }}" {{ currentFilters.status == value ? 'selected' : '' }}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Zakres</label>
+                            <select name="zakres" class="form-select">
+                                <option value="">Wszystkie zakresy</option>
+                                {% for label, value in zakresChoices %}
+                                    <option value="{{ value }}" {{ currentFilters.zakres == value ? 'selected' : '' }}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Numer umowy</label>
+                            <input type="text" name="numer_umowy" class="form-control" value="{{ currentFilters.numer_umowy }}" placeholder="np. UZ/2024">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Sortuj po</label>
+                            <select name="sortuj_po" class="form-select">
+                                <option value="dataUtworzenia" {{ currentFilters.sortuj_po == 'dataUtworzenia' ? 'selected' : '' }}>Data utworzenia</option>
+                                <option value="numerUmowy" {{ currentFilters.sortuj_po == 'numerUmowy' ? 'selected' : '' }}>Numer umowy</option>
+                                <option value="wynagrodzenie" {{ currentFilters.sortuj_po == 'wynagrodzenie' ? 'selected' : '' }}>Wynagrodzenie</option>
+                                <option value="dataOd" {{ currentFilters.sortuj_po == 'dataOd' ? 'selected' : '' }}>Data rozpoczęcia</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Filtruj
+                                </button>
+                                <a href="{{ path('umowa_index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Wyczyść
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Contracts List -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>Lista umów ({{ pagination.totalItemCount }})
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    {% if pagination|length > 0 %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Numer umowy</th>
+                                        <th>Zleceniobiorca</th>
+                                        <th>Zakres</th>
+                                        <th>Wynagrodzenie</th>
+                                        <th>Okres</th>
+                                        <th>Status</th>
+                                        <th>Data utworzenia</th>
+                                        <th class="text-center" style="width: 120px;">Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for umowa in pagination %}
+                                        <tr class="contract-row" data-href="{{ path('umowa_show', {id: umowa.id}) }}">
+                                            <td>
+                                                <strong class="contract-number">{{ umowa.numerUmowy }}</strong>
+                                            </td>
+                                            <td>
+                                                <div class="user-info">
+                                                    <div class="user-name">{{ umowa.zleceniobiorca.imie }} {{ umowa.zleceniobiorca.nazwisko }}</div>
+                                                    <small class="text-muted">{{ umowa.zleceniobiorca.email }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">{{ umowa.zakresLabel }}</span>
+                                            </td>
+                                            <td>
+                                                <strong class="amount">{{ umowa.formattedWynagrodzenie }}</strong>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">{{ umowa.okresDisplay }}</small>
+                                            </td>
+                                            <td>
+                                                {% set statusClass = 'secondary' %}
+                                                {% if umowa.isProjekt %}
+                                                    {% set statusClass = 'warning' %}
+                                                {% elseif umowa.isPodpisana %}
+                                                    {% set statusClass = 'success' %}
+                                                {% elseif umowa.isAnulowana %}
+                                                    {% set statusClass = 'danger' %}
+                                                {% elseif umowa.isZakonczona %}
+                                                    {% set statusClass = 'info' %}
+                                                {% endif %}
+                                                <span class="badge bg-{{ statusClass }}">{{ umowa.statusLabel }}</span>
+                                            </td>
+                                            <td>
+                                                <small class="text-muted">{{ umowa.dataUtworzenia|date('d.m.Y H:i') }}</small>
+                                            </td>
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    <a href="{{ path('umowa_show', {id: umowa.id}) }}" class="btn btn-sm btn-outline-primary" title="Zobacz szczegóły">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    {% if umowa.isProjekt and isSkarbnikPartii %}
+                                                        <a href="{{ path('umowa_edit', {id: umowa.id}) }}" class="btn btn-sm btn-outline-secondary" title="Edytuj">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                    <a href="{{ path('umowa_copy', {id: umowa.id}) }}" class="btn btn-sm btn-outline-info" title="Kopiuj">
+                                                        <i class="fas fa-copy"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-file-contract"></i>
+                            </div>
+                            <h5>Brak umów zlecenia</h5>
+                            {% if currentFilters.status or currentFilters.zakres or currentFilters.numer_umowy %}
+                                <p class="text-muted">Nie znaleziono umów spełniających kryteria wyszukiwania.</p>
+                                <a href="{{ path('umowa_index') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Wyczyść filtry
+                                </a>
+                            {% else %}
+                                <p class="text-muted">Nie masz jeszcze żadnych umów zlecenia.</p>
+                                <a href="{{ path('umowa_new') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Utwórz pierwszą umowę
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if pagination.totalItemCount > 0 %}
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">
+                                Wyników {{ pagination|length }} z {{ pagination.totalItemCount }}
+                            </small>
+                        </div>
+                        <div>
+                            {{ knp_pagination_render(pagination) }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Use the same CSS as faktura/index.html.twig with minor adjustments for contracts */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+        background-size: 200% 200%;
+        animation: gradientShift 8s ease infinite;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.1),
+                    0 5px 15px rgba(0, 0, 0, 0.07);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        pointer-events: none;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-icon {
+        margin-right: 1.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    .icon-wrapper {
+        width: 60px; height: 60px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .icon-wrapper i {
+        font-size: 24px;
+        color: white;
+    }
+
+    .header-text { color: white; }
+
+    .page-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 400;
+    }
+
+    .header-actions { position: relative; z-index: 1; }
+
+    .header-btn {
+        background: rgba(255, 255, 255, 0.15) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-btn:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        color: white !important;
+    }
+
+    .contract-row {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .contract-row:hover {
+        background-color: #f8f9fa;
+        transform: translateX(2px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .contract-number {
+        font-family: 'Courier New', monospace;
+        color: #0066cc;
+        font-size: 0.95rem;
+    }
+
+    .user-info .user-name {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .amount {
+        color: #28a745;
+        font-size: 1.05rem;
+    }
+
+    .alert-card {
+        border-radius: 15px;
+        border: none;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: flex-start;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border-left: 4px solid #28a745;
+    }
+
+    .alert-warning {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border-left: 4px solid #ffc107;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+        border-left: 4px solid #17a2b8;
+    }
+
+    .alert-icon {
+        width: 50px; height: 50px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .alert-success .alert-icon { background: #28a745; color: white; }
+    .alert-warning .alert-icon { background: #ffc107; color: #856404; }
+    .alert-info .alert-icon { background: #17a2b8; color: white; }
+
+    .recent-item {
+        padding: 0.25rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .recent-item:last-child { border-bottom: none; }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .quick-stats-bar { position: relative; z-index: 1; }
+
+    .quick-info { display: flex; align-items: center; }
+
+    .info-items {
+        display: flex; align-items: center; gap: 1rem;
+    }
+
+    .info-item {
+        display: flex; align-items: center;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .info-icon {
+        width: 40px; height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        margin-right: 0.75rem;
+    }
+
+    .info-icon i { color: white; font-size: 18px; }
+
+    .info-label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        font-size: 0.9rem;
+        color: white;
+        font-weight: 600;
+    }
+
+    .info-separator {
+        width: 1px; height: 30px;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 0 0.5rem;
+    }
+
+    .header-breadcrumb { color: white; }
+
+    .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .breadcrumb-item a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .breadcrumb-item a:hover { color: white; }
+
+    .breadcrumb-item.active {
+        color: white;
+        font-weight: 600;
+    }
+
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .header-icon {
+            margin-right: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .page-title { font-size: 1.8rem; }
+        
+        .info-items {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .info-item { width: 100%; }
+        
+        .header-breadcrumb { margin-top: 1rem; }
+    }
+</style>
+
+<script>
+    // Make table rows clickable
+    document.querySelectorAll('.contract-row').forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (!e.target.closest('a') && !e.target.closest('button')) {
+                window.location.href = this.dataset.href;
+            }
+        });
+    });
+</script>
+{% endblock %}

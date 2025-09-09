@@ -1,0 +1,370 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Szczegóły postępu - {{ kandydat.imie }} {{ kandydat.nazwisko }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Szczegóły postępu kandydata{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .candidate-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+        
+        .progress-steps {
+            display: grid;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .step-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .step-card.completed {
+            border-left: 4px solid #10b981;
+            background: rgba(16, 185, 129, 0.03);
+        }
+        
+        .step-card.pending {
+            border-left: 4px solid #f59e0b;
+            background: rgba(245, 158, 11, 0.03);
+        }
+        
+        .step-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .step-number {
+            background: var(--brand-primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .step-card.completed .step-number {
+            background: #10b981;
+        }
+        
+        .step-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            flex-grow: 1;
+        }
+        
+        .step-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .toggle-checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--brand-primary);
+        }
+        
+        .step-details {
+            margin-left: 3rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .step-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .progress-bar-container {
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary));
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-weight: 600;
+            color: var(--brand-primary);
+        }
+        
+        .management-panel {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .save-btn {
+            background: var(--brand-primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .save-btn:hover {
+            background: var(--brand-secondary);
+            transform: translateY(-2px);
+        }
+        
+        [data-theme="dark"] .step-card {
+            background: var(--bg-primary);
+            border-color: var(--border-color);
+        }
+        
+        [data-theme="dark"] .step-card.completed {
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        [data-theme="dark"] .step-card.pending {
+            background: rgba(245, 158, 11, 0.1);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="candidate-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-user-graduate me-3"></i>
+                    {{ kandydat.fullName }}
+                </h2>
+                <p class="mb-0">
+                    <i class="fas fa-envelope me-2"></i>{{ kandydat.email }}
+                    {% if kandydat.telefon %}
+                        <i class="fas fa-phone ms-3 me-2"></i>{{ kandydat.telefon }}
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="width: {{ postep.postepProcentowy }}%"></div>
+                </div>
+                <div class="progress-text">{{ postep.postepProcentowy }}% ukończone</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Kroki postępu -->
+            <form method="post" action="{{ path('postep_kandydata_update', {id: kandydat.id}) }}">
+                <div class="progress-steps">
+                    {% set kroki = postep.krokiPostepuArray %}
+                    {% for numerKroku, krok in kroki %}
+                        <div class="step-card {{ krok.wykonane ? 'completed' : 'pending' }}">
+                            <div class="step-header">
+                                <div class="step-number">{{ numerKroku }}</div>
+                                <div class="step-title">{{ krok.nazwa }}</div>
+                                {% if is_granted('ROLE_FUNKCYJNY') %}
+                                <div class="step-toggle">
+                                    <input 
+                                        type="checkbox" 
+                                        class="toggle-checkbox" 
+                                        name="krok{{ numerKroku }}" 
+                                        value="1"
+                                        {{ krok.wykonane ? 'checked' : '' }}
+                                        onchange="toggleKrok({{ kandydat.id }}, {{ numerKroku }}, this.checked)"
+                                    >
+                                    <label for="krok{{ numerKroku }}">Wykonane</label>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if krok.wykonane %}
+                                <div class="step-details">
+                                    <div class="step-meta">
+                                        {% if krok.odznaczyl %}
+                                            <div class="meta-item">
+                                                <i class="fas fa-user text-success"></i>
+                                                <span>{{ krok.odznaczyl.fullName }}</span>
+                                            </div>
+                                        {% endif %}
+                                        {% if krok.data %}
+                                            <div class="meta-item">
+                                                <i class="fas fa-calendar text-success"></i>
+                                                <span>{{ krok.data|date('d.m.Y H:i') }}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Uwagi -->
+                {% if is_granted('ROLE_FUNKCYJNY') %}
+                <div class="management-panel">
+                    <h6 class="mb-3">Uwagi do procesu rekrutacji</h6>
+                    <div class="mb-3">
+                        <textarea 
+                            name="uwagi" 
+                            class="form-control" 
+                            rows="4" 
+                            placeholder="Dodaj uwagi dotyczące postępu kandydata..."
+                        >{{ postep.uwagi }}</textarea>
+                    </div>
+                    <button type="submit" class="save-btn">
+                        <i class="fas fa-save me-2"></i>
+                        Zapisz zmiany
+                    </button>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Panel boczny -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Informacje o procesie
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Aktualny etap</small>
+                        <strong>{{ postep.aktualnyEtap }} / 8</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Data rozpoczęcia</small>
+                        <strong>{{ postep.dataRozpoczecia|date('d.m.Y H:i') }}</strong>
+                    </div>
+                    
+                    {% if postep.dataZakonczenia %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Data zakończenia</small>
+                        <strong class="text-success">{{ postep.dataZakonczenia|date('d.m.Y H:i') }}</strong>
+                    </div>
+                    {% endif %}
+                    
+                    {% if postep.prezesOdpowiedzialny %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Osoba odpowiedzialna</small>
+                        <strong>{{ postep.prezesOdpowiedzialny.fullName }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Szczegóły kandydata -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        Informacje o kandydacie
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if kandydat.okreg %}
+                    <div class="mb-2">
+                        <small class="text-muted">Okręg:</small>
+                        <strong class="d-block">{{ kandydat.okreg.nazwa }}</strong>
+                    </div>
+                    {% endif %}
+                    
+                    {% if kandydat.oddzial %}
+                    <div class="mb-2">
+                        <small class="text-muted">Oddział:</small>
+                        <strong class="d-block">{{ kandydat.oddzial.nazwa }}</strong>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-2">
+                        <small class="text-muted">Status:</small>
+                        <span class="badge bg-warning">{{ kandydat.status|title }}</span>
+                    </div>
+                    
+                    {% if kandydat.dataRejestracji %}
+                    <div class="mb-2">
+                        <small class="text-muted">Data rejestracji:</small>
+                        <strong class="d-block">{{ kandydat.dataRejestracji|date('d.m.Y') }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function toggleKrok(kandydatId, krokNumer, isChecked) {
+    try {
+        const response = await fetch(`/postep-kandydatow/${kandydatId}/krok/${krokNumer}/toggle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                checked: isChecked
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                // Refresh the page to show updated progress
+                window.location.reload();
+            }
+        } else {
+            console.error('Error toggling step');
+            // Revert checkbox state
+            event.target.checked = !isChecked;
+        }
+    } catch (error) {
+        console.error('Network error:', error);
+        // Revert checkbox state
+        event.target.checked = !isChecked;
+    }
+}
+</script>
+{% endblock %}

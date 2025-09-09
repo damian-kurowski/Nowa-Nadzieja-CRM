@@ -1,0 +1,611 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Umowa zlecenia {{ umowa.numerUmowy }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Enhanced Header -->
+            <div class="page-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="header-content">
+                            <div class="header-icon">
+                                <div class="icon-wrapper">
+                                    <i class="fas fa-file-contract"></i>
+                                </div>
+                            </div>
+                            <div class="header-text">
+                                <h1 class="page-title mb-1">{{ umowa.numerUmowy }}</h1>
+                                <p class="page-subtitle mb-0">
+                                    <span class="badge bg-{{ umowa.statusBadgeClass }} me-2">{{ umowa.statusLabel }}</span>
+                                    Umowa zlecenia - {{ umowa.zakresLabel }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="header-actions">
+                            <a href="{{ path('umowa_index') }}" class="btn btn-outline-light btn-lg header-btn me-2">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                <span>Powrót</span>
+                            </a>
+                            <a href="{{ path('umowa_pdf', {'id': umowa.id}) }}" class="btn btn-light btn-lg header-btn" target="_blank">
+                                <i class="fas fa-file-pdf me-2"></i>
+                                <span>PDF</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Contract Status Progress -->
+                <div class="quick-stats-bar mt-3">
+                    <div class="row">
+                        <div class="col">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="contract-progress">
+                                    <div class="progress-steps-horizontal">
+                                        <div class="step-h {{ umowa.isProjekt ? 'active' : (umowa.isPodpisana or umowa.isZakonczona ? 'completed' : '') }}">
+                                            <div class="step-h-number">1</div>
+                                            <div class="step-h-label">Projekt</div>
+                                        </div>
+                                        <div class="step-h-connector {{ umowa.isPodpisana or umowa.isZakonczona ? 'completed' : '' }}"></div>
+                                        <div class="step-h {{ umowa.isPodpisana ? 'active' : (umowa.isZakonczona ? 'completed' : '') }}">
+                                            <div class="step-h-number">2</div>
+                                            <div class="step-h-label">Podpisana</div>
+                                        </div>
+                                        <div class="step-h-connector {{ umowa.isZakonczona ? 'completed' : '' }}"></div>
+                                        <div class="step-h {{ umowa.isZakonczona ? 'active' : '' }}">
+                                            <div class="step-h-number">3</div>
+                                            <div class="step-h-label">Zakończona</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="header-breadcrumb">
+                                    <nav aria-label="breadcrumb">
+                                        <ol class="breadcrumb mb-0">
+                                            <li class="breadcrumb-item">
+                                                <a href="{{ path('dashboard') }}">
+                                                    <i class="fas fa-home me-1"></i>Dashboard
+                                                </a>
+                                            </li>
+                                            <li class="breadcrumb-item">
+                                                <a href="{{ path('umowa_index') }}">Umowy zlecenia</a>
+                                            </li>
+                                            <li class="breadcrumb-item active">{{ umowa.numerUmowy }}</li>
+                                        </ol>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Contract Details -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="form-icon me-3">
+                                        <div class="mini-icon-wrapper">
+                                            <i class="fas fa-info-circle"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h5 class="card-title mb-1">Szczegóły umowy</h5>
+                                        <small class="text-white-50">Informacje o umowie zlecenia</small>
+                                    </div>
+                                </div>
+                                {% if canEdit %}
+                                <a href="{{ path('umowa_edit', {'id': umowa.id}) }}" class="btn btn-light btn-sm">
+                                    <i class="fas fa-edit me-1"></i>Edytuj
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-group mb-4">
+                                        <h6 class="info-label">Numer umowy</h6>
+                                        <p class="info-value">{{ umowa.numerUmowy }}</p>
+                                    </div>
+                                    <div class="info-group mb-4">
+                                        <h6 class="info-label">Zleceniobiorca</h6>
+                                        <p class="info-value">
+                                            <i class="fas fa-user me-2 text-primary"></i>
+                                            {{ umowa.zleceniobiorca.imie }} {{ umowa.zleceniobiorca.nazwisko }}
+                                            <br><small class="text-muted">{{ umowa.zleceniobiorca.email }}</small>
+                                        </p>
+                                    </div>
+                                    <div class="info-group mb-4">
+                                        <h6 class="info-label">Zakres umowy</h6>
+                                        <p class="info-value">
+                                            <span class="badge bg-primary me-2">{{ umowa.zakresLabel }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-group mb-4">
+                                        <h6 class="info-label">Status</h6>
+                                        <p class="info-value">
+                                            <span class="badge bg-{{ umowa.statusBadgeClass }} fs-6">{{ umowa.statusLabel }}</span>
+                                        </p>
+                                    </div>
+                                    <div class="info-group mb-4">
+                                        <h6 class="info-label">Wynagrodzenie</h6>
+                                        <p class="info-value">
+                                            <strong class="text-success fs-5">{{ umowa.formattedWynagrodzenie }}</strong>
+                                        </p>
+                                    </div>
+                                    <div class="info-group mb-4">
+                                        <h6 class="info-label">Okres umowy</h6>
+                                        <p class="info-value">
+                                            <i class="fas fa-calendar me-2 text-info"></i>
+                                            {{ umowa.okresDisplay }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="info-group mb-4">
+                                <h6 class="info-label">Szczegółowy opis zakresu prac</h6>
+                                <div class="scope-description">
+                                    {{ umowa.opisZakresu|nl2br }}
+                                </div>
+                            </div>
+
+                            {% if umowa.numerKonta or umowa.pobranieKontaZSkladek %}
+                            <div class="info-group mb-4">
+                                <h6 class="info-label">Dane płatności</h6>
+                                <p class="info-value">
+                                    {% if umowa.numerKonta %}
+                                        <i class="fas fa-university me-2 text-success"></i>
+                                        <span class="account-number">{{ umowa.numerKonta }}</span>
+                                    {% elseif umowa.pobranieKontaZSkladek %}
+                                        <i class="fas fa-download me-2 text-info"></i>
+                                        <em>Numer konta zostanie pobrany z systemu składkowego</em>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% endif %}
+
+                            {% if umowa.skanPodpisanejUmowy %}
+                            <div class="info-group mb-4">
+                                <h6 class="info-label">Skan podpisanej umowy</h6>
+                                <p class="info-value">
+                                    <i class="fas fa-file-image me-2 text-success"></i>
+                                    <a href="{{ asset('uploads/scans/' ~ umowa.skanPodpisanejUmowy) }}" target="_blank" class="text-decoration-none">
+                                        <strong>{{ umowa.skanPodpisanejUmowy }}</strong>
+                                    </a>
+                                    <small class="text-muted d-block">Kliknij aby pobrać skan</small>
+                                </p>
+                            </div>
+                            {% endif %}
+
+                            {% if umowa.uwagi %}
+                            <div class="info-group mb-4">
+                                <h6 class="info-label">Uwagi dodatkowe</h6>
+                                <div class="alert alert-light">
+                                    {{ umowa.uwagi|nl2br }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Status Management Actions -->
+                    {% if canManageStatus or umowa.zleceniobiorca.id == app.user.id %}
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-cogs me-2"></i>Akcje
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex gap-2 flex-wrap">
+                                {% if umowa.isProjekt %}
+                                    {% if canManageStatus %}
+                                        <form method="post" action="{{ path('umowa_sign', {'id': umowa.id}) }}" style="display: inline;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('sign' ~ umowa.id) }}">
+                                            <button type="submit" class="btn btn-success" onclick="return confirm('Czy na pewno chcesz podpisać tę umowę?')">
+                                                <i class="fas fa-signature me-1"></i>Podpisz umowę (bez skanu)
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                    
+                                    {% if umowa.zleceniobiorca.id == app.user.id %}
+                                        <a href="{{ path('umowa_upload_scan', {'id': umowa.id}) }}" class="btn btn-primary">
+                                            <i class="fas fa-cloud-upload-alt me-1"></i>Prześlij skan podpisanej umowy
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if umowa.isPodpisana %}
+                                <form method="post" action="{{ path('umowa_complete', {'id': umowa.id}) }}" style="display: inline;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ umowa.id) }}">
+                                    <button type="submit" class="btn btn-primary" onclick="return confirm('Czy na pewno chcesz zakończyć tę umowę?')">
+                                        <i class="fas fa-check-circle me-1"></i>Zakończ umowę
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                {% if not umowa.isZakonczona %}
+                                <form method="post" action="{{ path('umowa_cancel', {'id': umowa.id}) }}" style="display: inline;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ umowa.id) }}">
+                                    <button type="submit" class="btn btn-warning" onclick="return confirm('Czy na pewno chcesz anulować tę umowę?')">
+                                        <i class="fas fa-ban me-1"></i>Anuluj umowę
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                {% if umowa.isProjekt or umowa.isAnulowana %}
+                                <form method="post" action="{{ path('umowa_delete', {'id': umowa.id}) }}" style="display: inline;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ umowa.id) }}">
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć tę umowę? Ta operacja jest nieodwracalna!')">
+                                        <i class="fas fa-trash me-1"></i>Usuń umowę
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-lg-4">
+                    <!-- Contract Timeline -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-history me-2"></i>Historia umowy
+                            </h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="timeline">
+                                <div class="timeline-item active">
+                                    <div class="timeline-icon bg-primary">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6>Utworzono</h6>
+                                        <small class="text-muted">{{ umowa.dataUtworzenia|date('d.m.Y H:i') }}</small>
+                                        <p class="mb-0">Utworzył: {{ umowa.tworca.imie }} {{ umowa.tworca.nazwisko }}</p>
+                                    </div>
+                                </div>
+
+                                {% if umowa.dataPodpisania %}
+                                <div class="timeline-item active">
+                                    <div class="timeline-icon bg-success">
+                                        <i class="fas fa-signature"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6>Podpisano</h6>
+                                        <small class="text-muted">{{ umowa.dataPodpisania|date('d.m.Y H:i') }}</small>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if umowa.dataZakonczenia %}
+                                <div class="timeline-item active">
+                                    <div class="timeline-icon bg-info">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6>Zakończono</h6>
+                                        <small class="text-muted">{{ umowa.dataZakonczenia|date('d.m.Y H:i') }}</small>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contract Info -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-info-circle me-2"></i>Informacje dodatkowe
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-item mb-3">
+                                <div class="d-flex">
+                                    <div class="info-icon me-3">
+                                        <i class="fas fa-user-tie text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Sekretarz partii</h6>
+                                        <small class="text-muted">
+                                            {% if umowa.sekretarzPartii %}
+                                                {{ umowa.sekretarzPartii.imie }} {{ umowa.sekretarzPartii.nazwisko }}
+                                            {% else %}
+                                                Zostanie przypisany automatycznie
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-item mb-3">
+                                <div class="d-flex">
+                                    <div class="info-icon me-3">
+                                        <i class="fas fa-graduation-cap text-warning"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Status studenta</h6>
+                                        <small class="text-muted">
+                                            {% if umowa.czyStudent %}
+                                                <span class="badge bg-warning">Student (do 26 lat)</span>
+                                            {% else %}
+                                                Nie jest studentem
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="info-item">
+                                <div class="d-flex">
+                                    <div class="info-icon me-3">
+                                        <i class="fas fa-copy text-info"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Kopiuj umowę</h6>
+                                        <small class="text-muted">
+                                            <a href="{{ path('umowa_copy', {'id': umowa.id}) }}" class="btn btn-sm btn-outline-info">
+                                                <i class="fas fa-copy me-1"></i>Utwórz kopię
+                                            </a>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Enhanced styling matching new.html.twig */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+        background-size: 200% 200%;
+        animation: gradientShift 8s ease infinite;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.1),
+                    0 5px 15px rgba(0, 0, 0, 0.07);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        pointer-events: none;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-icon {
+        margin-right: 1.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    .icon-wrapper {
+        width: 60px; height: 60px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .icon-wrapper i { font-size: 24px; color: white; }
+    .header-text { color: white; }
+    .page-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 400;
+    }
+    .header-actions { position: relative; z-index: 1; }
+    .header-btn {
+        background: rgba(255, 255, 255, 0.15) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .header-btn:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        color: white !important;
+    }
+
+    /* Progress Steps */
+    .progress-steps-horizontal {
+        display: flex; align-items: center; gap: 0;
+    }
+    .step-h {
+        display: flex; flex-direction: column; align-items: center;
+        opacity: 0.4; transition: all 0.3s ease;
+    }
+    .step-h.active { opacity: 1; transform: scale(1.05); }
+    .step-h.completed { opacity: 0.8; }
+    .step-h-number {
+        width: 40px; height: 40px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-weight: 600;
+        margin-bottom: 0.5rem; transition: all 0.3s ease;
+    }
+    .step-h.active .step-h-number {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+    .step-h.completed .step-h-number {
+        background: rgba(46, 204, 113, 0.8);
+        border-color: rgba(46, 204, 113, 1);
+    }
+    .step-h-label {
+        font-size: 0.85rem; color: white;
+        font-weight: 500; text-align: center;
+    }
+    .step-h-connector {
+        width: 60px; height: 2px;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 0 1rem; transition: all 0.3s ease;
+    }
+    .step-h-connector.completed {
+        background: rgba(46, 204, 113, 0.8);
+    }
+
+    /* Info styling */
+    .info-group {
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 1rem;
+    }
+    .info-group:last-child { border-bottom: none; }
+    .info-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    .info-value {
+        font-size: 1rem;
+        color: #2d3748;
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .scope-description {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 10px;
+        border-left: 4px solid #74b9ff;
+        font-style: italic;
+    }
+
+    .account-number {
+        font-family: 'Monaco', 'Menlo', monospace;
+        background: #e3f2fd;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+
+    /* Timeline */
+    .timeline {
+        padding: 1rem;
+        position: relative;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 2rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+    .timeline-item {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    .timeline-item:last-child { margin-bottom: 0; }
+    .timeline-icon {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        color: white;
+        margin-right: 1rem;
+        z-index: 1;
+        position: relative;
+    }
+    .timeline-content {
+        flex: 1;
+        padding-top: 0.5rem;
+    }
+    .timeline-content h6 {
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .info-item {
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
+    }
+    .info-item:hover { background-color: #f8f9fa; }
+    .info-icon { width: 32px; display: flex; justify-content: center; }
+
+    .mini-icon-wrapper {
+        width: 30px; height: 30px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .mini-icon-wrapper i { font-size: 14px; color: white; }
+
+    /* Breadcrumb */
+    .header-breadcrumb { color: white; }
+    .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px; padding: 0.75rem 1rem;
+        backdrop-filter: blur(10px);
+    }
+    .breadcrumb-item a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none; transition: color 0.2s ease;
+    }
+    .breadcrumb-item a:hover { color: white; }
+    .breadcrumb-item.active { color: white; font-weight: 600; }
+
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+</style>
+{% endblock %}

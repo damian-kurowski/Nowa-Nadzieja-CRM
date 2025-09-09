@@ -1,0 +1,14 @@
+doctrine:
+    dbal:
+        # Connection pooling configuration for production
+        options:
+            # PgBouncer compatible settings (if using PgBouncer)
+            # server_version: '14.0'
+            
+    orm:
+        # DQL custom functions if needed
+        dql:
+            string_functions:
+                # Add custom functions here if needed
+            numeric_functions:
+                # Add custom functions here if needed

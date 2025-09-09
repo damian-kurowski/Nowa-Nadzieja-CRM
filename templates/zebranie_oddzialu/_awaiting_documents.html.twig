@@ -1,0 +1,27 @@
+{% if awaiting_documents is not empty %}
+<div class="alert alert-warning" role="alert">
+    <div class="d-flex align-items-center mb-2">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Oczekujące dokumenty</strong>
+    </div>
+    <ul class="mb-0 small">
+        {% for document in awaiting_documents %}
+        <li>
+            <strong>{{ document.typ }}</strong>
+            {% if document.kandydat %}
+                - {{ document.kandydat.imie }} {{ document.kandydat.nazwisko }}
+            {% endif %}
+            <span class="text-muted">
+                ({{ document.dataUtworzenia|date('d.m.Y H:i') }})
+            </span>
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="mt-2">
+        <small class="text-muted">
+            <i class="fas fa-info-circle me-1"></i>
+            Te dokumenty wymagają podpisu lub zatwierdzenia przed kontynuowaniem zebrania.
+        </small>
+    </div>
+</div>
+{% endif %}

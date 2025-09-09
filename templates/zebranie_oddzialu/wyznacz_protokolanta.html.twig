@@ -1,0 +1,234 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Wyznacz Protokolanta - {{ zebranie.oddzial.nazwa }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Wyznacz Protokolanta Zebrania{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .step-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .step-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+
+        .member-card {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+        }
+
+        .member-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+        }
+
+        .member-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+        }
+
+        .member-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .member-info h5 {
+            margin-bottom: 0.25rem;
+            color: var(--text-primary);
+        }
+
+        .member-info .text-muted {
+            font-size: 0.875rem;
+        }
+
+        .step-info {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="step-header">
+        <h1 class="mb-2">
+            <i class="fas fa-pen me-2"></i>
+            Krok 1: Wyznacz Protokolanta Zebrania
+        </h1>
+        <p class="mb-0 opacity-90">
+            Oddział: <strong>{{ zebranie.oddzial.nazwa }}</strong> | 
+            Obserwator: <strong>{{ zebranie.obserwator.fullName }}</strong>
+        </p>
+    </div>
+
+    <div class="step-info">
+        <h5 class="mb-3">
+            <i class="fas fa-info-circle me-2"></i>
+            Informacje o protokolancie
+        </h5>
+        <ul class="mb-0">
+            <li>Protokolant musi być członkiem oddziału {{ zebranie.oddzial.nazwa }}</li>
+            <li>Będzie odpowiedzialny za dokumentowanie przebiegu zebrania</li>
+            <li>Otrzyma tymczasową rolę na czas trwania zebrania</li>
+            <li>Będzie mógł podpisywać dokumenty powołań i odwołań</li>
+        </ul>
+    </div>
+
+    <form method="post" class="step-card">
+        <h4 class="mb-4">
+            <i class="fas fa-users me-2"></i>
+            Wybierz protokolanta z członków oddziału
+        </h4>
+
+        {% if czlonkowie|length > 0 %}
+            <div class="mb-3">
+                <input type="text" class="form-control" id="searchMember" 
+                       placeholder="Wyszukaj członka po imieniu lub nazwisku...">
+            </div>
+
+            <div class="members-list" style="max-height: 500px; overflow-y: auto;">
+                {% for czlonek in czlonkowie %}
+                    <div class="member-card" data-id="{{ czlonek.id }}" 
+                         data-name="{{ czlonek.fullName|lower }}">
+                        <div class="d-flex align-items-center">
+                            <div class="member-avatar me-3">
+                                {{ czlonek.imie|first|upper }}{{ czlonek.nazwisko|first|upper }}
+                            </div>
+                            <div class="member-info flex-grow-1">
+                                <h5>{{ czlonek.fullName }}</h5>
+                                <span class="text-muted">
+                                    {% if czlonek.email %}
+                                        <i class="fas fa-envelope me-1"></i>{{ czlonek.email }}
+                                    {% endif %}
+                                    {% if czlonek.telefon %}
+                                        <i class="fas fa-phone ms-3 me-1"></i>{{ czlonek.telefon }}
+                                    {% endif %}
+                                </span>
+                                {% if czlonek.roles|length > 1 %}
+                                    <div class="mt-1">
+                                        {% if 'ROLE_PRZEWODNICZACY_ODDZIALU' in czlonek.roles %}
+                                            <span class="badge bg-primary">Przewodniczący Oddziału</span>
+                                        {% endif %}
+                                        {% if 'ROLE_ZASTEPCA_PRZEWODNICZACEGO_ODDZIALU' in czlonek.roles %}
+                                            <span class="badge bg-info">Zastępca Przewodniczącego</span>
+                                        {% endif %}
+                                        {% if 'ROLE_SEKRETARZ_ODDZIALU' in czlonek.roles %}
+                                            <span class="badge bg-success">Sekretarz Oddziału</span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <input type="radio" name="protokolant" value="{{ czlonek.id }}" 
+                                       class="form-check-input" required>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Brak członków w oddziale {{ zebranie.oddzial.nazwa }}. 
+                Nie można wyznaczyć protokolanta.
+            </div>
+        {% endif %}
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="{{ path('zebranie_wizard', {id: zebranie.id}) }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Powrót do kreatora
+            </a>
+            {% if czlonkowie|length > 0 %}
+                <button type="submit" class="btn btn-primary-gradient">
+                    <i class="fas fa-check me-2"></i>
+                    Wyznacz protokolanta
+                </button>
+            {% endif %}
+        </div>
+    </form>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Obsługa wyboru członka
+        document.querySelectorAll('.member-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Usuń zaznaczenie z innych
+                document.querySelectorAll('.member-card').forEach(c => {
+                    c.classList.remove('selected');
+                });
+                
+                // Zaznacz tę kartę
+                this.classList.add('selected');
+                
+                // Zaznacz radio button
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                }
+            });
+        });
+
+        // Wyszukiwarka członków
+        const searchInput = document.getElementById('searchMember');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                document.querySelectorAll('.member-card').forEach(card => {
+                    const name = card.dataset.name;
+                    if (name.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+    </script>
+{% endblock %}

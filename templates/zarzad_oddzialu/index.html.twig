@@ -1,0 +1,90 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Zarząd Oddziału - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Zarząd Oddziału {{ oddział.nazwa }}{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Skład zarządu oddziału {{ oddział.nazwa }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if zarzad|length > 0 %}
+                        <div class="row">
+                            {% for czlonek in zarzad %}
+                                <div class="col-lg-6 col-md-6 col-sm-12 mb-4">
+                                    <div class="card h-100 border-start border-primary border-3">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                {% if czlonek.zdjecie %}
+                                                    <img src="{{ asset('uploads/photos/' ~ czlonek.zdjecie) }}" 
+                                                         class="rounded-circle me-3" 
+                                                         style="width: 60px; height: 60px; object-fit: cover;"
+                                                         alt="Zdjęcie {{ czlonek.fullName }}">
+                                                {% else %}
+                                                    <div class="bg-primary rounded-circle me-3 d-flex align-items-center justify-content-center text-white"
+                                                         style="width: 60px; height: 60px;">
+                                                        <i class="fas fa-user fa-lg"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">{{ czlonek.fullName }}</h6>
+                                                    <div class="text-muted small">
+                                                        {% for role in czlonek.roles %}
+                                                            {% if role == 'ROLE_PRZEWODNICZACY_ODDZIALU' %}
+                                                                <span class="badge bg-danger me-1">Przewodniczący Oddziału</span>
+                                                            {% elseif role == 'ROLE_ZASTEPCA_PRZEWODNICZACEGO_ODDZIALU' %}
+                                                                <span class="badge bg-warning me-1">Zastępca Przewodniczącego</span>
+                                                            {% elseif role == 'ROLE_SEKRETARZ_ODDZIALU' %}
+                                                                <span class="badge bg-info me-1">Sekretarz Oddziału</span>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row text-center">
+                                                <div class="col-6">
+                                                    <small class="text-muted d-block">Email</small>
+                                                    <small class="fw-bold">
+                                                        <a href="mailto:{{ czlonek.email }}" class="text-decoration-none">
+                                                            {{ czlonek.email }}
+                                                        </a>
+                                                    </small>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted d-block">Telefon</small>
+                                                    <small class="fw-bold">
+                                                        {% if czlonek.telefon %}
+                                                            <a href="tel:{{ czlonek.telefon }}" class="text-decoration-none">
+                                                                {{ czlonek.telefon }}
+                                                            </a>
+                                                        {% else %}
+                                                            <span class="text-muted">Brak</span>
+                                                        {% endif %}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Brak członków zarządu</h5>
+                            <p class="text-muted">W oddziale {{ oddział.nazwa }} nie ma jeszcze przypisanych członków zarządu.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

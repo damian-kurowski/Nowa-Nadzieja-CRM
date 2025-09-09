@@ -1,0 +1,130 @@
+{# Unified Candidate Card Component - paymentStatus parameter expected #}
+<div class="unified-card animate-in" data-candidate-id="{{ candidate.id }}">
+    {# Status Badge #}
+    <div class="unified-card-status">
+        <span class="unified-status-badge kandydat">Kandydat</span>
+    </div>
+
+    {# Card Header #}
+    <div class="unified-card-header">
+        <div class="unified-card-avatar">
+            {% if candidate.zdjecie %}
+                <img src="{{ asset('uploads/photos/' ~ candidate.zdjecie) }}" alt="{{ candidate.fullName }}">
+            {% else %}
+                <span class="unified-card-avatar-initials">
+                    {{ candidate.imie|first|upper }}{{ candidate.nazwisko|first|upper }}
+                </span>
+            {% endif %}
+        </div>
+        <div class="unified-card-info">
+            <h6 class="unified-card-name">{{ candidate.fullName }}</h6>
+            <div class="unified-card-meta">
+                {% if candidate.email %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ candidate.email }}</span>
+                    </div>
+                {% endif %}
+                {% if candidate.telefon %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ candidate.telefon }}</span>
+                    </div>
+                {% endif %}
+                {% if candidate.pesel %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-id-card"></i>
+                        <span>{{ candidate.pesel }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Card Body #}
+    <div class="unified-card-body">
+        <div class="unified-card-details">
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Okręg</span>
+                <span class="unified-detail-value">
+                    {% if candidate.okreg %}
+                        {{ candidate.okreg.nazwa }}
+                    {% else %}
+                        <em>Brak przypisania</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Oddział</span>
+                <span class="unified-detail-value">
+                    {% if candidate.oddzial %}
+                        {{ candidate.oddzial.nazwa }}
+                    {% else %}
+                        <em>Brak przypisania</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Kandydat od</span>
+                <span class="unified-detail-value">
+                    {% if candidate.dataRejestracji %}
+                        {{ candidate.dataRejestracji|date('d.m.Y') }}
+                    {% else %}
+                        <em>Brak daty</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Składka</span>
+                <span class="unified-detail-value">
+                    {% if paymentStatus is defined and paymentStatus %}
+                        {% if paymentStatus.status in ['candidate_ready', 'future_member_prepaid'] %}
+                            <div class="unified-detail-payment">
+                                <span class="unified-payment-status paid">3 mies. z góry</span>
+                                {% if paymentStatus.paidUntil %}
+                                    <small>od członkostwa</small>
+                                {% endif %}
+                            </div>
+                        {% elseif paymentStatus.status in ['paid', 'current'] %}
+                            <div class="unified-detail-payment">
+                                <span class="unified-payment-status paid">Opłacona</span>
+                                {% if paymentStatus.paidUntil %}
+                                    <small>do {{ paymentStatus.paidUntil|date('d.m.Y') }}</small>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <span class="unified-payment-status unpaid">Wymagana zaliczka</span>
+                        {% endif %}
+                    {% elseif candidate.skladkaOplacona %}
+                        <div class="unified-detail-payment">
+                            <span class="unified-payment-status paid">3 mies. z góry</span>
+                            {% if candidate.dataWaznosciSkladki %}
+                                <small>od członkostwa</small>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <span class="unified-payment-status unpaid">Wymagana zaliczka</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {# Card Footer #}
+    <div class="unified-card-footer">
+        <a href="{{ path('kandydat_show', {id: candidate.id}) }}" class="unified-action-btn primary">
+            <i class="fas fa-eye"></i>
+            <span>Zobacz</span>
+        </a>
+        <a href="{{ path('kandydat_edit', {id: candidate.id}) }}" class="unified-action-btn secondary">
+            <i class="fas fa-edit"></i>
+            <span>Edytuj</span>
+        </a>
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('postep_kandydata_show', {id: candidate.id}) }}" class="unified-action-btn secondary">
+                <i class="fas fa-chart-line"></i>
+                <span>Postęp</span>
+            </a>
+        {% endif %}
+    </div>
+</div>

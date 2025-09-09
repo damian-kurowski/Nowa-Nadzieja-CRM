@@ -1,0 +1,8 @@
+framework:
+    mailer:
+        dsn: '%env(MAILER_DSN)%'
+        envelope:
+            sender: 'noreply@nowanadzieja.pl'
+        headers:
+            From: 'Nowa Nadzieja CRM <noreply@nowanadzieja.pl>'
+        message_bus: false  # Disable async for production reliability

@@ -4,6 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    photos_directory: '%kernel.project_dir%/public/uploads/photos'
+    struktura_api_key: '%env(STRUKTURA_API_KEY)%'
 
 services:
     # default configuration for services in *this* file
@@ -18,3 +20,16 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Service\PhotoService:
+        arguments:
+            $photoDirectory: '%photos_directory%'
+    
+    App\Service\PaymentImportService:
+        calls:
+            - [setPaymentStatusService, ['@App\Service\PaymentStatusService']]
+    
+    # Performance optimization: Cache response listener
+    App\EventListener\CacheResponseListener:
+        tags:
+            - { name: kernel.event_subscriber }

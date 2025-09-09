@@ -1,0 +1,1438 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Zebranie Członków Oddziału - {{ zebranie.oddzial.nazwa }}{% endblock %}
+
+{% block body %}
+<div class="meeting-simulator-container">
+    <!-- Header Section -->
+    <div class="meeting-header">
+        <div class="header-content">
+            <div class="header-main">
+                <div class="meeting-breadcrumb">
+                    <a href="{{ path('zebranie_oddzialu_index') }}" class="breadcrumb-link">
+                        <i class="fas fa-users-cog"></i>
+                        <span>Zebrania Oddziału</span>
+                    </a>
+                    <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                    <span class="breadcrumb-current">{{ zebranie.oddzial.nazwa }}</span>
+                </div>
+                <h1 class="meeting-title">
+                    Zebranie Członków Oddziału
+                    <span class="meeting-district">{{ zebranie.oddzial.nazwa }}</span>
+                </h1>
+                <div class="meeting-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Rozpoczęte {{ zebranie.dataRozpoczecia|date('d.m.Y H:i') }}</span>
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Obserwator: {{ zebranie.obserwator.imie }} {{ zebranie.obserwator.nazwisko }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-status">
+                <div class="status-indicator">
+                    <div class="status-dot status-{{ zebranie.status }}"></div>
+                    <span class="status-text">{{ zebranie.statusDisplayName }}</span>
+                    {% if zebranie.status != 'zakonczone' and zebranie.status != 'anulowane' %}
+                        <div class="step-counter">{{ zebranie.getCurrentStepNumber() }}/7</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 1 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 1 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-play"></i></div>
+            <div class="step-info">
+                <div class="step-title">Rozpoczęcie</div>
+                <div class="step-desc">Powołanie obserwatora</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 2 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 2 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-pen"></i></div>
+            <div class="step-info">
+                <div class="step-title">Protokolant</div>
+                <div class="step-desc">Wyznaczenie protokolanta</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 3 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 3 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-user-tie"></i></div>
+            <div class="step-info">
+                <div class="step-title">Prowadzący</div>
+                <div class="step-desc">Wyznaczenie prowadzącego</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 4 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 4 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-gavel"></i></div>
+            <div class="step-info">
+                <div class="step-title">Przewodniczący</div>
+                <div class="step-desc">Wybór przewodniczącego zebrania</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 5 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 5 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-users"></i></div>
+            <div class="step-info">
+                <div class="step-title">Zastępcy</div>
+                <div class="step-desc">Wybór zastępców przewodniczącego</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 6 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 6 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-signature"></i></div>
+            <div class="step-info">
+                <div class="step-title">Podpisy</div>
+                <div class="step-desc">Podpisywanie dokumentów</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 7 %}completed{% endif %}">
+            <div class="step-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="step-info">
+                <div class="step-title">Zakończenie</div>
+                <div class="step-desc">Zebranie zakończone</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="meeting-content">
+        <div class="content-grid">
+            <!-- Left Column - Actions -->
+            <div class="content-main">
+                <div class="action-card">
+                    <h2 class="card-title">
+                        <i class="fas fa-tasks"></i>
+                        Aktualny Krok
+                    </h2>
+                    
+                    {% if zebranie.status == 'oczekuje_na_protokolanta' %}
+                        {% if zebranie.canAssignProtokolant(app.user) %}
+                            <div class="current-action">
+                                <p class="action-description">
+                                    Jako obserwator zebrania, wyznacz protokolanta spośród członków oddziału.
+                                </p>
+                                <button type="button" class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#protokolantModal">
+                                    <i class="fas fa-user-plus"></i>
+                                    Wyznacz Protokolanta
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="waiting-info">
+                                <i class="fas fa-hourglass-half"></i>
+                                <p>Oczekiwanie na wyznaczenie protokolanta przez obserwatora</p>
+                            </div>
+                        {% endif %}
+                        
+                    {% elseif zebranie.status == 'oczekuje_na_prowadzacego' %}
+                        {% if zebranie.canAssignProwadzacy(app.user) %}
+                            <div class="current-action">
+                                <p class="action-description">
+                                    Jako obserwator zebrania, wyznacz prowadzącego spośród członków oddziału.
+                                </p>
+                                <button type="button" class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#prowadzacyModal">
+                                    <i class="fas fa-user-tie"></i>
+                                    Wyznacz Prowadzącego
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="waiting-info">
+                                <i class="fas fa-hourglass-half"></i>
+                                <p>Oczekiwanie na wyznaczenie prowadzącego przez obserwatora</p>
+                            </div>
+                        {% endif %}
+                        
+                    {% elseif zebranie.status == 'wybor_przewodniczacego' %}
+                        {% if zebranie.canSelectPrzewodniczacy(app.user) %}
+                            <div class="current-action">
+                                <p class="action-description">
+                                    Jako protokolant lub prowadzący, wybierz przewodniczącego zebrania.
+                                </p>
+                                <button type="button" class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#przewodniczacyModal">
+                                    <i class="fas fa-gavel"></i>
+                                    Wybierz Przewodniczącego
+                                </button>
+                            </div>
+                        {% else %}
+                            <div class="waiting-info">
+                                <i class="fas fa-hourglass-half"></i>
+                                <p>Oczekiwanie na wybór przewodniczącego przez protokolanta i prowadzącego</p>
+                            </div>
+                        {% endif %}
+                        
+                    {% elseif zebranie.status == 'wybor_zastepcow' %}
+                        {% if zebranie.canSelectZastepcy(app.user) %}
+                            <div class="current-action">
+                                <p class="action-description">
+                                    Jako przewodniczący zebrania, wybierz dwóch zastępców przewodniczącego.
+                                </p>
+                                <div class="deputies-selection">
+                                    {% if not zebranie.zastepca1 %}
+                                        <button type="button" class="btn btn-primary btn-action mb-3" data-bs-toggle="modal" data-bs-target="#zastepca1Modal">
+                                            <i class="fas fa-user-plus"></i>
+                                            Wybierz Pierwszego Zastępcę
+                                        </button>
+                                    {% else %}
+                                        <div class="selected-deputy mb-3">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            Pierwszy zastępca: {{ zebranie.zastepca1.fullName }}
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if zebranie.zastepca1 and not zebranie.zastepca2 %}
+                                        <button type="button" class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#zastepca2Modal">
+                                            <i class="fas fa-user-plus"></i>
+                                            Wybierz Drugiego Zastępcę
+                                        </button>
+                                    {% elseif zebranie.zastepca2 %}
+                                        <div class="selected-deputy">
+                                            <i class="fas fa-check-circle text-success"></i>
+                                            Drugi zastępca: {{ zebranie.zastepca2.fullName }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="waiting-info">
+                                <i class="fas fa-hourglass-half"></i>
+                                <p>Oczekiwanie na wybór zastępców przez przewodniczącego</p>
+                            </div>
+                        {% endif %}
+                        
+                    {% elseif zebranie.status == 'wybor_zarzadu' %}
+                        {% if zebranie.canManagePositions(app.user) %}
+                            <div class="current-action">
+                                <p class="action-description">
+                                    Wybierz skład zarządu oddziału.
+                                </p>
+                                <a href="{{ path('zebranie_oddzialu_wybor_zarzadu', {'id': zebranie.id}) }}" class="btn btn-primary btn-action">
+                                    <i class="fas fa-users-cog"></i>
+                                    Zarządzaj Zarządem
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="waiting-info">
+                                <i class="fas fa-hourglass-half"></i>
+                                <p>Oczekiwanie na wybór zarządu</p>
+                            </div>
+                        {% endif %}
+                        
+                    {% elseif zebranie.status == 'oczekuje_na_podpisy' %}
+                        <div class="signatures-collection-section">
+                            <h5><i class="fas fa-signature"></i> Składanie Podpisów</h5>
+                            <p class="text-muted mb-3">Każdy uczestnik musi złożyć podpis przed zakończeniem zebrania.</p>
+                            
+                            <div class="participant-signatures">
+                                <div class="signature-item {% if zebranie.obserwatorPodpisal %}signed{% else %}pending{% endif %}">
+                                    <div class="signature-icon">
+                                        <i class="fas {% if zebranie.obserwatorPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                                    </div>
+                                    <div class="signature-info">
+                                        <div class="signature-role">Obserwator</div>
+                                        <div class="signature-person">{{ zebranie.obserwator.imie }} {{ zebranie.obserwator.nazwisko }}</div>
+                                        {% if zebranie.obserwatorPodpisal %}
+                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuObserwatora|date('d.m.Y H:i') }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="signature-badge {% if zebranie.obserwatorPodpisal %}signed{% else %}pending{% endif %}">
+                                        {% if zebranie.obserwatorPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
+                                    </div>
+                                </div>
+
+                                {% if zebranie.protokolant %}
+                                <div class="signature-item {% if zebranie.protokolantPodpisal %}signed{% else %}pending{% endif %}">
+                                    <div class="signature-icon">
+                                        <i class="fas {% if zebranie.protokolantPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                                    </div>
+                                    <div class="signature-info">
+                                        <div class="signature-role">Protokolant</div>
+                                        <div class="signature-person">{{ zebranie.protokolant.imie }} {{ zebranie.protokolant.nazwisko }}</div>
+                                        {% if zebranie.protokolantPodpisal %}
+                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuProtokolanta|date('d.m.Y H:i') }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="signature-badge {% if zebranie.protokolantPodpisal %}signed{% else %}pending{% endif %}">
+                                        {% if zebranie.protokolantPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if zebranie.prowadzacy %}
+                                <div class="signature-item {% if zebranie.prowadzacyPodpisal %}signed{% else %}pending{% endif %}">
+                                    <div class="signature-icon">
+                                        <i class="fas {% if zebranie.prowadzacyPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                                    </div>
+                                    <div class="signature-info">
+                                        <div class="signature-role">Prowadzący</div>
+                                        <div class="signature-person">{{ zebranie.prowadzacy.imie }} {{ zebranie.prowadzacy.nazwisko }}</div>
+                                        {% if zebranie.prowadzacyPodpisal %}
+                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuProwadzacego|date('d.m.Y H:i') }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="signature-badge {% if zebranie.prowadzacyPodpisal %}signed{% else %}pending{% endif %}">
+                                        {% if zebranie.prowadzacyPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if zebranie.przewodniczacy %}
+                                <div class="signature-item {% if zebranie.przewodniczacyPodpisal %}signed{% else %}pending{% endif %}">
+                                    <div class="signature-icon">
+                                        <i class="fas {% if zebranie.przewodniczacyPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                                    </div>
+                                    <div class="signature-info">
+                                        <div class="signature-role">Przewodniczący</div>
+                                        <div class="signature-person">{{ zebranie.przewodniczacy.imie }} {{ zebranie.przewodniczacy.nazwisko }}</div>
+                                        {% if zebranie.przewodniczacyPodpisal %}
+                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuPrzewodniczacego|date('d.m.Y H:i') }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="signature-badge {% if zebranie.przewodniczacyPodpisal %}signed{% else %}pending{% endif %}">
+                                        {% if zebranie.przewodniczacyPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if zebranie.zastepca1 %}
+                                <div class="signature-item {% if zebranie.zastepca1Podpisal %}signed{% else %}pending{% endif %}">
+                                    <div class="signature-icon">
+                                        <i class="fas {% if zebranie.zastepca1Podpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                                    </div>
+                                    <div class="signature-info">
+                                        <div class="signature-role">Zastępca I</div>
+                                        <div class="signature-person">{{ zebranie.zastepca1.imie }} {{ zebranie.zastepca1.nazwisko }}</div>
+                                        {% if zebranie.zastepca1Podpisal %}
+                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuZastepcy1|date('d.m.Y H:i') }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="signature-badge {% if zebranie.zastepca1Podpisal %}signed{% else %}pending{% endif %}">
+                                        {% if zebranie.zastepca1Podpisal %}Podpisane{% else %}Oczekuje{% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if zebranie.zastepca2 %}
+                                <div class="signature-item {% if zebranie.zastepca2Podpisal %}signed{% else %}pending{% endif %}">
+                                    <div class="signature-icon">
+                                        <i class="fas {% if zebranie.zastepca2Podpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
+                                    </div>
+                                    <div class="signature-info">
+                                        <div class="signature-role">Zastępca II</div>
+                                        <div class="signature-person">{{ zebranie.zastepca2.imie }} {{ zebranie.zastepca2.nazwisko }}</div>
+                                        {% if zebranie.zastepca2Podpisal %}
+                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuZastepcy2|date('d.m.Y H:i') }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="signature-badge {% if zebranie.zastepca2Podpisal %}signed{% else %}pending{% endif %}">
+                                        {% if zebranie.zastepca2Podpisal %}Podpisane{% else %}Oczekuje{% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% if zebranie.canUserPerformAction(app.user, 'podpisz_obserwator') or 
+                                  zebranie.canUserPerformAction(app.user, 'podpisz_protokolant') or 
+                                  zebranie.canUserPerformAction(app.user, 'podpisz_prowadzacy') or
+                                  zebranie.canUserPerformAction(app.user, 'podpisz_przewodniczacy') or
+                                  zebranie.canUserPerformAction(app.user, 'podpisz_zastepca1') or
+                                  zebranie.canUserPerformAction(app.user, 'podpisz_zastepca2') %}
+                                <div class="signature-pad-container">
+                                    <h6><i class="fas fa-signature"></i> Twój podpis</h6>
+                                    <p class="text-muted small mb-3">Narysuj swój podpis w polu poniżej, a następnie potwierdź.</p>
+                                    
+                                    <div class="signature-canvas-wrapper">
+                                        <canvas id="signatureCanvas" width="400" height="150"></canvas>
+                                        <div class="canvas-overlay">
+                                            <span class="canvas-instruction">Narysuj tutaj swój podpis</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="signature-controls mt-3">
+                                        <button id="clearSignature" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-eraser"></i> Wyczyść
+                                        </button>
+                                        <button id="signBtn" class="btn btn-primary" disabled>
+                                            <i class="fas fa-check"></i> Potwierdź Podpis
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if zebranie.czyWszyscyPodpisali %}
+                                <div class="alert alert-success mt-3">
+                                    <i class="fas fa-check-circle"></i>
+                                    Wszyscy uczestnicy złożyli podpisy. Zebranie zostanie zakończone automatycznie.
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                    {% elseif zebranie.status == 'zakonczone' %}
+                        <div class="meeting-completed">
+                            <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                            <h3>Zebranie Zakończone</h3>
+                            <p>Zebranie zostało pomyślnie zakończone {{ zebranie.dataZakonczenia|date('d.m.Y H:i') }}</p>
+                            <a href="{{ path('zebranie_oddzialu_historia', {'id': zebranie.id}) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-history"></i>
+                                Zobacz Historię
+                            </a>
+                        </div>
+                        
+                    {% elseif zebranie.status == 'anulowane' %}
+                        <div class="meeting-cancelled">
+                            <i class="fas fa-times-circle text-danger fa-3x mb-3"></i>
+                            <h3>Zebranie Anulowane</h3>
+                            <p>To zebranie zostało anulowane</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Documents Section -->
+                {% if zebranie.dokumenty is not empty %}
+                <div class="documents-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-alt"></i>
+                        Dokumenty Zebrania
+                    </h3>
+                    <div class="documents-grid">
+                        {% for dokument in zebranie.dokumenty %}
+                            <div class="document-card">
+                                <div class="doc-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <div class="doc-info">
+                                    <h4>{{ dokument.tytul }}</h4>
+                                    <span class="doc-status status-{{ dokument.status }}">
+                                        {{ dokument.statusDisplayName }}
+                                    </span>
+                                </div>
+                                <a href="{{ path('dokument_show', {'id': dokument.id}) }}" class="btn btn-sm btn-outline-primary">
+                                    Otwórz
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Right Column - Meeting Info -->
+            <div class="content-sidebar">
+                <!-- Meeting Participants -->
+                <div class="participants-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-users"></i> Uczestnicy Zebrania</h3>
+                    </div>
+                    <div class="participants-list">
+                        <!-- Obserwator -->
+                        <div class="participant-card observer">
+                            <div class="participant-avatar">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="participant-info">
+                                <div class="participant-role">Obserwator</div>
+                                <div class="participant-name">{{ zebranie.obserwator.imie }} {{ zebranie.obserwator.nazwisko }}</div>
+                                <div class="participant-status">Wyznaczony przez Sekretarza Partii</div>
+                            </div>
+                        </div>
+
+                        <!-- Protokolant -->
+                        <div class="participant-card secretary {% if zebranie.protokolant %}assigned{% else %}unassigned{% endif %}">
+                            <div class="participant-avatar">
+                                <i class="fas {% if zebranie.protokolant %}fa-pen{% else %}fa-hourglass-half{% endif %}"></i>
+                            </div>
+                            <div class="participant-info">
+                                <div class="participant-role">Protokolant Zebrania</div>
+                                <div class="participant-name">
+                                    {% if zebranie.protokolant %}
+                                        {{ zebranie.protokolant.imie }} {{ zebranie.protokolant.nazwisko }}
+                                    {% else %}
+                                        <em>Oczekuje na wyznaczenie</em>
+                                    {% endif %}
+                                </div>
+                                <div class="participant-status">Wyznaczany przez Obserwatora</div>
+                            </div>
+                        </div>
+
+                        <!-- Prowadzący -->
+                        <div class="participant-card chairman {% if zebranie.prowadzacy %}assigned{% else %}unassigned{% endif %}">
+                            <div class="participant-avatar">
+                                <i class="fas {% if zebranie.prowadzacy %}fa-user-tie{% else %}fa-hourglass-half{% endif %}"></i>
+                            </div>
+                            <div class="participant-info">
+                                <div class="participant-role">Prowadzący Zebranie</div>
+                                <div class="participant-name">
+                                    {% if zebranie.prowadzacy %}
+                                        {{ zebranie.prowadzacy.imie }} {{ zebranie.prowadzacy.nazwisko }}
+                                    {% else %}
+                                        <em>Oczekuje na wyznaczenie</em>
+                                    {% endif %}
+                                </div>
+                                <div class="participant-status">Wyznaczany przez Obserwatora</div>
+                            </div>
+                        </div>
+
+                        <!-- Przewodniczący -->
+                        {% if zebranie.przewodniczacy %}
+                        <div class="participant-card president assigned">
+                            <div class="participant-avatar">
+                                <i class="fas fa-gavel"></i>
+                            </div>
+                            <div class="participant-info">
+                                <div class="participant-role">Przewodniczący Zebrania</div>
+                                <div class="participant-name">{{ zebranie.przewodniczacy.imie }} {{ zebranie.przewodniczacy.nazwisko }}</div>
+                                <div class="participant-status">Wybrany przez Protokolanta i Prowadzącego</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Zastępca I -->
+                        {% if zebranie.zastepca1 %}
+                        <div class="participant-card deputy assigned">
+                            <div class="participant-avatar">
+                                <i class="fas fa-user-friends"></i>
+                            </div>
+                            <div class="participant-info">
+                                <div class="participant-role">I Zastępca Przewodniczącego</div>
+                                <div class="participant-name">{{ zebranie.zastepca1.imie }} {{ zebranie.zastepca1.nazwisko }}</div>
+                                <div class="participant-status">Wybrany przez Przewodniczącego</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Zastępca II -->
+                        {% if zebranie.zastepca2 %}
+                        <div class="participant-card deputy assigned">
+                            <div class="participant-avatar">
+                                <i class="fas fa-user-friends"></i>
+                            </div>
+                            <div class="participant-info">
+                                <div class="participant-role">II Zastępca Przewodniczącego</div>
+                                <div class="participant-name">{{ zebranie.zastepca2.imie }} {{ zebranie.zastepca2.nazwisko }}</div>
+                                <div class="participant-status">Wybrany przez Przewodniczącego</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                {% if zebranie.isAktywne() and is_granted('ROLE_ADMIN') %}
+                <div class="info-card">
+                    <h3 class="card-title">
+                        <i class="fas fa-tools"></i>
+                        Akcje Administracyjne
+                    </h3>
+                    <div class="admin-actions">
+                        <button type="button" class="btn btn-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                            <i class="fas fa-times-circle"></i>
+                            Anuluj Zebranie
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals Section -->
+{% include 'zebranie_oddzialu/modals/_wyznacz_protokolanta.html.twig' %}
+{% include 'zebranie_oddzialu/modals/_wyznacz_prowadzacego.html.twig' %}
+{% include 'zebranie_oddzialu/modals/_wybor_przewodniczacego.html.twig' %}
+{% include 'zebranie_oddzialu/modals/_wybor_zastepcow.html.twig' %}
+
+{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+/* Meeting Simulator Styles - Identical to ZebranieOkregu */
+.meeting-simulator-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 0;
+    color: white;
+}
+
+.meeting-header {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding: 2rem;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.meeting-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.breadcrumb-link {
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+    color: white;
+}
+
+.breadcrumb-separator {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.5);
+}
+
+.breadcrumb-current {
+    color: white;
+    font-weight: 500;
+}
+
+.meeting-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.2;
+}
+
+.meeting-district {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: rgba(255,255,255,0.9);
+    margin-top: 0.2rem;
+}
+
+.meeting-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.8rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.meta-item i {
+    color: rgba(255,255,255,0.6);
+}
+
+.header-status {
+    text-align: right;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: rgba(255,255,255,0.15);
+    padding: 0.8rem 1.2rem;
+    border-radius: 10px;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.status-rozpoczete { background: #06b6d4; }
+.status-wyznaczanie_protokolanta,
+.status-wyznaczanie_prowadzacego { background: #fbbf24; }
+.status-oczekuje_na_protokolanta,
+.status-oczekuje_na_prowadzacego,
+.status-wybor_przewodniczacego,
+.status-wybor_zastepcow,
+.status-wybor_zarzadu,
+.status-oczekuje_na_podpisy { background: #fbbf24; }
+.status-wybor_prezesa,
+.status-wybor_wiceprezesow { background: #3b82f6; }
+.status-skladanie_podpisow { background: #8b5cf6; }
+.status-oczekuje_na_akceptacje { background: #10b981; }
+.status-zakonczone { background: #10b981; }
+.status-anulowane { background: #ef4444; }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.status-text {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.step-counter {
+    background: rgba(255,255,255,0.2);
+    padding: 0.3rem 0.6rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Progress Steps */
+.progress-steps {
+    display: flex;
+    justify-content: center;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    overflow-x: auto;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 120px;
+    position: relative;
+    margin: 0 0.5rem;
+}
+
+.step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 70%;
+    width: 60%;
+    height: 2px;
+    background: rgba(255,255,255,0.2);
+}
+
+.step.completed:not(:last-child)::after {
+    background: #10b981;
+}
+
+.step-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 0.8rem;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    z-index: 2;
+}
+
+.step.completed .step-icon {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+.step.active .step-icon {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    animation: activeStep 2s infinite;
+}
+
+@keyframes activeStep {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.step-info {
+    text-align: center;
+}
+
+.step-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+}
+
+.step.active .step-title {
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+.step.completed .step-title {
+    color: #10b981;
+}
+
+.step-desc {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.3;
+}
+
+/* Main Content */
+.meeting-content {
+    padding: 0 2rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.participants-panel,
+.actions-panel {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.action-card,
+.documents-card,
+.info-card {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
+    margin-bottom: 2rem;
+}
+
+.panel-header {
+    margin-bottom: 1.5rem;
+}
+
+.panel-header h3,
+.panel-header h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: white;
+}
+
+.current-action {
+    text-align: center;
+    padding: 2rem;
+}
+
+.action-description {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 2rem;
+}
+
+.btn-action {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.btn-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(59, 130, 246, 0.4);
+}
+
+.waiting-info {
+    text-align: center;
+    padding: 3rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.waiting-info i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #fbbf24;
+    animation: rotate 2s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.deputies-selection {
+    padding: 1rem;
+}
+
+.selected-deputy {
+    background: rgba(255,255,255,0.1);
+    padding: 1rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: white;
+}
+
+.documents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.document-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: rgba(255,255,255,0.08);
+    border-radius: 10px;
+}
+
+.doc-title {
+    font-weight: 500;
+    color: white;
+}
+
+.signatures-progress {
+    margin-top: 1.5rem;
+}
+
+.progress {
+    height: 30px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.1);
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    transition: width 0.3s ease;
+}
+
+.meeting-completed,
+.meeting-cancelled {
+    text-align: center;
+    padding: 3rem;
+}
+
+.documents-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.document-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.08);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.document-card:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+.doc-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #3b82f6;
+}
+
+.doc-info {
+    flex: 1;
+}
+
+.doc-info h4 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+    color: white;
+}
+
+.doc-status {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.9);
+}
+
+.doc-status.status-podpisany {
+    background: rgba(16,185,129,0.3);
+    color: #6ee7b7;
+}
+
+.doc-status.status-czeka_na_podpis {
+    background: rgba(251,191,36,0.3);
+    color: #fde68a;
+}
+
+/* Sidebar */
+.participants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.participant-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    position: relative;
+    border-left: 4px solid transparent;
+}
+
+.participant-card.observer {
+    border-left-color: #06b6d4;
+}
+
+.participant-card.secretary.assigned {
+    border-left-color: #10b981;
+}
+
+.participant-card.chairman.assigned {
+    border-left-color: #8b5cf6;
+}
+
+.participant-card.president.assigned {
+    border-left-color: #f59e0b;
+}
+
+.participant-card.deputy.assigned {
+    border-left-color: #3b82f6;
+}
+
+.participant-card.unassigned {
+    border-left-color: #fbbf24;
+    opacity: 0.7;
+}
+
+.participant-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.participant-info {
+    flex: 1;
+}
+
+.participant-role {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-bottom: 0.2rem;
+}
+
+.participant-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.2rem;
+}
+
+.participant-status {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+}
+
+/* Signature Styles */
+.signatures-collection-section {
+    padding: 1.5rem;
+}
+
+.participant-signatures {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.signature-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.08);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    position: relative;
+    border-left: 4px solid transparent;
+}
+
+.signature-item.pending {
+    border-left-color: #fbbf24;
+    opacity: 0.8;
+}
+
+.signature-item.signed {
+    border-left-color: #10b981;
+    background: rgba(16,185,129,0.1);
+}
+
+.signature-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.signature-item.signed .signature-icon {
+    background: rgba(16,185,129,0.3);
+    color: #6ee7b7;
+}
+
+.signature-item.pending .signature-icon {
+    background: rgba(251,191,36,0.3);
+    color: #fde68a;
+}
+
+.signature-info {
+    flex: 1;
+}
+
+.signature-role {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    margin-bottom: 0.2rem;
+}
+
+.signature-person {
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 0.2rem;
+}
+
+.signature-time {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.7);
+}
+
+.signature-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.signature-badge.pending {
+    background: rgba(251,191,36,0.3);
+    color: #fde68a;
+}
+
+.signature-badge.signed {
+    background: rgba(16,185,129,0.3);
+    color: #6ee7b7;
+}
+
+.signature-pad-container {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.signature-canvas-wrapper {
+    position: relative;
+    display: inline-block;
+    border: 2px dashed rgba(255,255,255,0.3);
+    border-radius: 8px;
+    background: white;
+}
+
+.signature-canvas-wrapper canvas {
+    display: block;
+    cursor: crosshair;
+}
+
+.canvas-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background: rgba(255,255,255,0.8);
+    color: rgba(0,0,0,0.5);
+    font-style: italic;
+    border-radius: 6px;
+    transition: opacity 0.3s ease;
+}
+
+.canvas-overlay.hidden {
+    opacity: 0;
+}
+
+.signature-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.admin-actions {
+    padding-top: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    
+    .progress-steps {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .meeting-content {
+        padding: 0 1rem 2rem;
+    }
+    
+    .meeting-header {
+        padding: 1.5rem 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh page every 30 seconds if meeting is active
+    {% if zebranie.isAktywne() %}
+    setTimeout(function() {
+        location.reload();
+    }, 30000);
+    {% endif %}
+
+    // Signature Canvas functionality (copied from ZebranieOkregu)
+    const signatureCanvas = document.getElementById('signatureCanvas');
+    const clearSignatureBtn = document.getElementById('clearSignature');
+    const signBtn = document.getElementById('signBtn');
+    const canvasOverlay = document.querySelector('.canvas-overlay');
+    
+    if (signatureCanvas) {
+        const ctx = signatureCanvas.getContext('2d');
+        let isDrawing = false;
+        let hasDrawn = false;
+        
+        // Set up canvas drawing style
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        // Mouse events
+        signatureCanvas.addEventListener('mousedown', startDrawing);
+        signatureCanvas.addEventListener('mousemove', draw);
+        signatureCanvas.addEventListener('mouseup', stopDrawing);
+        signatureCanvas.addEventListener('mouseout', stopDrawing);
+        
+        // Touch events for mobile
+        signatureCanvas.addEventListener('touchstart', handleTouch);
+        signatureCanvas.addEventListener('touchmove', handleTouch);
+        signatureCanvas.addEventListener('touchend', stopDrawing);
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = signatureCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            
+            if (!hasDrawn) {
+                hasDrawn = true;
+                canvasOverlay.classList.add('hidden');
+                signBtn.disabled = false;
+            }
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            
+            const rect = signatureCanvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+        
+        function stopDrawing() {
+            if (isDrawing) {
+                isDrawing = false;
+                ctx.beginPath();
+            }
+        }
+        
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            signatureCanvas.dispatchEvent(mouseEvent);
+        }
+        
+        // Clear signature
+        if (clearSignatureBtn) {
+            clearSignatureBtn.addEventListener('click', function() {
+                ctx.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+                hasDrawn = false;
+                canvasOverlay.classList.remove('hidden');
+                signBtn.disabled = true;
+            });
+        }
+        
+        // Submit signature
+        if (signBtn) {
+            signBtn.addEventListener('click', function() {
+                if (!hasDrawn) {
+                    showAlert('warning', 'Najpierw narysuj swój podpis');
+                    return;
+                }
+                
+                // Add loading state
+                const originalContent = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Składam podpis...';
+                this.disabled = true;
+                
+                // Get signature data as base64
+                const signatureData = signatureCanvas.toDataURL('image/png');
+                
+                // Get CSRF token for this specific action
+                const formData = new FormData();
+                formData.append('_token', '{{ csrf_token('sign_' ~ zebranie.id) }}');
+                formData.append('signature', signatureData);
+                
+                fetch('{{ path('zebranie_oddzialu_zloz_podpis', {id: zebranie.id}) }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', data.message);
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showAlert('danger', data.error || 'Wystąpił błąd podczas składania podpisu');
+                        // Restore button state
+                        this.innerHTML = originalContent;
+                        this.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'Wystąpił błąd podczas składania podpisu');
+                    // Restore button state
+                    this.innerHTML = originalContent;
+                    this.disabled = false;
+                });
+            });
+        }
+    }
+
+    // Alert helper function
+    function showAlert(type, message) {
+        const alertContainer = document.createElement('div');
+        alertContainer.className = `alert alert-${type} alert-dismissible fade show`;
+        alertContainer.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('.meeting-content') || document.body;
+        container.insertBefore(alertContainer, container.firstChild);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertContainer && alertContainer.parentNode) {
+                alertContainer.remove();
+            }
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}

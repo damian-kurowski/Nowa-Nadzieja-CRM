@@ -1,0 +1,577 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mój postęp w procesie kandydowania{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-2 py-md-4">
+    <!-- Header Card -->
+    <div class="row mb-3 mb-md-4">
+        <div class="col-12">
+            <div class="card gradient-header">
+                <div class="card-body p-3 p-md-4">
+                    <div class="d-flex align-items-center">
+                        <div class="progress-icon me-3">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h4 class="mb-1 text-white fw-bold">Mój postęp kandydacki</h4>
+                            <p class="mb-0 text-white-50">Sprawdź na jakim etapie znajduje się Twoja aplikacja</p>
+                        </div>
+                        <div class="d-none d-md-block">
+                            <div class="progress-stats">
+                                {% set completed = 0 %}
+                                {% set total = 6 %}
+                                {% if postep.skladkaZa3Miesiace %}{% set completed = completed + 1 %}{% endif %}
+                                {% if postep.dodanieCvWMiesiacu %}{% set completed = completed + 1 %}{% endif %}
+                                {% if postep.spotkanieMiesieczne %}{% set completed = completed + 1 %}{% endif %}
+                                {% if postep.zaangaowanieWDzialanie %}{% set completed = completed + 1 %}{% endif %}
+                                {% if postep.rozmowaZPrezesem %}{% set completed = completed + 1 %}{% endif %}
+                                {% if postep.decyzjaPrezesa == 'akceptacja' %}{% set completed = completed + 1 %}{% endif %}
+                                {% set progress = (completed / total * 100)|round %}
+                                
+                                <div class="circular-progress" data-progress="{{ progress }}">
+                                    <div class="progress-text">
+                                        <span class="progress-number">{{ completed }}/{{ total }}</span>
+                                        <span class="progress-label">kroków</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Progress Summary -->
+    <div class="row mb-3 d-md-none">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-3">
+                    {% set completed = 0 %}
+                    {% set total = 6 %}
+                    {% if postep.skladkaZa3Miesiace %}{% set completed = completed + 1 %}{% endif %}
+                    {% if postep.dodanieCvWMiesiacu %}{% set completed = completed + 1 %}{% endif %}
+                    {% if postep.spotkanieMiesieczne %}{% set completed = completed + 1 %}{% endif %}
+                    {% if postep.zaangaowanieWDzialanie %}{% set completed = completed + 1 %}{% endif %}
+                    {% if postep.rozmowaZPrezesem %}{% set completed = completed + 1 %}{% endif %}
+                    {% if postep.decyzjaPrezesa == 'akceptacja' %}{% set completed = completed + 1 %}{% endif %}
+                    {% set progress = (completed / total * 100)|round %}
+                    
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="mb-0">Postęp ogólny</h6>
+                            <small class="text-muted">{{ completed }} z {{ total }} kroków ukończonych</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="progress-circle-small">
+                                <span class="fw-bold text-primary">{{ progress }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-gradient-primary" role="progressbar" style="width: {{ progress }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card timeline-card">
+                <div class="card-body p-3 p-md-4">
+                    <div class="progress-timeline">
+                        <!-- Step 1: Składka -->
+                        <div class="timeline-item {{ postep.skladkaZa3Miesiace ? 'completed' : 'pending' }}">
+                            <div class="timeline-icon">
+                                <i class="fas {{ postep.skladkaZa3Miesiace ? 'fa-check' : 'fa-credit-card' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                                    <div class="timeline-info mb-2 mb-md-0">
+                                        <h6 class="timeline-title">
+                                            <i class="fas fa-coins me-2 text-warning"></i>
+                                            Składka za 3 miesiące
+                                        </h6>
+                                        <p class="timeline-description">Opłać składkę członkowską za pierwsze 3 miesiące</p>
+                                    </div>
+                                    <div class="timeline-status">
+                                        {% if postep.skladkaZa3Miesiace %}
+                                            <span class="badge bg-success px-3 py-2">
+                                                <i class="fas fa-check me-1"></i>Opłacone
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning px-3 py-2">
+                                                <i class="fas fa-clock me-1"></i>Oczekuje
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: CV -->
+                        <div class="timeline-item {{ postep.dodanieCvWMiesiacu ? 'completed' : 'pending' }}">
+                            <div class="timeline-icon">
+                                <i class="fas {{ postep.dodanieCvWMiesiacu ? 'fa-check' : 'fa-file-alt' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                                    <div class="timeline-info mb-2 mb-md-0">
+                                        <h6 class="timeline-title">
+                                            <i class="fas fa-file-user me-2 text-info"></i>
+                                            Dodanie CV
+                                        </h6>
+                                        <p class="timeline-description">Prześlij swoje CV w ciągu miesiąca</p>
+                                    </div>
+                                    <div class="timeline-status">
+                                        {% if postep.dodanieCvWMiesiacu %}
+                                            <span class="badge bg-success px-3 py-2">
+                                                <i class="fas fa-check me-1"></i>Ukończone
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning px-3 py-2">
+                                                <i class="fas fa-clock me-1"></i>Oczekuje
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Spotkanie -->
+                        <div class="timeline-item {{ postep.spotkanieMiesieczne ? 'completed' : 'pending' }}">
+                            <div class="timeline-icon">
+                                <i class="fas {{ postep.spotkanieMiesieczne ? 'fa-check' : 'fa-users' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                                    <div class="timeline-info mb-2 mb-md-0">
+                                        <h6 class="timeline-title">
+                                            <i class="fas fa-calendar-check me-2 text-primary"></i>
+                                            Spotkanie miesięczne
+                                        </h6>
+                                        <p class="timeline-description">Weź udział w spotkaniu miesięcznym oddziału</p>
+                                    </div>
+                                    <div class="timeline-status">
+                                        {% if postep.spotkanieMiesieczne %}
+                                            <span class="badge bg-success px-3 py-2">
+                                                <i class="fas fa-check me-1"></i>Ukończone
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning px-3 py-2">
+                                                <i class="fas fa-clock me-1"></i>Oczekuje
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Zaangażowanie -->
+                        <div class="timeline-item {{ postep.zaangaowanieWDzialanie ? 'completed' : 'pending' }}">
+                            <div class="timeline-icon">
+                                <i class="fas {{ postep.zaangaowanieWDzialanie ? 'fa-check' : 'fa-hands-helping' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                                    <div class="timeline-info mb-2 mb-md-0">
+                                        <h6 class="timeline-title">
+                                            <i class="fas fa-heart me-2 text-danger"></i>
+                                            Zaangażowanie w działanie
+                                        </h6>
+                                        <p class="timeline-description">Wykaż aktywność w działaniach partii</p>
+                                    </div>
+                                    <div class="timeline-status">
+                                        {% if postep.zaangaowanieWDzialanie %}
+                                            <span class="badge bg-success px-3 py-2">
+                                                <i class="fas fa-check me-1"></i>Potwierdzone
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning px-3 py-2">
+                                                <i class="fas fa-clock me-1"></i>Oczekuje
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Rozmowa -->
+                        <div class="timeline-item {{ postep.rozmowaZPrezesem ? 'completed' : 'pending' }}">
+                            <div class="timeline-icon">
+                                <i class="fas {{ postep.rozmowaZPrezesem ? 'fa-check' : 'fa-comments' }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                                    <div class="timeline-info mb-2 mb-md-0">
+                                        <h6 class="timeline-title">
+                                            <i class="fas fa-user-tie me-2 text-secondary"></i>
+                                            Rozmowa z prezesem
+                                        </h6>
+                                        <p class="timeline-description">Przeprowadź rozmowę kwalifikacyjną z prezesem oddziału</p>
+                                    </div>
+                                    <div class="timeline-status">
+                                        {% if postep.rozmowaZPrezesem %}
+                                            <span class="badge bg-success px-3 py-2">
+                                                <i class="fas fa-check me-1"></i>Przeprowadzona
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning px-3 py-2">
+                                                <i class="fas fa-clock me-1"></i>Oczekuje
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 6: Decyzja -->
+                        <div class="timeline-item {{ postep.decyzjaPrezesa == 'akceptacja' ? 'completed' : (postep.decyzjaPrezesa == 'odrzucenie' ? 'rejected' : 'pending') }}">
+                            <div class="timeline-icon">
+                                <i class="fas {{ postep.decyzjaPrezesa == 'akceptacja' ? 'fa-check' : (postep.decyzjaPrezesa == 'odrzucenie' ? 'fa-times' : 'fa-gavel') }}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
+                                    <div class="timeline-info mb-2 mb-md-0">
+                                        <h6 class="timeline-title">
+                                            <i class="fas fa-stamp me-2 text-success"></i>
+                                            Decyzja prezesa
+                                        </h6>
+                                        <p class="timeline-description">Ostateczna decyzja o przyjęciu do partii</p>
+                                        {% if postep.dataDecyzji %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar me-1"></i>{{ postep.dataDecyzji|date('d.m.Y') }}
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="timeline-status">
+                                        {% if postep.decyzjaPrezesa == 'akceptacja' %}
+                                            <span class="badge bg-success px-3 py-2">
+                                                <i class="fas fa-check me-1"></i>Akceptacja
+                                            </span>
+                                        {% elseif postep.decyzjaPrezesa == 'odrzucenie' %}
+                                            <span class="badge bg-danger px-3 py-2">
+                                                <i class="fas fa-times me-1"></i>Odrzucenie
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-info px-3 py-2">
+                                                <i class="fas fa-hourglass-half me-1"></i>Oczekuje
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if postep.uwagi %}
+                    <div class="mt-4">
+                        <div class="alert alert-info border-0 shadow-sm">
+                            <div class="d-flex align-items-start">
+                                <div class="alert-icon me-3">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="alert-heading mb-2">Uwagi od prezesa:</h6>
+                                    <p class="mb-0">{{ postep.uwagi }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Gradient Header */
+.gradient-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.progress-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    backdrop-filter: blur(10px);
+}
+
+/* Circular Progress */
+.circular-progress {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(#28a745 var(--progress, 0%), rgba(255,255,255,0.2) 0%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.circular-progress::before {
+    content: '';
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #667eea;
+    position: absolute;
+}
+
+.progress-text {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    color: white;
+}
+
+.progress-number {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.progress-label {
+    display: block;
+    font-size: 0.7rem;
+    opacity: 0.9;
+}
+
+/* Timeline Card */
+.timeline-card {
+    border: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-radius: 16px;
+}
+
+/* Timeline */
+.progress-timeline {
+    position: relative;
+    padding-left: 50px;
+}
+
+@media (max-width: 768px) {
+    .progress-timeline {
+        padding-left: 35px;
+    }
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 40px;
+    margin-bottom: 20px;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+
+.timeline-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: -30px;
+    top: 60px;
+    width: 3px;
+    height: calc(100% - 40px);
+    background: linear-gradient(to bottom, #e9ecef, #dee2e6);
+    border-radius: 2px;
+}
+
+@media (max-width: 768px) {
+    .timeline-item:not(:last-child)::before {
+        left: -22px;
+    }
+}
+
+.timeline-item.completed:not(:last-child)::before {
+    background: linear-gradient(to bottom, #28a745, #20c997);
+}
+
+.timeline-icon {
+    position: absolute;
+    left: -45px;
+    top: 8px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    border: 3px solid white;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .timeline-icon {
+        left: -37px;
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+        border-width: 2px;
+    }
+}
+
+.timeline-item.completed .timeline-icon {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    transform: scale(1.1);
+}
+
+.timeline-item.pending .timeline-icon {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+}
+
+.timeline-item.rejected .timeline-icon {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border-left: 4px solid #e9ecef;
+}
+
+@media (max-width: 768px) {
+    .timeline-content {
+        padding: 15px;
+    }
+}
+
+.timeline-item.completed .timeline-content {
+    border-left-color: #28a745;
+    background: #f8fff9;
+}
+
+.timeline-item.pending .timeline-content {
+    border-left-color: #ffc107;
+    background: #fffef8;
+}
+
+.timeline-item.rejected .timeline-content {
+    border-left-color: #dc3545;
+    background: #fff8f8;
+}
+
+.timeline-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.timeline-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .timeline-title {
+        font-size: 1rem;
+    }
+}
+
+.timeline-description {
+    color: #6c757d;
+    margin-bottom: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.timeline-status .badge {
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Alert Improvements */
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+    color: #0c5460;
+}
+
+.alert-icon {
+    font-size: 1.2rem;
+    color: #17a2b8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .container-fluid {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .timeline-title i {
+        display: none;
+    }
+    
+    .badge {
+        font-size: 0.75rem !important;
+        padding: 6px 12px !important;
+    }
+}
+
+/* Animation for progress */
+@keyframes progressAnimation {
+    from {
+        --progress: 0%;
+    }
+    to {
+        --progress: var(--final-progress);
+    }
+}
+
+.circular-progress {
+    animation: progressAnimation 2s ease-out;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate circular progress
+    const progressElements = document.querySelectorAll('.circular-progress');
+    progressElements.forEach(element => {
+        const progress = element.dataset.progress;
+        element.style.setProperty('--progress', progress + '%');
+        element.style.setProperty('--final-progress', progress + '%');
+    });
+    
+    // Add entrance animations
+    const timelineItems = document.querySelectorAll('.timeline-item');
+    timelineItems.forEach((item, index) => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            item.style.transition = 'all 0.6s ease';
+            item.style.opacity = '1';
+            item.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+});
+</script>
+{% endblock %}

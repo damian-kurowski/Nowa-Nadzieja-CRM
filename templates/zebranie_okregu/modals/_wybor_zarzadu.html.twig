@@ -1,0 +1,178 @@
+<!-- Modal Wybór Zarządu Okręgu -->
+<div class="modal fade" id="wyborZarzaduModal" tabindex="-1" aria-labelledby="wyborZarzaduModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="wyborZarzaduModalLabel">
+                    <i class="fas fa-users-cog"></i> Wybór zarządu okręgu
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-success">
+                    <i class="fas fa-crown"></i>
+                    <strong>Wybór zarządu okręgu:</strong> Prowadzący i protokolant dokonują wyboru członków zarządu okręgu zgodnie ze statutem partii.
+                    <br><strong>Uwaga:</strong> Wszystkie osoby muszą być członkami okręgu {{ zebranie.okreg.nazwa }}.
+                </div>
+
+                <div class="row">
+                    <!-- Stanowiska wymagane -->
+                    <div class="col-md-12 mb-3">
+                        <h6 class="text-danger">Stanowiska wymagane <span class="text-danger">*</span></h6>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="prezes_okregu_id" class="form-label">
+                            <i class="fas fa-crown text-warning"></i> Prezes okręgu <span class="text-danger">*</span>
+                        </label>
+                        <select id="prezes_okregu_id" class="form-select" required>
+                            <option value="">-- Wybierz prezesa --</option>
+                            {% for member in usersInOkreg %}
+                                <option value="{{ member.id }}">
+                                    {{ member.imie }} {{ member.nazwisko }}
+                                    ({{ member.najwyzszaFunkcja }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="wiceprezes1_id" class="form-label">
+                            <i class="fas fa-user-tie text-info"></i> Wiceprezes I <span class="text-danger">*</span>
+                        </label>
+                        <select id="wiceprezes1_id" class="form-select" required>
+                            <option value="">-- Wybierz wiceprezesa I --</option>
+                            {% for member in usersInOkreg %}
+                                <option value="{{ member.id }}">
+                                    {{ member.imie }} {{ member.nazwisko }}
+                                    ({{ member.najwyzszaFunkcja }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label for="wiceprezes2_id" class="form-label">
+                            <i class="fas fa-user-tie text-info"></i> Wiceprezes II <span class="text-danger">*</span>
+                        </label>
+                        <select id="wiceprezes2_id" class="form-select" required>
+                            <option value="">-- Wybierz wiceprezesa II --</option>
+                            {% for member in usersInOkreg %}
+                                <option value="{{ member.id }}">
+                                    {{ member.imie }} {{ member.nazwisko }}
+                                    ({{ member.najwyzszaFunkcja }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row">
+                    <!-- Stanowiska opcjonalne -->
+                    <div class="col-md-12 mb-3">
+                        <h6 class="text-info">Stanowiska opcjonalne</h6>
+                        <small class="text-muted">Te stanowiska mogą zostać obsadzone później lub pozostać wolne</small>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="sekretarz_okregu_id" class="form-label">
+                            <i class="fas fa-pen text-secondary"></i> Sekretarz okręgu
+                        </label>
+                        <select id="sekretarz_okregu_id" class="form-select">
+                            <option value="">-- Brak lub wybierz później --</option>
+                            {% for member in usersInOkreg %}
+                                <option value="{{ member.id }}">
+                                    {{ member.imie }} {{ member.nazwisko }}
+                                    ({{ member.najwyzszaFunkcja }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label for="skarbnik_okregu_id" class="form-label">
+                            <i class="fas fa-coins text-success"></i> Skarbnik okręgu
+                        </label>
+                        <select id="skarbnik_okregu_id" class="form-select">
+                            <option value="">-- Brak lub wybierz później --</option>
+                            {% for member in usersInOkreg %}
+                                <option value="{{ member.id }}">
+                                    {{ member.imie }} {{ member.nazwisko }}
+                                    ({{ member.najwyzszaFunkcja }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Ważne informacje:</h6>
+                    <ul class="mb-0">
+                        <li>Prezes i dwóch wiceprezesów są wymagani do utworzenia zarządu</li>
+                        <li>Jedna osoba nie może pełnić więcej niż jednej funkcji</li>
+                        <li>Sekretarz i skarbnik mogą być wybrani później</li>
+                        <li>Po wyborze zarządu zebranie przejdzie do etapu podpisów</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Anuluj
+                </button>
+                <button type="button" class="btn btn-success" onclick="wyborZarzadu()">
+                    <i class="fas fa-vote-yea"></i> Wybierz zarząd
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Validation to prevent selecting same person for multiple roles
+document.addEventListener('DOMContentLoaded', function() {
+    const selects = ['prezes_okregu_id', 'wiceprezes1_id', 'wiceprezes2_id', 'sekretarz_okregu_id', 'skarbnik_okregu_id'];
+    
+    selects.forEach(selectId => {
+        document.getElementById(selectId).addEventListener('change', function() {
+            validateUniqueSelections();
+        });
+    });
+    
+    function validateUniqueSelections() {
+        const selectedValues = {};
+        let hasConflict = false;
+        
+        selects.forEach(selectId => {
+            const select = document.getElementById(selectId);
+            const value = select.value;
+            
+            // Reset styling
+            select.classList.remove('is-invalid');
+            
+            if (value && selectedValues[value]) {
+                // Conflict detected
+                select.classList.add('is-invalid');
+                hasConflict = true;
+            } else if (value) {
+                selectedValues[value] = true;
+            }
+        });
+        
+        // Show/hide conflict warning
+        let warningDiv = document.getElementById('conflict-warning');
+        if (hasConflict) {
+            if (!warningDiv) {
+                warningDiv = document.createElement('div');
+                warningDiv.id = 'conflict-warning';
+                warningDiv.className = 'alert alert-danger mt-2';
+                warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <strong>Błąd:</strong> Ta sama osoba nie może pełnić więcej niż jednej funkcji.';
+                document.querySelector('#wyborZarzaduModal .modal-body').appendChild(warningDiv);
+            }
+        } else if (warningDiv) {
+            warningDiv.remove();
+        }
+    }
+});
+</script>

@@ -1,0 +1,454 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ konferencja.tytulKonferencji }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}{{ konferencja.tytulKonferencji }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .conference-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            backdrop-filter: blur(10px);
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        
+        .conference-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .info-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--shadow-medium);
+        }
+        
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .info-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #6f42c1, #5a32a3);
+            color: white;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+        
+        .detail-item:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .detail-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .detail-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            font-size: 0.875rem;
+            background: linear-gradient(135deg, #6f42c1, #5a32a3);
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        .detail-content {
+            flex: 1;
+        }
+        
+        .detail-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+        
+        .detail-value {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .speakers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .speaker-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .speaker-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+        }
+        
+        .speaker-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6f42c1, #5a32a3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin: 0 auto 0.5rem auto;
+        }
+        
+        .speaker-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .speaker-role {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .content-section {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .action-buttons {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            text-align: center;
+        }
+        
+        .action-buttons .btn {
+            margin: 0 0.5rem;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        
+        .recording-link {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(19, 132, 150, 0.05));
+            border: 1px solid rgba(23, 162, 184, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .recording-link .btn {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .recording-link .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(23, 162, 184, 0.4);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Profile Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                <div class="conference-avatar">
+                    <i class="fas fa-microphone-alt"></i>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <h1 class="mb-2">{{ konferencja.tytulKonferencji }}</h1>
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <span class="conference-status">
+                        {% if konferencja.dataIGodzina > "now"|date_modify("now") %}
+                            <i class="fas fa-clock"></i>
+                            Planowana
+                        {% else %}
+                            <i class="fas fa-check-circle"></i>
+                            Zakończona
+                        {% endif %}
+                    </span>
+                    <span class="opacity-75">
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ konferencja.dataIGodzina|date('d.m.Y H:i') }}
+                    </span>
+                    {% if konferencja.miejsceWydarzenia %}
+                        <span class="opacity-75">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            {{ konferencja.miejsceWydarzenia }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Podstawowe informacje -->
+        <div class="col-lg-8">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h5 class="mb-0">Szczegóły konferencji</h5>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="detail-content">
+                                <div class="detail-label">Data i godzina</div>
+                                <div class="detail-value">{{ konferencja.dataIGodzina|date('d.m.Y H:i') }}</div>
+                            </div>
+                        </div>
+                        
+                        {% if konferencja.miejsceWydarzenia %}
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="detail-content">
+                                <div class="detail-label">Miejsce wydarzenia</div>
+                                <div class="detail-value">{{ konferencja.miejsceWydarzenia }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if konferencja.organizatorWydarzenia %}
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <div class="detail-content">
+                                <div class="detail-label">Organizator</div>
+                                <div class="detail-value">{{ konferencja.organizatorWydarzenia }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        {% if konferencja.numerTelefonu %}
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="detail-content">
+                                <div class="detail-label">Telefon kontaktowy</div>
+                                <div class="detail-value">{{ konferencja.numerTelefonu }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if konferencja.zglaszajacy %}
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="detail-content">
+                                <div class="detail-label">Zgłaszający</div>
+                                <div class="detail-value">{{ konferencja.zglaszajacy.fullName }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if konferencja.dataZgloszenia %}
+                        <div class="detail-item">
+                            <div class="detail-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="detail-content">
+                                <div class="detail-label">Data zgłoszenia</div>
+                                <div class="detail-value">{{ konferencja.dataZgloszenia|date('d.m.Y H:i') }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Treść konferencji -->
+            {% if konferencja.trescKonferencji %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h5 class="mb-0">Treść i agenda konferencji</h5>
+                </div>
+                <div class="content-section">
+                    {{ konferencja.trescKonferencji|nl2br }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar z dodatkowymi informacjami -->
+        <div class="col-lg-4">
+            <!-- Mówcy -->
+            {% if konferencja.mowcy|length > 0 %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h5 class="mb-0">Mówcy i prelegenci</h5>
+                </div>
+                <div class="speakers-grid">
+                    {% for mowca in konferencja.mowcy %}
+                        <div class="speaker-card">
+                            <div class="speaker-avatar">
+                                {% set initials = (mowca.imie|slice(0,1) ~ mowca.nazwisko|slice(0,1))|upper %}
+                                {{ initials }}
+                            </div>
+                            <div class="speaker-name">{{ mowca.fullName }}</div>
+                            <div class="speaker-role">Mówca</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Link do nagrania -->
+            {% if konferencja.linkDoNagrania %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <h5 class="mb-0">Nagranie</h5>
+                </div>
+                <div class="recording-link">
+                    <p class="mb-3 text-muted">Nagranie z konferencji jest dostępne do obejrzenia</p>
+                    <a href="{{ konferencja.linkDoNagrania }}" target="_blank" class="btn">
+                        <i class="fas fa-play"></i>
+                        Oglądaj nagranie
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Enhanced Action Buttons -->
+    <div class="action-buttons mt-4">
+        <div class="row">
+            <div class="col-12">
+                {% if is_granted('EDIT', konferencja) %}
+                    <a href="{{ path('konferencja_prasowa_edit', {id: konferencja.id}) }}" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>Edytuj konferencję
+                    </a>
+                {% endif %}
+                <a href="{{ path('konferencja_prasowa_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Powrót do listy
+                </a>
+                {% if is_granted('ROLE_RZECZNIK_PRASOWY') or is_granted('ROLE_ADMIN') %}
+                    <form method="post" action="{{ path('konferencja_prasowa_delete', {id: konferencja.id}) }}" 
+                          style="display: inline-block;" class="ms-2"
+                          onsubmit="return confirm('Czy na pewno chcesz usunąć tę konferencję?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ konferencja.id) }}">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="fas fa-trash me-2"></i>Usuń konferencję
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

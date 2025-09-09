@@ -1,0 +1,352 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Archiwum Zebrania - {{ zebranie.oddzial.nazwa }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Archiwum Zebrania Członków Oddziału{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .archive-header {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .archive-info-box {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .info-item i {
+            width: 30px;
+            color: #667eea;
+        }
+
+        .document-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .document-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .document-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .document-status.signed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .document-status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .document-status.draft {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.75rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #e9ecef;
+        }
+
+        .participants-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .participant-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .role-observer {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .role-secretary {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .role-chairman {
+            background: #fff8e1;
+            color: #ef6c00;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="archive-header">
+        <h1 class="mb-2">
+            <i class="fas fa-archive me-2"></i>
+            Archiwum Zebrania - {{ zebranie.oddzial.nazwa }}
+        </h1>
+        <p class="mb-0 opacity-90">
+            <i class="fas fa-calendar me-2"></i>
+            {{ zebranie.dataRozpoczecia|date('d.m.Y H:i') }} - {{ zebranie.dataZakonczenia|date('d.m.Y H:i') }}
+            <span class="ms-3">
+                <i class="fas fa-clock me-1"></i>
+                Czas trwania: {{ ((zebranie.dataZakonczenia.timestamp - zebranie.dataRozpoczecia.timestamp) / 3600)|number_format(1) }}h
+            </span>
+        </p>
+    </div>
+
+    <div class="archive-info-box">
+        <h5 class="mb-3">Uczestnicy zebrania</h5>
+        <div class="participants-grid">
+            <div class="participant-card">
+                <div class="info-item justify-content-center">
+                    <i class="fas fa-eye"></i>
+                    <span><strong>{{ zebranie.obserwator.fullName }}</strong></span>
+                </div>
+                <div class="role-badge role-observer">Obserwator</div>
+            </div>
+            
+            {% if zebranie.protokolant %}
+                <div class="participant-card">
+                    <div class="info-item justify-content-center">
+                        <i class="fas fa-pen"></i>
+                        <span><strong>{{ zebranie.protokolant.fullName }}</strong></span>
+                    </div>
+                    <div class="role-badge role-secretary">Protokolant</div>
+                </div>
+            {% endif %}
+            
+            {% if zebranie.prowadzacy %}
+                <div class="participant-card">
+                    <div class="info-item justify-content-center">
+                        <i class="fas fa-gavel"></i>
+                        <span><strong>{{ zebranie.prowadzacy.fullName }}</strong></span>
+                    </div>
+                    <div class="role-badge role-chairman">Prowadzący</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            {% if dokumenty|length > 0 %}
+                <h4 class="mb-4">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Dokumenty utworzone podczas zebrania ({{ dokumenty|length }})
+                </h4>
+                
+                <div class="timeline">
+                    {% for dokument in dokumenty %}
+                        <div class="timeline-item">
+                            <div class="document-card">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h6 class="mb-1">{{ dokument.tytul }}</h6>
+                                        <p class="text-muted mb-1">
+                                            <small>
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ dokument.dataUtworzenia|date('d.m.Y H:i') }}
+                                            </small>
+                                        </p>
+                                        {% if dokument.tworca %}
+                                            <p class="text-muted mb-0">
+                                                <small>
+                                                    <i class="fas fa-user me-1"></i>
+                                                    Utworzone przez: {{ dokument.tworca.fullName }}
+                                                </small>
+                                            </p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="document-status {{ dokument.status == 'podpisany' ? 'signed' : (dokument.status == 'czeka_na_podpis' ? 'pending' : 'draft') }}">
+                                            {% if dokument.status == 'podpisany' %}
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                Podpisany
+                                            {% elseif dokument.status == 'czeka_na_podpis' %}
+                                                <i class="fas fa-clock me-1"></i>
+                                                Oczekuje
+                                            {% else %}
+                                                <i class="fas fa-edit me-1"></i>
+                                                Projekt
+                                            {% endif %}
+                                        </span>
+                                        <div class="mt-2">
+                                            <a href="{{ path('dokument_show', {id: dokument.id}) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye me-1"></i>
+                                                Zobacz
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if dokument.podpisy|length > 0 %}
+                                    <div class="border-top pt-2 mt-2">
+                                        <small class="text-muted">
+                                            <strong>Podpisy:</strong>
+                                            {% for podpis in dokument.podpisy %}
+                                                <span class="badge bg-{{ podpis.status == 'podpisany' ? 'success' : 'secondary' }} me-1">
+                                                    {{ podpis.podpisujacy.fullName }}
+                                                    {% if podpis.status == 'podpisany' %}
+                                                        ✓
+                                                    {% else %}
+                                                        ⏳
+                                                    {% endif %}
+                                                </span>
+                                            {% endfor %}
+                                        </small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Brak dokumentów</h5>
+                    <p class="text-muted">W tym zebraniu nie zostały utworzone żadne dokumenty.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <h4 class="mb-4">
+                <i class="fas fa-history me-2"></i>
+                Timeline Aktywności
+            </h4>
+            
+            {% if activity_log|length > 0 %}
+                <div class="timeline">
+                    {% for activity in activity_log %}
+                        <div class="timeline-item">
+                            <div class="document-card">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            {% if activity.action == 'meeting_started' %}
+                                                <i class="fas fa-play-circle text-success me-1"></i>
+                                                Rozpoczęcie
+                                            {% elseif activity.action == 'secretary_appointed' %}
+                                                <i class="fas fa-pen text-primary me-1"></i>
+                                                Protokolant
+                                            {% elseif activity.action == 'chairman_appointed' %}
+                                                <i class="fas fa-gavel text-info me-1"></i>
+                                                Prowadzący
+                                            {% elseif activity.action == 'meeting_ended' %}
+                                                <i class="fas fa-stop-circle text-danger me-1"></i>
+                                                Zakończenie
+                                            {% else %}
+                                                <i class="fas fa-info-circle text-secondary me-1"></i>
+                                                {{ activity.action }}
+                                            {% endif %}
+                                        </h6>
+                                        <p class="mb-1 small">{{ activity.description }}</p>
+                                        <p class="text-muted mb-0">
+                                            <small>
+                                                <i class="fas fa-user me-1"></i>
+                                                {{ activity.user }}
+                                            </small>
+                                        </p>
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ activity.timestamp|date('H:i') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-history fa-2x text-muted mb-2"></i>
+                    <p class="text-muted small">Brak logów aktywności</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <div class="d-flex gap-2">
+            <a href="{{ path('zebranie_historia') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-history me-2"></i>
+                Historia zebrań
+            </a>
+            <a href="{{ path('zebranie_oddzialu_index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-users me-2"></i>
+                Wszystkie zebrania
+            </a>
+            {% if dokumenty|length > 0 %}
+                <a href="{{ path('dokument_index') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Zobacz dokumenty
+                </a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,814 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Składki członkowskie{% endblock %}
+
+{% block body %}
+<!-- Enhanced Header Section -->
+<div class="payments-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="header-content">
+                    <h1 class="page-title">
+                        <div class="title-icon">
+                            <i class="fas fa-coins"></i>
+                        </div>
+                        Składki członkowskie
+                    </h1>
+                    <p class="page-subtitle">Przegląd Twoich składek i historii płatności</p>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="header-actions">
+                    <a href="{{ path('app_payment_history_export') }}" 
+                       class="btn btn-enhanced btn-primary-gradient">
+                        <i class="fas fa-download me-2"></i>Pobierz historię
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <!-- Enhanced Status Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-{% if is_granted('ROLE_FUNKCYJNY') %}8{% else %}12{% endif %}">
+            <div class="payment-status-card">
+                <div class="status-header">
+                    <div class="status-icon {{ paymentStatus.color }}">
+                        {% if paymentStatus.color == 'success' %}
+                            <i class="fas fa-check-circle"></i>
+                        {% elseif paymentStatus.color == 'warning' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                        {% else %}
+                            <i class="fas fa-times-circle"></i>
+                        {% endif %}
+                    </div>
+                    <div class="status-content">
+                        <h2 class="status-title">Status składek</h2>
+                        <div class="status-message alert-{{ paymentStatus.color }}">
+                            {{ paymentStatus.message|raw }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="status-metrics">
+                    <div class="row g-0">
+                        <div class="col-6">
+                            <div class="metric-card total-paid">
+                                <div class="metric-icon">
+                                    <i class="fas fa-piggy-bank"></i>
+                                </div>
+                                <div class="metric-content">
+                                    <div class="metric-label">Łącznie wpłacono</div>
+                                    <div class="metric-value">{{ paymentStatus.totalPaid }} PLN</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="metric-card monthly-fee">
+                                <div class="metric-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="metric-content">
+                                    <div class="metric-label">Miesięczna składka</div>
+                                    <div class="metric-value">{{ paymentStatus.monthlyFee }} PLN</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if paymentStatus.paidUntil %}
+                <div class="status-footer">
+                    <div class="paid-until-info">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        <span>Składki opłacone do: <strong>{{ paymentStatus.paidUntil|date('m.Y') }}</strong></span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions - Only for functional roles -->
+        {% if is_granted('ROLE_FUNKCYJNY') %}
+        <div class="col-lg-4">
+            <div class="quick-actions-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>Szybkie akcje
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="action-list">
+                        <div class="action-item">
+                            <div class="action-icon export">
+                                <i class="fas fa-file-csv"></i>
+                            </div>
+                            <div class="action-content">
+                                <h6 class="action-title">Eksport historii</h6>
+                                <p class="action-desc">Pobierz pełną historię wpłat</p>
+                                <a href="{{ path('app_payment_history_export') }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>CSV
+                                </a>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Enhanced Payment History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="payment-history-card">
+                <div class="history-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Historia wpłat
+                    </h3>
+                    <div class="history-filters">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleHistoryFilters()">
+                            <i class="fas fa-filter me-1"></i>Filtry
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="history-filters-panel" id="historyFilters" style="display: none;">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <input type="date" class="form-control form-control-sm" placeholder="Data od">
+                        </div>
+                        <div class="col-md-3">
+                            <input type="date" class="form-control form-control-sm" placeholder="Data do">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select form-select-sm">
+                                <option value="">Wszystkie statusy</option>
+                                <option value="potwierdzona">Potwierdzona</option>
+                                <option value="oczekujaca">Oczekująca</option>
+                                <option value="anulowana">Anulowana</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-primary btn-sm">
+                                <i class="fas fa-search me-1"></i>Filtruj
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="history-body">
+                    {% if paymentHistory|length > 0 %}
+                    <div class="payments-timeline">
+                        {% for payment in paymentHistory %}
+                        <div class="payment-timeline-item">
+                            <div class="timeline-marker {{ payment.status }}">
+                                {% if payment.status == 'oplacona' %}
+                                    <i class="fas fa-check"></i>
+                                {% elseif payment.status == 'oczekujaca' %}
+                                    <i class="fas fa-clock"></i>
+                                {% else %}
+                                    <i class="fas fa-times"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="payment-card">
+                                    <div class="payment-header">
+                                        <div class="payment-amount">
+                                            <span class="amount">{{ payment.kwota }} PLN</span>
+                                        </div>
+                                        <div class="payment-status">
+                                            <span class="status-badge {{ payment.status }}">
+                                                {% if payment.status == 'oplacona' %}
+                                                    <i class="fas fa-check-circle me-1"></i>Opłacona
+                                                {% elseif payment.status == 'oczekujaca' %}
+                                                    <i class="fas fa-clock me-1"></i>Oczekująca
+                                                {% elseif payment.status == 'zwolniona' %}
+                                                    <i class="fas fa-gift me-1"></i>Zwolniona
+                                                {% else %}
+                                                    <i class="fas fa-times-circle me-1"></i>Anulowana
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="payment-details">
+                                        <div class="detail-row">
+                                            <div class="detail-label">
+                                                <i class="fas fa-calendar me-2"></i>Data płatności
+                                            </div>
+                                            <div class="detail-value">
+                                                {% if payment.dataPlatnosci %}
+                                                    {{ payment.dataPlatnosci|date('d.m.Y') }}
+                                                {% else %}
+                                                    <span class="text-muted">Brak danych</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <div class="detail-label">
+                                                <i class="fas fa-calendar-alt me-2"></i>Okres
+                                            </div>
+                                            <div class="detail-value">
+                                                {% if payment.miesiac < 10 %}0{% endif %}{{ payment.miesiac }}/{{ payment.rok }}
+                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <div class="detail-label">
+                                                <i class="fas fa-clock me-2"></i>Data rejestracji
+                                            </div>
+                                            <div class="detail-value">
+                                                {{ payment.dataRejestracji|date('d.m.Y H:i') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <h4>Brak historii wpłat</h4>
+                        <p class="text-muted">Nie znaleziono żadnych wpłat w systemie.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleHistoryFilters() {
+    const filters = document.getElementById('historyFilters');
+    filters.style.display = filters.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+
+<style>
+/* Enhanced Payment Page Styles */
+.payments-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.payments-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: float 20s ease-in-out infinite;
+}
+
+.header-content .page-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.title-icon {
+    background: rgba(255,255,255,0.2);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.5rem;
+}
+
+.page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.btn-enhanced {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary-gradient {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,123,255,0.3);
+}
+
+/* Payment Status Card */
+.payment-status-card {
+    background: var(--bg-primary);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+.status-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+
+.status-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-right: 1.5rem;
+    flex-shrink: 0;
+}
+
+.status-icon.success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.status-icon.warning {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: #000;
+}
+
+.status-icon.danger {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.status-content {
+    flex: 1;
+}
+
+.status-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+}
+
+.status-message {
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: none;
+}
+
+.status-metrics .row {
+    background: var(--bg-secondary);
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.metric-card {
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s ease;
+    border-right: 1px solid var(--border-color);
+}
+
+.metric-card:last-child {
+    border-right: none;
+}
+
+.metric-card:hover {
+    background: var(--bg-primary);
+}
+
+.metric-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.total-paid .metric-icon {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.monthly-fee .metric-icon {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+}
+
+.metric-content {
+    flex: 1;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.status-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.paid-until-info {
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    color: var(--text-secondary);
+}
+
+/* Quick Actions Card */
+.quick-actions-card {
+    background: var(--bg-primary);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+    height: 100%;
+}
+
+.quick-actions-card .card-header {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.5rem;
+    border-radius: 20px 20px 0 0;
+}
+
+.action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.action-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 15px;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.action-item:hover {
+    border-left-color: #667eea;
+    transform: translateX(4px);
+}
+
+.action-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.action-icon.export {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+}
+
+.action-icon.contact {
+    background: linear-gradient(135deg, #6f42c1, #563d7c);
+    color: white;
+}
+
+.action-content {
+    flex: 1;
+}
+
+.action-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.action-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+/* Payment History Card */
+.payment-history-card {
+    background: var(--bg-primary);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+    border-radius: 20px 20px 0 0;
+}
+
+.history-filters-panel {
+    padding: 1.5rem 2rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.history-body {
+    padding: 2rem;
+}
+
+/* Timeline Styles */
+.payments-timeline {
+    position: relative;
+}
+
+.payments-timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #667eea, #764ba2);
+}
+
+.payment-timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-start;
+}
+
+.timeline-marker {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    position: relative;
+    z-index: 2;
+    margin-right: 1.5rem;
+    flex-shrink: 0;
+}
+
+.timeline-marker.oplacona {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.timeline-marker.oczekujaca {
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: #000;
+}
+
+.timeline-marker.zwolniona {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+}
+
+.timeline-marker.anulowana {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.timeline-content {
+    flex: 1;
+    margin-top: -5px;
+}
+
+.payment-card {
+    background: var(--bg-secondary);
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.payment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.payment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.payment-amount .amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+}
+
+.status-badge.oplacona {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.2), rgba(32, 201, 151, 0.1));
+    color: #28a745;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-badge.oczekujaca {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(253, 126, 20, 0.1));
+    color: #856404;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.status-badge.zwolniona {
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.2), rgba(19, 132, 150, 0.1));
+    color: #17a2b8;
+    border: 1px solid rgba(23, 162, 184, 0.3);
+}
+
+.status-badge.anulowana {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.2), rgba(200, 35, 51, 0.1));
+    color: #dc3545;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.payment-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.detail-label {
+    flex: 0 0 40%;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+}
+
+.detail-value {
+    flex: 1;
+    text-align: right;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #667eea;
+    margin: 0 auto 2rem;
+}
+
+.empty-state h4 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .payments-header {
+        padding: 1.5rem;
+    }
+    
+    .header-content .page-title {
+        font-size: 1.5rem;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .title-icon {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .payment-status-card {
+        padding: 1.5rem;
+    }
+    
+    .status-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .status-icon {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-card {
+        flex-direction: column;
+        text-align: center;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .metric-card:last-child {
+        border-bottom: none;
+    }
+    
+    .metric-icon {
+        margin-right: 0;
+        margin-bottom: 0.75rem;
+    }
+    
+    .payment-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .detail-row {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .detail-label {
+        flex: none;
+    }
+    
+    .detail-value {
+        text-align: left;
+    }
+    
+    .payments-timeline::before {
+        left: 15px;
+    }
+    
+    .timeline-marker {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+}
+</style>
+{% endblock %}

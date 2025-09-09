@@ -1,0 +1,519 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Zarządzaj zdjęciem - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Zarządzaj zdjęciem{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .photo-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .photo-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .photo-upload-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .photo-upload-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .current-photo-section {
+            background: linear-gradient(135deg, rgba(111, 66, 193, 0.1), rgba(90, 50, 163, 0.05));
+            border: 1px solid rgba(111, 66, 193, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .info-alert {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(19, 132, 150, 0.05));
+            border: none;
+            border-left: 4px solid #17a2b8;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .file-input-enhanced {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .file-input-enhanced input[type="file"] {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%;
+            background: var(--bg-secondary);
+            transition: all 0.3s ease;
+        }
+        
+        .file-input-enhanced input[type="file"]:hover {
+            border-color: #6f42c1;
+            background: rgba(111, 66, 193, 0.05);
+        }
+        
+        .current-photo-display {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .current-photo-display img {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .current-photo-display img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+        }
+        
+        .photo-info {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .tips-card {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(33, 136, 56, 0.05));
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .tips-card h5 {
+            color: #28a745;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .tips-card h5 i {
+            margin-right: 0.5rem;
+        }
+        
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+            padding-left: 0.5rem;
+        }
+        
+        .tip-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .tip-item i {
+            color: #28a745;
+            margin-right: 0.75rem;
+            margin-top: 0.2rem;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+        
+        .action-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .btn-enhanced {
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary-enhanced {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            border-color: #6f42c1;
+            color: white;
+        }
+        
+        .btn-primary-enhanced:hover {
+            border-color: #5a32a3;
+            box-shadow: 0 4px 16px rgba(111, 66, 193, 0.3);
+        }
+        
+        .btn-outline-primary-enhanced {
+            background: transparent;
+            border-color: #6f42c1;
+            color: #6f42c1;
+        }
+        
+        .btn-outline-primary-enhanced:hover {
+            background: #6f42c1;
+            border-color: #6f42c1;
+            color: white;
+            box-shadow: 0 4px 16px rgba(111, 66, 193, 0.3);
+        }
+        
+        .btn-danger-enhanced {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger-enhanced:hover {
+            border-color: #c82333;
+            box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+        }
+        
+        .delete-photo-form {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(200, 35, 51, 0.05));
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .preview-container {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            background: var(--bg-secondary);
+            margin-top: 1rem;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .preview-container.has-preview {
+            border-color: #6f42c1;
+            background: rgba(111, 66, 193, 0.05);
+        }
+        
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Photo Header -->
+    <div class="photo-header">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="header-icon me-3">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="mb-0">Zarządzaj zdjęciem</h1>
+                        <p class="mb-0 opacity-90 fs-5">Wgraj i zarządzaj zdjęciem profilowym</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Enhanced Photo Upload Section -->
+            <div class="photo-upload-section">
+                <div class="info-alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Informacje o zdjęciu:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Dozwolone formaty: JPEG, PNG, GIF, WebP</li>
+                        <li>Maksymalny rozmiar: 5 MB</li>
+                        <li>Zdjęcie zostanie automatycznie przycięte do rozmiaru 500x500 pikseli</li>
+                        <li>Przycinanie odbywa się ze środka obrazu w celu zachowania najważniejszych detali</li>
+                    </ul>
+                </div>
+
+                {{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
+                    <div class="file-input-enhanced">
+                        {{ form_label(form.photo, null, {'attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.photo, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.photo) }}
+                        <div class="form-text">
+                            <i class="fas fa-upload me-1"></i>
+                            Wybierz zdjęcie z dysku. Zostanie ono automatycznie przycięte do kwadratu 500x500px.
+                        </div>
+                    </div>
+                    
+                    <!-- Preview Container -->
+                    <div class="preview-container" id="previewContainer">
+                        <div class="text-muted">
+                            <i class="fas fa-image fa-2x mb-2"></i>
+                            <p class="mb-0">Podgląd wybranego zdjęcia pojawi się tutaj</p>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start mt-3">
+                        {{ form_widget(form.upload, {'attr': {'class': 'btn btn-enhanced btn-primary-enhanced me-md-2'}}) }}
+                        <a href="{{ path('profil_index') }}" class="btn btn-enhanced btn-outline-primary-enhanced">
+                            <i class="fas fa-arrow-left me-2"></i>Powrót do profilu
+                        </a>
+                    </div>
+                {{ form_end(form) }}
+            </div>
+
+            <!-- Enhanced Current Photo Display -->
+            {% if user.zdjecie %}
+                <div class="current-photo-section">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">
+                            <i class="fas fa-image me-2"></i>Aktualne zdjęcie
+                        </h5>
+                        <div class="delete-photo-form">
+                            <span class="text-danger fw-bold">Usuń aktualne zdjęcie</span>
+                            <form method="post" action="{{ path('profil_delete_photo') }}" 
+                                  onsubmit="return confirm('Czy na pewno chcesz usunąć zdjęcie?');" class="ms-3">
+                                <button type="submit" class="btn btn-enhanced btn-danger-enhanced btn-sm">
+                                    <i class="fas fa-trash me-2"></i>Usuń
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="current-photo-display">
+                        <img src="{{ asset('uploads/photos/' ~ user.zdjecie) }}" 
+                             class="img-thumbnail" 
+                             alt="Zdjęcie {{ user.fullName }}">
+                        <div class="photo-info">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Rozmiar: 500x500px | Format: {{ user.zdjecie|split('.')|last|upper }}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Enhanced Tips Card -->
+            <div class="tips-card">
+                <h5>
+                    <i class="fas fa-lightbulb"></i>Wskazówki
+                </h5>
+                <h6>Jak przygotować dobre zdjęcie profilowe:</h6>
+                <div class="tip-item">
+                    <i class="fas fa-check"></i>
+                    <span>Użyj zdjęcia wysokiej jakości</span>
+                </div>
+                <div class="tip-item">
+                    <i class="fas fa-check"></i>
+                    <span>Upewnij się, że twoja twarz jest wyraźnie widoczna</span>
+                </div>
+                <div class="tip-item">
+                    <i class="fas fa-check"></i>
+                    <span>Wybierz zdjęcie z dobrym oświetleniem</span>
+                </div>
+                <div class="tip-item">
+                    <i class="fas fa-check"></i>
+                    <span>Unikaj zdjęć rozmazanych lub zbyt ciemnych</span>
+                </div>
+                <div class="tip-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>System automatycznie przytnie zdjęcie do kwadratu</span>
+                </div>
+            </div>
+
+            <!-- Enhanced Action Card -->
+            <div class="action-card">
+                <h5>
+                    <i class="fas fa-cog me-2"></i>Akcje
+                </h5>
+                <div class="d-grid gap-2">
+                    <a href="{{ path('profil_edit') }}" class="btn btn-enhanced btn-outline-primary-enhanced">
+                        <i class="fas fa-edit me-2"></i>Edytuj profil
+                    </a>
+                    <a href="{{ path('profil_index') }}" class="btn btn-enhanced btn-primary-enhanced">
+                        <i class="fas fa-user me-2"></i>Pokaż profil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Enhanced file preview functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.querySelector('input[type="file"]');
+            const previewContainer = document.getElementById('previewContainer');
+            
+            if (fileInput && previewContainer) {
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    
+                    if (file) {
+                        // Validate file type
+                        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                        if (!allowedTypes.includes(file.type)) {
+                            alert('Nieprawidłowy format pliku. Dozwolone formaty: JPEG, PNG, GIF, WebP');
+                            fileInput.value = '';
+                            showDefaultPreview();
+                            return;
+                        }
+                        
+                        // Validate file size (5MB)
+                        const maxSize = 5 * 1024 * 1024;
+                        if (file.size > maxSize) {
+                            alert('Plik jest za duży. Maksymalny rozmiar to 5 MB.');
+                            fileInput.value = '';
+                            showDefaultPreview();
+                            return;
+                        }
+                        
+                        // Show preview
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            showImagePreview(e.target.result, file);
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        showDefaultPreview();
+                    }
+                });
+            }
+            
+            function showImagePreview(src, file) {
+                previewContainer.className = 'preview-container has-preview';
+                previewContainer.innerHTML = `
+                    <div class="text-center">
+                        <img src="${src}" class="preview-image" alt="Podgląd">
+                        <div class="photo-info">
+                            <i class="fas fa-file-image me-1"></i>
+                            <strong>${file.name}</strong><br>
+                            <small>Rozmiar: ${(file.size / 1024 / 1024).toFixed(2)} MB | Format: ${file.type.split('/')[1].toUpperCase()}</small>
+                        </div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-scissors me-1"></i>
+                                Zdjęcie zostanie automatycznie przycięte do 500x500px
+                            </small>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            function showDefaultPreview() {
+                previewContainer.className = 'preview-container';
+                previewContainer.innerHTML = `
+                    <div class="text-muted">
+                        <i class="fas fa-image fa-2x mb-2"></i>
+                        <p class="mb-0">Podgląd wybranego zdjęcia pojawi się tutaj</p>
+                    </div>
+                `;
+            }
+            
+            // Drag and drop functionality
+            const uploadSection = document.querySelector('.photo-upload-section');
+            
+            if (uploadSection && fileInput) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    uploadSection.addEventListener(eventName, preventDefaults, false);
+                });
+                
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    uploadSection.addEventListener(eventName, highlight, false);
+                });
+                
+                ['dragleave', 'drop'].forEach(eventName => {
+                    uploadSection.addEventListener(eventName, unhighlight, false);
+                });
+                
+                function highlight(e) {
+                    uploadSection.style.borderColor = '#6f42c1';
+                    uploadSection.style.backgroundColor = 'rgba(111, 66, 193, 0.05)';
+                }
+                
+                function unhighlight(e) {
+                    uploadSection.style.borderColor = '';
+                    uploadSection.style.backgroundColor = '';
+                }
+                
+                uploadSection.addEventListener('drop', handleDrop, false);
+                
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    
+                    if (files.length > 0) {
+                        fileInput.files = files;
+                        // Trigger change event
+                        const event = new Event('change', { bubbles: true });
+                        fileInput.dispatchEvent(event);
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}

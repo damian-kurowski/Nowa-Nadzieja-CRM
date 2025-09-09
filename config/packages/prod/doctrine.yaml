@@ -1,0 +1,46 @@
+doctrine:
+    orm:
+        auto_generate_proxy_classes: false
+        proxy_dir: '%kernel.build_dir%/doctrine/orm/Proxies'
+        query_cache_driver:
+            type: pool
+            pool: doctrine.system_cache_pool
+        result_cache_driver:
+            type: pool
+            pool: doctrine.result_cache_pool
+        metadata_cache_driver:
+            type: pool
+            pool: doctrine.metadata_cache_pool
+        
+        # Enable Second Level Cache for better performance
+        second_level_cache:
+            enabled: true
+            region_cache_driver:
+                type: pool
+                pool: doctrine.second_level_cache_pool
+            regions:
+                default:
+                    lifetime: 3600
+                    cache_driver:
+                        type: pool
+                        pool: doctrine.second_level_cache_pool
+
+framework:
+    cache:
+        pools:
+            doctrine.result_cache_pool:
+                adapter: cache.adapter.redis
+                provider: '%env(REDIS_URL)%/1'
+                default_lifetime: 3600
+            doctrine.system_cache_pool:
+                adapter: cache.adapter.redis
+                provider: '%env(REDIS_URL)%/1'
+                default_lifetime: 86400
+            doctrine.metadata_cache_pool:
+                adapter: cache.adapter.redis
+                provider: '%env(REDIS_URL)%/1'
+                default_lifetime: 86400
+            doctrine.second_level_cache_pool:
+                adapter: cache.adapter.redis
+                provider: '%env(REDIS_URL)%/6'
+                default_lifetime: 3600

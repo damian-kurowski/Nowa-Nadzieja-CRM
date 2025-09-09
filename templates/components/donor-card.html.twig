@@ -1,0 +1,126 @@
+{# Unified Donor Card Component #}
+<div class="unified-card animate-in" data-donor-id="{{ donor.id }}">
+    {# Status Badge #}
+    <div class="unified-card-status">
+        {% set statusType = donor.status == 'aktywny' ? 'aktywny' : 'nieaktywny' %}
+        <span class="unified-status-badge {{ statusType }}">{{ donor.status|title }}</span>
+    </div>
+
+    {# Card Header #}
+    <div class="unified-card-header">
+        <div class="unified-card-avatar">
+            {% if donor.zdjecie %}
+                <img src="{{ asset('uploads/photos/' ~ donor.zdjecie) }}" alt="{{ donor.fullName }}">
+            {% else %}
+                <span class="unified-card-avatar-initials">
+                    {{ donor.imie|first|upper }}{{ donor.nazwisko|first|upper }}
+                </span>
+            {% endif %}
+        </div>
+        <div class="unified-card-info">
+            <h6 class="unified-card-name">{{ donor.fullName }}</h6>
+            <div class="unified-card-meta">
+                {% if donor.email %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ donor.email }}</span>
+                    </div>
+                {% endif %}
+                {% if donor.telefon %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ donor.telefon }}</span>
+                    </div>
+                {% endif %}
+                {% if donor.pesel %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-id-card"></i>
+                        <span>{{ donor.pesel }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Card Body #}
+    <div class="unified-card-body">
+        <div class="unified-card-details">
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Typ darczyńcy</span>
+                <span class="unified-detail-value">
+                    {% if donorTypes is defined and donorTypes[donor.id] is defined %}
+                        {{ donorTypes[donor.id] }}
+                    {% elseif donor.typDarczyny %}
+                        {{ donor.typDarczyny|title }}
+                    {% else %}
+                        <em>Nieokreślony</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Okręg</span>
+                <span class="unified-detail-value">
+                    {% if donor.okreg %}
+                        {{ donor.okreg.nazwa }}
+                    {% else %}
+                        <em>Brak przypisania</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Data rejestracji</span>
+                <span class="unified-detail-value">
+                    {% if donor.dataRejestracji %}
+                        {{ donor.dataRejestracji|date('d.m.Y') }}
+                    {% else %}
+                        <em>Brak daty</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Łączne wpłaty</span>
+                <span class="unified-detail-value">
+                    {% if paymentTotals is defined and paymentTotals[donor.id] is defined %}
+                        {% set lacznaKwota = paymentTotals[donor.id] %}
+                        {% if lacznaKwota > 0 %}
+                            <div class="unified-detail-payment">
+                                <span class="unified-payment-status paid">{{ lacznaKwota|number_format(0) }} PLN</span>
+                            </div>
+                        {% else %}
+                            <span class="unified-payment-status unpaid">Brak wpłat</span>
+                        {% endif %}
+                    {% elseif platnoscRepository is defined %}
+                        {% set lacznaKwota = platnoscRepository.getTotalPaidByUser(donor) %}
+                        {% if lacznaKwota > 0 %}
+                            <div class="unified-detail-payment">
+                                <span class="unified-payment-status paid">{{ lacznaKwota|number_format(0) }} PLN</span>
+                            </div>
+                        {% else %}
+                            <span class="unified-payment-status unpaid">Brak wpłat</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="unified-payment-status unpaid">Brak danych</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {# Card Footer #}
+    <div class="unified-card-footer">
+        <a href="{{ path('darczyca_show', {id: donor.id}) }}" class="unified-action-btn primary">
+            <i class="fas fa-eye"></i>
+            <span>Zobacz</span>
+        </a>
+        <a href="{{ path('darczyca_edit', {id: donor.id}) }}" class="unified-action-btn secondary">
+            <i class="fas fa-edit"></i>
+            <span>Edytuj</span>
+        </a>
+        {% if is_granted('ROLE_SKARBNIK_PARTII') %}
+            <a href="{{ path('darczyca_payments', {id: donor.id}) }}" class="unified-action-btn secondary">
+                <i class="fas fa-hand-holding-usd"></i>
+                <span>Wpłaty</span>
+            </a>
+        {% endif %}
+    </div>
+</div>

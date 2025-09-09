@@ -1,0 +1,524 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edytuj profil - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Edytuj profil{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .edit-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .edit-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .form-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .section-header {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid;
+            border-image: linear-gradient(135deg, #6f42c1, #5a32a3) 1;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-header i {
+            background: linear-gradient(135deg, #6f42c1, #5a32a3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #6f42c1;
+            box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .restricted-info {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(253, 126, 20, 0.05));
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .restricted-info h6 {
+            color: #856404;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .restricted-info h6 i {
+            margin-right: 0.5rem;
+        }
+        
+        .restricted-field {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .security-card {
+            background: linear-gradient(135deg, rgba(111, 66, 193, 0.1), rgba(90, 50, 163, 0.05));
+            border: 1px solid rgba(111, 66, 193, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .password-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .alert-enhanced {
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(19, 132, 150, 0.05));
+            color: var(--text-primary);
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .btn-enhanced {
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary-enhanced {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary-enhanced:hover {
+            box-shadow: 0 4px 16px rgba(111, 66, 193, 0.3);
+        }
+        
+        .btn-secondary-enhanced {
+            background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+            border: none;
+            color: white;
+        }
+        
+        .btn-secondary-enhanced:hover {
+            box-shadow: 0 4px 16px rgba(108, 117, 125, 0.3);
+        }
+        
+        .action-buttons {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Edit Header -->
+    <div class="edit-header">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="header-icon me-3">
+                        <i class="fas fa-user-edit"></i>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="mb-0">Edytuj profil</h1>
+                        <p class="mb-0 opacity-90 fs-5">Modyfikacja danych osobowych</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restricted Fields Information -->
+    <div class="restricted-info">
+        <h6>
+            <i class="fas fa-lock"></i>Pola chronione
+        </h6>
+        <p class="mb-2">
+            <strong>Następujące dane mogą być zmienione tylko przez administratora:</strong>
+        </p>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="restricted-field">
+                    <span><strong>Region:</strong> {{ user.region ? user.region.nazwa : 'Nie przypisany' }}</span>
+                    <i class="fas fa-lock text-warning"></i>
+                </div>
+                <div class="restricted-field">
+                    <span><strong>Okręg:</strong> {{ user.okreg ? user.okreg.nazwa : 'Nie przypisany' }}</span>
+                    <i class="fas fa-lock text-warning"></i>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="restricted-field">
+                    <span><strong>Oddział:</strong> {{ user.oddzial ? user.oddzial.nazwa : 'Nie przypisany' }}</span>
+                    <i class="fas fa-lock text-warning"></i>
+                </div>
+                <div class="restricted-field">
+                    <span><strong>Data rejestracji:</strong> {{ user.dataRejestracji|date('d.m.Y H:i') }}</span>
+                    <i class="fas fa-lock text-warning"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-12">
+            {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': '', 'enctype': 'multipart/form-data'}}) }}
+            
+            <!-- Dane osobowe -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-user"></i>Dane osobowe
+                </div>
+                
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Informacja:</strong> Dane osobowe (imię, nazwisko, PESEL, data urodzenia, płeć) nie podlegają edycji. 
+                    W przypadku konieczności zmiany tych danych, skontaktuj się z administratorem systemu.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form_label(form.imie, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.imie, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.imie) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.drugieImie, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.drugieImie, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.drugieImie) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.nazwisko, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.nazwisko, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.nazwisko) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.pesel, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.pesel, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.pesel) }}
+                            <div class="form-text">{{ form_help(form.pesel) }}</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form_label(form.dataUrodzenia, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.dataUrodzenia, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.dataUrodzenia) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.plec, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.plec, {'attr': {'class': 'form-select'}}) }}
+                            {{ form_errors(form.plec) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.email, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.email) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.telefon, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.telefon, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.telefon) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Adres zamieszkania -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-home"></i>Adres zamieszkania
+                </div>
+                
+                <div class="form-group">
+                    {{ form_label(form.adresZamieszkania, null, {'label_attr': {'class': 'form-label'}}) }}
+                    {{ form_widget(form.adresZamieszkania, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Ulica, numer domu/mieszkania\nKod pocztowy Miasto\nWojewództwo'}}) }}
+                    {{ form_errors(form.adresZamieszkania) }}
+                </div>
+            </div>
+
+            <!-- Informacje zawodowe -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-briefcase"></i>Informacje zawodowe
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form_label(form.zatrudnienieSpolki, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.zatrudnienieSpolki, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+                            {{ form_errors(form.zatrudnienieSpolki) }}
+                            <div class="form-text">{{ form_help(form.zatrudnienieSpolki) }}</div>
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.zatrudnienieSpolkiMiejskie, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.zatrudnienieSpolkiMiejskie, {'attr': {'class': 'form-control', 'rows': 2}}) }}
+                            {{ form_errors(form.zatrudnienieSpolkiMiejskie) }}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form_label(form.zatrudnienieSpolkiSkarbuPanstwa, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.zatrudnienieSpolkiSkarbuPanstwa, {'attr': {'class': 'form-control', 'rows': 2}}) }}
+                            {{ form_errors(form.zatrudnienieSpolkiSkarbuPanstwa) }}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.zatrudnienieSpolkiKomunalne, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.zatrudnienieSpolkiKomunalne, {'attr': {'class': 'form-control', 'rows': 2}}) }}
+                            {{ form_errors(form.zatrudnienieSpolkiKomunalne) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CV i dokumenty -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-file-pdf"></i>CV i dokumenty
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form_label(form.cvFile, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.cvFile, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.cvFile) }}
+                            <div class="form-text">{{ form_help(form.cvFile) }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        {% if user.cv %}
+                            <div class="current-cv">
+                                <label class="form-label">Obecne CV:</label>
+                                <div class="d-flex align-items-center">
+                                    <a href="{{ asset('uploads/cv/' ~ user.cv) }}" 
+                                       target="_blank" 
+                                       class="btn btn-outline-primary btn-sm me-2">
+                                        <i class="fas fa-eye me-1"></i>Podgląd
+                                    </a>
+                                    <span class="text-muted">{{ user.cv }}</span>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Brak CV w systemie
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media społecznościowe i informacje osobiste -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-share-alt"></i>Media społecznościowe i informacje osobiste
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form_label(form.socialMedia, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.socialMedia, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'https://facebook.com/twojprofil\nhttps://instagram.com/twojprofil\nhttps://twitter.com/twojprofil'}}) }}
+                            {{ form_errors(form.socialMedia) }}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Wprowadź pełne adresy URL, każdy w nowej linii
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.informacjeOmnie, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.informacjeOmnie, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Opowiedz coś o sobie, swoich zainteresowaniach, doświadczeniu...'}}) }}
+                            {{ form_errors(form.informacjeOmnie) }}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form_label(form.historiaWyborow, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.historiaWyborow, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+                            {{ form_errors(form.historiaWyborow) }}
+                            <div class="form-text">{{ form_help(form.historiaWyborow) }}</div>
+                        </div>
+
+                        <div class="form-group">
+                            {{ form_label(form.dodatkoweInformacje, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.dodatkoweInformacje, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+                            {{ form_errors(form.dodatkoweInformacje) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Change Section -->
+            <div class="form-section">
+                <div class="section-header">
+                    <i class="fas fa-lock"></i>Zmiana hasła
+                </div>
+                <div class="alert alert-enhanced">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Pozostaw puste, jeśli nie chcesz zmieniać hasła.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form_label(form.plainPassword.first, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.plainPassword.first, {'attr': {'class': 'form-control', 'placeholder': 'Nowe hasło'}}) }}
+                            {{ form_errors(form.plainPassword.first) }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form_label(form.plainPassword.second, null, {'label_attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.plainPassword.second, {'attr': {'class': 'form-control', 'placeholder': 'Powtórz nowe hasło'}}) }}
+                            {{ form_errors(form.plainPassword.second) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Action Buttons -->
+            <div class="action-buttons">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{{ path('profil_index') }}" class="btn btn-enhanced btn-secondary-enhanced">
+                        <i class="fas fa-arrow-left me-2"></i>Powrót do profilu
+                    </a>
+                    <button type="submit" class="btn btn-enhanced btn-primary-enhanced">
+                        <i class="fas fa-save me-2"></i>Zapisz zmiany
+                    </button>
+                </div>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Bootstrap form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+
+        // Auto-focus na pierwszym polu
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstInput = document.querySelector('input[name="profil[imie]"]');
+            if (firstInput) {
+                firstInput.focus();
+            }
+        });
+    </script>
+{% endblock %}

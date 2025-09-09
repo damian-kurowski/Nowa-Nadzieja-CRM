@@ -1,0 +1,81 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Odrzuć dokument{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header pb-0">
+                    <div class="d-lg-flex">
+                        <div>
+                            <h5 class="mb-0">Odrzuć dokument</h5>
+                            <p class="text-sm mb-0">{{ dokument.tytul }}</p>
+                        </div>
+                        <div class="ms-auto my-auto mt-lg-0 mt-4">
+                            <div class="ms-auto my-auto">
+                                <a href="{{ path('dokument_show', {'id': dokument.id}) }}" class="btn btn-outline-primary btn-sm mb-0">
+                                    <i class="fas fa-arrow-left me-1"></i> Powrót do dokumentu
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Uwaga:</strong> Odrzucenie dokumentu spowoduje jego anulowanie. 
+                                Ta operacja jest nieodwracalna.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Szczegóły dokumentu:</h6>
+                            <ul class="list-unstyled">
+                                <li><strong>Numer:</strong> {{ dokument.numerDokumentu }}</li>
+                                <li><strong>Typ:</strong> {{ dokument.typDisplayName }}</li>
+                                <li><strong>Data utworzenia:</strong> {{ dokument.dataUtworzenia|date('d.m.Y H:i') }}</li>
+                                <li><strong>Status:</strong> 
+                                    <span class="badge bg-warning">{{ dokument.status|title }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="reason"><strong>Powód odrzucenia *</strong></label>
+                                    <textarea class="form-control" name="reason" id="reason" rows="5" 
+                                              placeholder="Podaj szczegółowy powód odrzucenia dokumentu..." required></textarea>
+                                    <small class="form-text text-muted">
+                                        Wymagane jest podanie powodu odrzucenia. Informacja zostanie zapisana w historii dokumentu.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('Czy na pewno chcesz odrzucić ten dokument? Ta operacja jest nieodwracalna.')">
+                                    <i class="fas fa-times-circle me-1"></i> Odrzuć dokument
+                                </button>
+                                <a href="{{ path('dokument_show', {'id': dokument.id}) }}" class="btn btn-secondary ms-2">
+                                    <i class="fas fa-arrow-left me-1"></i> Anuluj
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

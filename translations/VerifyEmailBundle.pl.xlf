@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="pl" target-language="pl" datatype="plaintext" original="file.ext">
+    <header>
+      <tool tool-id="symfony" tool-name="Symfony"/>
+    </header>
+    <body>
+      <trans-unit id="U_NoHhq" resname="%count% year|%count% years">
+        <source>%count% year|%count% years</source>
+        <target>%count% rok|%count% lata|%count% lat</target>
+      </trans-unit>
+      <trans-unit id="NCe6niW" resname="%count% month|%count% months">
+        <source>%count% month|%count% months</source>
+        <target>%count% miesiąc|%count% miesiące|%count% miesięcy</target>
+      </trans-unit>
+      <trans-unit id="E69bPZ6" resname="%count% day|%count% days">
+        <source>%count% day|%count% days</source>
+        <target>%count% dzień|%count% dni|%count% dni</target>
+      </trans-unit>
+      <trans-unit id="H3jnVKg" resname="%count% hour|%count% hours">
+        <source>%count% hour|%count% hours</source>
+        <target>%count% godzinę|%count% godziny|%count% godzin</target>
+      </trans-unit>
+      <trans-unit id="30tji6_" resname="%count% minute|%count% minutes">
+        <source>%count% minute|%count% minutes</source>
+        <target>%count% minutę|%count% minuty|%count% minut</target>
+      </trans-unit>
+      <trans-unit id="F0PcQoi" resname="The link to verify your email has expired. Please request a new link.">
+        <source>The link to verify your email has expired. Please request a new link.</source>
+        <target>Link do weryfikacji adresu e-mail wygasł. Proszę poprosić o nowy link.</target>
+      </trans-unit>
+      <trans-unit id="dSF4hGL" resname="The link to verify your email is invalid. Please request a new link.">
+        <source>The link to verify your email is invalid. Please request a new link.</source>
+        <target>Link do weryfikacji adresu e-mail jest nieprawidłowy. Proszę poprosić o nowy link.</target>
+      </trans-unit>
+      <trans-unit id="GTlrnoK" resname="The link to verify your email appears to be for a different account or email. Please request a new link.">
+        <source>The link to verify your email appears to be for a different account or email. Please request a new link.</source>
+        <target>Wygląda na to, że link do weryfikacji adresu e-mail dotyczy innego konta lub adresu e-mail. Proszę poprosić o nowy link.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

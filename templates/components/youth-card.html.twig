@@ -1,0 +1,112 @@
+{# Unified Youth Card Component #}
+<div class="unified-card animate-in" data-member-id="{{ member.id }}">
+    {# Status Badge #}
+    <div class="unified-card-status">
+        {% set statusType = member.status == 'aktywny' ? 'aktywny' : 'nieaktywny' %}
+        <span class="unified-status-badge {{ statusType }}">
+            <i class="fas fa-graduation-cap me-1"></i>Młodzi dla Wolności
+        </span>
+    </div>
+
+    {# Card Header #}
+    <div class="unified-card-header">
+        <div class="unified-card-avatar">
+            {% if member.zdjecie %}
+                <img src="{{ asset('uploads/photos/' ~ member.zdjecie) }}" alt="{{ member.fullName }}">
+            {% else %}
+                <span class="unified-card-avatar-initials">
+                    {{ member.imie|first|upper }}{{ member.nazwisko|first|upper }}
+                </span>
+            {% endif %}
+        </div>
+        <div class="unified-card-info">
+            <h6 class="unified-card-name">{{ member.fullName }}</h6>
+            <div class="unified-card-meta">
+                {% if member.email %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ member.email }}</span>
+                    </div>
+                {% endif %}
+                {% if member.telefon %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ member.telefon }}</span>
+                    </div>
+                {% endif %}
+                {% if member.dataUrodzenia %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-birthday-cake"></i>
+                        <span>
+                            {{ member.dataUrodzenia|date('d.m.Y') }}
+                            {% if member.wiek %}
+                                ({{ member.wiek }} lat)
+                            {% endif %}
+                        </span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Card Body #}
+    <div class="unified-card-body">
+        <div class="unified-card-details">
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Okręg</span>
+                <span class="unified-detail-value">
+                    {% if member.okreg %}
+                        {{ member.okreg.nazwa }}
+                    {% else %}
+                        <em>Brak przypisania</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Oddział</span>
+                <span class="unified-detail-value">
+                    {% if member.oddzial %}
+                        {{ member.oddzial.nazwa }}
+                    {% else %}
+                        <em>Brak przypisania</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Członek od</span>
+                <span class="unified-detail-value">
+                    {% if member.dataPrzyjeciaDoPartii %}
+                        {{ member.dataPrzyjeciaDoPartii|date('d.m.Y') }}
+                    {% else %}
+                        <em>Brak daty</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Status</span>
+                <span class="unified-detail-value">
+                    {% set statusClass = member.status == 'aktywny' ? 'paid' : 'unpaid' %}
+                    <span class="unified-payment-status {{ statusClass }}">{{ member.status|title }}</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {# Card Footer #}
+    <div class="unified-card-footer">
+        <a href="{{ path('mlodziezowka_show', {id: member.id}) }}" class="unified-action-btn primary">
+            <i class="fas fa-eye"></i>
+            <span>Zobacz</span>
+        </a>
+        <a href="{{ path('mlodziezowka_edit', {id: member.id}) }}" class="unified-action-btn secondary">
+            <i class="fas fa-edit"></i>
+            <span>Edytuj</span>
+        </a>
+        {% if is_granted('ROLE_FUNKCYJNY') and app.user.id != member.id %}
+            <a href="{{ path('opinia_czlonka_list', {id: member.id}) }}" class="unified-action-btn secondary">
+                <i class="fas fa-comment-alt"></i>
+                <span>Opinie</span>
+            </a>
+        {% endif %}
+    </div>
+</div>

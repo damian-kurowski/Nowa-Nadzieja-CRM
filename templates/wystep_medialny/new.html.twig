@@ -1,0 +1,1027 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nowe wystąpienie medialne - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Nowe wystąpienie medialne{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .form-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .form-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .form-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .form-section h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid;
+            border-image: linear-gradient(135deg, #17a2b8, #138496) 1;
+            display: flex;
+            align-items: center;
+        }
+        
+        .form-section h6 i {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #17a2b8;
+            box-shadow: 0 0 0 0.25rem rgba(23, 162, 184, 0.25);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(23, 162, 184, 0.3);
+        }
+        
+        .info-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--shadow-medium);
+        }
+        
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .info-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+        
+        .help-section {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .help-section h6 {
+            color: #17a2b8;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+        
+        .form-text {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        .action-buttons {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .stats-preview {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(19, 132, 150, 0.05));
+            border: 1px solid rgba(23, 162, 184, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .stat-icon-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem auto;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .stat-icon-preview.total { background: linear-gradient(135deg, #17a2b8, #138496); }
+        .stat-icon-preview.month { background: linear-gradient(135deg, #28a745, #1e7e34); }
+        .stat-icon-preview.upcoming { background: linear-gradient(135deg, #ffc107, #e0a800); }
+        .stat-icon-preview.more { background: linear-gradient(135deg, #6f42c1, #5a32a3); }
+        
+        /* Enhanced Speaker Selection Styles */
+        .enhanced-speaker-selection {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .speaker-controls {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+        
+        .selected-speakers {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(30, 126, 52, 0.05));
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .selected-speakers-header {
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .selected-speakers-list {
+            min-height: 60px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+        
+        .selected-speaker-item {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .selected-speaker-item .remove-speaker {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .selected-speaker-item .remove-speaker:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .available-speakers {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .speakers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+        }
+        
+        .speaker-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .speaker-card:hover {
+            border-color: #17a2b8;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .speaker-card.selected {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(30, 126, 52, 0.05));
+            border-color: #28a745;
+            color: #28a745;
+        }
+        
+        .speaker-card.selected .speaker-status {
+            background: #28a745;
+            color: white;
+        }
+        
+        .speaker-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6c757d, #545b62);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+        
+        .speaker-avatar.czlonek { background: linear-gradient(135deg, #17a2b8, #138496); }
+        .speaker-avatar.kandydat { background: linear-gradient(135deg, #ffc107, #e0a800); }
+        
+        .speaker-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .speaker-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .speaker-details {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .speaker-status {
+            background: var(--bg-tertiary);
+            padding: 0.125rem 0.375rem;
+            border-radius: 10px;
+            font-size: 0.625rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .speaker-location {
+            font-size: 0.625rem;
+            color: var(--text-secondary);
+        }
+        
+        .no-speakers-found {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .no-speakers-found i {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Form Header -->
+    <div class="form-header">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="header-icon me-3">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="mb-0">Nowe wystąpienie medialne</h1>
+                        <p class="mb-0 opacity-90 fs-5">Rejestracja aktywności medialnej</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Enhanced Form Section -->
+            <div class="form-section">
+                {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': ''}}) }}
+                    
+                    <div class="row">
+                        <!-- Podstawowe informacje o wystąpieniu -->
+                        <div class="col-md-6">
+                            <h6>
+                                <i class="fas fa-tv"></i>Informacje o medium
+                            </h6>
+                            
+                            <div class="mb-3">
+                                {{ form_label(form.dataIGodzina, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.dataIGodzina, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.dataIGodzina) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.nazwaMediaRedakcji, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.nazwaMediaRedakcji, {'attr': {'class': 'form-control', 'placeholder': 'np. TVP Info, Polsat News, Gazeta.pl'}}) }}
+                                {{ form_errors(form.nazwaMediaRedakcji) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.nazwaProgramu, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.nazwaProgramu, {'attr': {'class': 'form-control', 'placeholder': 'np. Wiadomości, Debata, Wywiad'}}) }}
+                                {{ form_errors(form.nazwaProgramu) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.dziennikarzProwadzacy, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.dziennikarzProwadzacy, {'attr': {'class': 'form-control', 'placeholder': 'Imię i nazwisko dziennikarza'}}) }}
+                                {{ form_errors(form.dziennikarzProwadzacy) }}
+                            </div>
+                        </div>
+
+                        <!-- Szczegóły wystąpienia -->
+                        <div class="col-md-6">
+                            <h6>
+                                <i class="fas fa-users"></i>Uczestnicy i kontakt
+                            </h6>
+
+                            <div class="mb-3">
+                                {{ form_label(form.mowcy, null, {'label_attr': {'class': 'form-label'}}) }}
+                                
+                                <!-- Enhanced Speaker Selection -->
+                                <div class="enhanced-speaker-selection">
+                                    <!-- Search and Filter -->
+                                    <div class="speaker-controls mb-3">
+                                        <div class="row g-2">
+                                            <div class="col-md-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-text">
+                                                        <i class="fas fa-search"></i>
+                                                    </span>
+                                                    <input type="text" class="form-control" id="speakerSearch" 
+                                                           placeholder="Szukaj po nazwisku lub imieniu...">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <select class="form-select" id="speakerTypeFilter">
+                                                    <option value="">Wszyscy</option>
+                                                    <option value="czlonek">Członkowie</option>
+                                                    <option value="kandydat">Kandydaci</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <select class="form-select" id="speakerLocationFilter">
+                                                    <option value="">Wszystkie lokalizacje</option>
+                                                    <option value="warszawa">Warszawa</option>
+                                                    <option value="krakow">Kraków</option>
+                                                    <option value="gdansk">Gdańsk</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Selected Speakers -->
+                                    <div class="selected-speakers mb-3" id="selectedSpeakers">
+                                        <div class="selected-speakers-header">
+                                            <small class="text-muted">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                Wybrani mówcy (<span id="selectedCount">0</span>):
+                                            </small>
+                                        </div>
+                                        <div class="selected-speakers-list" id="selectedSpeakersList">
+                                            <div class="no-selection text-muted text-center py-2">
+                                                <small>Nie wybrano żadnych mówców</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Available Speakers -->
+                                    <div class="available-speakers">
+                                        <div class="available-speakers-header mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-users me-1"></i>
+                                                Dostępni mówcy:
+                                            </small>
+                                        </div>
+                                        <div class="speakers-grid" id="speakersGrid">
+                                            <div class="loading-message text-center py-4">
+                                                <div class="spinner-border text-primary" role="status">
+                                                    <span class="visually-hidden">Ładowanie...</span>
+                                                </div>
+                                                <p class="mt-2 text-muted">Ładowanie listy mówców...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hidden original select for form submission -->
+                                    {{ form_widget(form.mowcy, {'attr': {'style': 'display: none;', 'id': 'original-speakers-select'}}) }}
+                                </div>
+                                
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Kliknij na osobę aby dodać/usunąć ją z listy mówców
+                                </div>
+                                {{ form_errors(form.mowcy) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.numerTelefonu, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.numerTelefonu, {'attr': {'class': 'form-control', 'placeholder': '+48 123 456 789'}}) }}
+                                {{ form_errors(form.numerTelefonu) }}
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form_label(form.linkDoNagrania, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.linkDoNagrania, {'attr': {'class': 'form-control', 'placeholder': 'https://'}}) }}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Link do nagrania lub transmisji na żywo
+                                </div>
+                                {{ form_errors(form.linkDoNagrania) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tematy rozmowy -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6>
+                                <i class="fas fa-comments"></i>Tematy i treść
+                            </h6>
+                            
+                            <div class="mb-4">
+                                {{ form_label(form.tematyRozmowy, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_widget(form.tematyRozmowy, {'attr': {'class': 'form-control', 'placeholder': 'Opisz główne tematy, które będą poruszane podczas wystąpienia...'}}) }}
+                                {{ form_errors(form.tematyRozmowy) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enhanced Action Buttons -->
+                    <div class="action-buttons">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="{{ path('wystep_medialny_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Powrót do listy
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Zapisz wystąpienie
+                            </button>
+                        </div>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+
+            <!-- Enhanced Information Panel -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h5 class="mb-0">Informacje o wystąpieniach medialnych</h5>
+                </div>
+                <div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="help-section mb-3">
+                                <h6>Przed wystąpieniem</h6>
+                                <ul class="small mb-0">
+                                    <li>Przygotuj kluczowe tezy do przekazania</li>
+                                    <li>Sprawdź aktualność danych i faktów</li>
+                                    <li>Ustal czas trwania wystąpienia</li>
+                                    <li>Przygotuj odpowiedzi na trudne pytania</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="help-section mb-3">
+                                <h6>Podczas wystąpienia</h6>
+                                <ul class="small mb-0">
+                                    <li>Mów jasno i konkretnie</li>
+                                    <li>Pozostań przy ustalonych tematach</li>
+                                    <li>Zachowaj spokój i profesjonalizm</li>
+                                    <li>Unikaj kontrowersyjnych stwierdzeń</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="help-section mb-3">
+                                <h6>Po wystąpieniu</h6>
+                                <ul class="small mb-0">
+                                    <li>Zapisz link do nagrania</li>
+                                    <li>Przygotuj podsumowanie</li>
+                                    <li>Monitoruj odbiór medialny</li>
+                                    <li>Udokumentuj w systemie CRM</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Statistics Preview -->
+            {% if is_granted('ROLE_RZECZNIK_PRASOWY') %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h5 class="mb-0">Statystyki wystąpień</h5>
+                </div>
+                <div class="stats-preview">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="stat-icon-preview total">
+                                <i class="fas fa-microphone"></i>
+                            </div>
+                            <h4 class="mb-0">{{ stats.total_count ?? 0 }}</h4>
+                            <small class="text-muted">Łącznie wystąpień</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-icon-preview month">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <h4 class="mb-0">{{ stats.this_month ?? 0 }}</h4>
+                            <small class="text-muted">W tym miesiącu</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-icon-preview upcoming">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h4 class="mb-0">{{ stats.upcoming is defined ? stats.upcoming|length : 0 }}</h4>
+                            <small class="text-muted">Planowanych</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-icon-preview more">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="mt-2">
+                                <a href="{{ path('wystep_medialny_stats') }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-external-link-alt me-1"></i>Zobacz więcej
+                                </a>
+                            </div>
+                            <small class="text-muted">Szczegółowe statystyki</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Bootstrap form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+
+        // Auto-focus na pierwszym polu
+        document.querySelector('input[type="datetime-local"]').focus();
+        
+        // Podpowiedzi dla różnych mediów
+        const mediaInput = document.querySelector('input[name="wystep_medialny[nazwaMediaRedakcji]"]');
+        if (mediaInput) {
+            mediaInput.addEventListener('blur', function() {
+                const value = this.value.toLowerCase();
+                const programInput = document.querySelector('input[name="wystep_medialny[nazwaProgramu]"]');
+                
+                if (programInput && !programInput.value) {
+                    if (value.includes('tvp')) {
+                        programInput.placeholder = 'np. Wiadomości, Gość Wiadomości, Studio Polska';
+                    } else if (value.includes('polsat')) {
+                        programInput.placeholder = 'np. Wydarzenia, Graffiti, Debata';
+                    } else if (value.includes('tvn')) {
+                        programInput.placeholder = 'np. Fakty, Kropka nad i, Szkło kontaktowe';
+                    }
+                }
+            });
+        }
+
+        // Enhanced Speaker Selection System - Fixed Version
+        class EnhancedSpeakerSelection {
+            constructor() {
+                this.selectedSpeakers = new Set();
+                this.allSpeakers = [];
+                this.filteredSpeakers = [];
+                this.isInitialized = false;
+                
+                // Find the original select element - try multiple methods
+                this.originalSelect = document.getElementById('original-speakers-select');
+                
+                if (!this.originalSelect) {
+                    this.originalSelect = document.querySelector('select[multiple][name*="mowcy"]');
+                }
+                
+                if (!this.originalSelect) {
+                    this.originalSelect = document.querySelector('select[multiple]');
+                }
+                
+                if (!this.originalSelect) {
+                    const allSelects = document.querySelectorAll('select');
+                    allSelects.forEach((select, index) => {
+                        if (select.multiple) {
+                            this.originalSelect = select;
+                        }
+                    });
+                }
+                
+                if (!this.originalSelect) {
+                    console.error('Original speakers select not found');
+                    this.showFallbackMessage();
+                    return;
+                }
+                
+                // Get DOM elements
+                this.speakersGrid = document.getElementById('speakersGrid');
+                this.selectedSpeakersList = document.getElementById('selectedSpeakersList');
+                this.selectedCount = document.getElementById('selectedCount');
+                this.searchInput = document.getElementById('speakerSearch');
+                this.typeFilter = document.getElementById('speakerTypeFilter');
+                this.locationFilter = document.getElementById('speakerLocationFilter');
+                
+                if (!this.speakersGrid || !this.selectedSpeakersList) {
+                    console.error('Required DOM elements not found');
+                    this.showFallbackMessage();
+                    return;
+                }
+                
+                this.init();
+            }
+            
+            init() {
+                try {
+                    this.extractSpeakersFromSelect();
+                    this.setupEventListeners();
+                    this.renderSpeakers();
+                    this.updateSelectedDisplay();
+                    this.isInitialized = true;
+                } catch (error) {
+                    console.error('Error initializing speaker selection:', error);
+                    this.showFallbackMessage();
+                }
+            }
+            
+            extractSpeakersFromSelect() {
+                const options = Array.from(this.originalSelect.querySelectorAll('option'));
+                
+                if (options.length <= 1) {
+                    this.showNoSpeakersMessage();
+                    return;
+                }
+                
+                this.allSpeakers = options
+                    .filter(option => option.value !== '')
+                    .map(option => {
+                        const fullText = option.textContent.trim();
+                        const emailMatch = fullText.match(/\(([^)]+)\)$/);
+                        const email = emailMatch ? emailMatch[1] : '';
+                        const name = emailMatch ? fullText.replace(/\s*\([^)]+\)$/, '') : fullText;
+                        
+                        // Determine user type
+                        let userType = 'czlonek';
+                        if (name.toLowerCase().includes('kandydat') || email.includes('kandydat')) {
+                            userType = 'kandydat';
+                        }
+                        
+                        // Try to determine location
+                        let location = '';
+                        const lowercaseName = name.toLowerCase();
+                        const lowercaseEmail = email.toLowerCase();
+                        
+                        if (lowercaseName.includes('warszawa') || lowercaseEmail.includes('warszawa')) {
+                            location = 'warszawa';
+                        } else if (lowercaseName.includes('kraków') || lowercaseName.includes('krakow') || 
+                                 lowercaseEmail.includes('krakow')) {
+                            location = 'krakow';
+                        } else if (lowercaseName.includes('gdańsk') || lowercaseName.includes('gdansk') || 
+                                 lowercaseEmail.includes('gdansk')) {
+                            location = 'gdansk';
+                        }
+                        
+                        return {
+                            id: option.value,
+                            name: name,
+                            email: email,
+                            userType: userType,
+                            location: location,
+                            initials: this.getInitials(name)
+                        };
+                    });
+                
+                this.filteredSpeakers = [...this.allSpeakers];
+            }
+            
+            getInitials(name) {
+                return name.split(' ')
+                    .map(word => word.charAt(0))
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2);
+            }
+            
+            setupEventListeners() {
+                // Search and filter events
+                this.searchInput.addEventListener('input', () => this.applyFilters());
+                this.typeFilter.addEventListener('change', () => this.applyFilters());
+                this.locationFilter.addEventListener('change', () => this.applyFilters());
+                
+                // Don't interfere with form submission - just ensure the select is updated
+                const form = this.originalSelect.closest('form');
+                if (form) {
+                    form.addEventListener('submit', () => {
+                        // Make sure the original select is properly updated before submission
+                        this.updateOriginalSelect();
+                    });
+                }
+            }
+            
+            applyFilters() {
+                const searchTerm = this.searchInput.value.toLowerCase();
+                const typeFilter = this.typeFilter.value;
+                const locationFilter = this.locationFilter.value;
+                
+                this.filteredSpeakers = this.allSpeakers.filter(speaker => {
+                    const matchesSearch = !searchTerm || 
+                        speaker.name.toLowerCase().includes(searchTerm) ||
+                        speaker.email.toLowerCase().includes(searchTerm);
+                    
+                    const matchesType = !typeFilter || speaker.userType === typeFilter;
+                    const matchesLocation = !locationFilter || speaker.location === locationFilter;
+                    
+                    return matchesSearch && matchesType && matchesLocation;
+                });
+                
+                this.renderSpeakers();
+            }
+            
+            renderSpeakers() {
+                if (this.filteredSpeakers.length === 0) {
+                    this.speakersGrid.innerHTML = `
+                        <div class="no-speakers-found">
+                            <i class="fas fa-search"></i>
+                            <p>Nie znaleziono mówców spełniających kryteria</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const speakerCards = this.filteredSpeakers
+                    .map(speaker => this.createSpeakerCard(speaker))
+                    .join('');
+                
+                this.speakersGrid.innerHTML = speakerCards;
+                
+                // Add click handlers to speaker cards
+                this.speakersGrid.querySelectorAll('.speaker-card').forEach(card => {
+                    const speakerId = card.dataset.speakerId;
+                    card.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.toggleSpeaker(speakerId);
+                    });
+                });
+            }
+            
+            createSpeakerCard(speaker) {
+                const isSelected = this.selectedSpeakers.has(speaker.id);
+                const statusText = speaker.userType === 'czlonek' ? 'Członek' : 'Kandydat';
+                
+                return `
+                    <div class="speaker-card ${isSelected ? 'selected' : ''}" data-speaker-id="${speaker.id}">
+                        <div class="speaker-avatar ${speaker.userType}">
+                            ${speaker.initials}
+                        </div>
+                        <div class="speaker-info">
+                            <div class="speaker-name">${speaker.name}</div>
+                            <div class="speaker-details">
+                                <span class="speaker-status">${statusText}</span>
+                                ${speaker.location ? `<span class="speaker-location">${speaker.location}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            toggleSpeaker(speakerId) {
+                if (this.selectedSpeakers.has(speakerId)) {
+                    this.selectedSpeakers.delete(speakerId);
+                } else {
+                    this.selectedSpeakers.add(speakerId);
+                }
+                
+                this.updateSelectedDisplay();
+                this.updateOriginalSelect();
+                this.renderSpeakers();
+            }
+            
+            removeSpeaker(speakerId) {
+                this.selectedSpeakers.delete(speakerId);
+                this.updateSelectedDisplay();
+                this.updateOriginalSelect();
+                this.renderSpeakers();
+            }
+            
+            updateSelectedDisplay() {
+                const count = this.selectedSpeakers.size;
+                this.selectedCount.textContent = count;
+                
+                if (count === 0) {
+                    this.selectedSpeakersList.innerHTML = `
+                        <div class="no-selection text-muted text-center py-2">
+                            <small>Nie wybrano żadnych mówców</small>
+                        </div>
+                    `;
+                } else {
+                    const selectedSpeakersData = this.allSpeakers.filter(speaker => 
+                        this.selectedSpeakers.has(speaker.id)
+                    );
+                    
+                    this.selectedSpeakersList.innerHTML = selectedSpeakersData
+                        .map(speaker => `
+                            <div class="selected-speaker-item">
+                                <span>${speaker.name}</span>
+                                <button type="button" class="remove-speaker" data-speaker-id="${speaker.id}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        `)
+                        .join('');
+                        
+                    // Add click handlers to remove buttons
+                    this.selectedSpeakersList.querySelectorAll('.remove-speaker').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const speakerId = btn.dataset.speakerId;
+                            this.removeSpeaker(speakerId);
+                        });
+                    });
+                }
+            }
+            
+            updateOriginalSelect() {
+                // Clear all selections first
+                Array.from(this.originalSelect.options).forEach(option => {
+                    option.selected = false;
+                });
+                
+                // Select the chosen speakers
+                this.selectedSpeakers.forEach(speakerId => {
+                    const option = this.originalSelect.querySelector(`option[value="${speakerId}"]`);
+                    if (option) {
+                        option.selected = true;
+                    }
+                });
+            }
+            
+            showFallbackMessage() {
+                if (this.speakersGrid) {
+                    this.speakersGrid.innerHTML = `
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Problem z ładowaniem interfejsu</h6>
+                            <p class="mb-0">Wystąpił błąd podczas ładowania interfejsu wyboru mówców. 
+                               Odśwież stronę lub skontaktuj się z administratorem.</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            showNoSpeakersMessage() {
+                if (this.speakersGrid) {
+                    this.speakersGrid.innerHTML = `
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Brak dostępnych mówców</h6>
+                            <p class="mb-0">W systemie nie ma jeszcze użytkowników z uprawnieniami mówcy.</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        // Initialize the speaker selection system when DOM is ready
+        let speakerSelection;
+        
+        function initSpeakerSelection() {
+            try {
+                speakerSelection = new EnhancedSpeakerSelection();
+            } catch (error) {
+                // Silent fail
+            }
+        }
+        
+        // Try multiple initialization methods
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSpeakerSelection);
+        } else {
+            // DOM already loaded
+            setTimeout(initSpeakerSelection, 100);
+        }
+        
+        // Backup initialization
+        window.addEventListener('load', function() {
+            if (!speakerSelection) {
+                initSpeakerSelection();
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,190 @@
+DirectoryIndex index.php
+
+# Enhanced Security Headers and Anti-Scraping
+<IfModule mod_headers.c>
+    # Remove server signature
+    Header unset Server
+    Header unset X-Powered-By
+    Header unset ETag
+    
+    # Security headers
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+    
+    # HSTS (enable in production with HTTPS)
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    
+    # Enhanced Content Security Policy
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; img-src 'self' data: https: blob:; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; connect-src 'self'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    
+    # Cache control for sensitive files
+    <FilesMatch "\.(php|json)$">
+        Header always set Cache-Control "no-cache, no-store, must-revalidate"
+        Header always set Pragma "no-cache"
+        Header always set Expires "0"
+    </FilesMatch>
+    
+    # Cache control for static assets (1 year)
+    <FilesMatch "\.(ico|jpg|jpeg|png|gif|webp|svg|css|js|woff|woff2|ttf|otf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+</IfModule>
+
+# Enable compression
+<IfModule mod_deflate.c>
+    # Compress HTML, CSS, JavaScript, Text, XML and fonts
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
+    AddOutputFilterByType DEFLATE application/x-font
+    AddOutputFilterByType DEFLATE application/x-font-opentype
+    AddOutputFilterByType DEFLATE application/x-font-otf
+    AddOutputFilterByType DEFLATE application/x-font-truetype
+    AddOutputFilterByType DEFLATE application/x-font-ttf
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE font/opentype
+    AddOutputFilterByType DEFLATE font/otf
+    AddOutputFilterByType DEFLATE font/ttf
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE image/x-icon
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/xml
+</IfModule>
+
+# Enable browser caching
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # Images
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    
+    # Video
+    ExpiresByType video/mp4 "access plus 1 year"
+    ExpiresByType video/mpeg "access plus 1 year"
+    
+    # CSS, JavaScript
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType text/javascript "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    
+    # Others
+    ExpiresByType application/pdf "access plus 1 month"
+    ExpiresByType application/x-font-ttf "access plus 1 year"
+    ExpiresByType application/x-font-woff "access plus 1 year"
+    ExpiresByType application/x-font-woff2 "access plus 1 year"
+    ExpiresByType font/opentype "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# Enable HTTP/2 Server Push (if available)
+<IfModule mod_http2.c>
+    Protocols h2 h2c http/1.1
+    H2Push on
+    H2PushPriority text/css before
+    H2PushPriority application/javascript after
+</IfModule>
+
+# Block access to sensitive files and directories
+<FilesMatch "^(\.|composer\.|package\.|symfony\.lock|yarn\.lock|\.env)">
+    Require all denied
+</FilesMatch>
+
+# Block access to development files
+<FilesMatch "\.(yaml|yml|json|lock|md|txt|log|bak|orig|swp|tmp)$">
+    Require all denied
+</FilesMatch>
+
+# Block directory access
+RedirectMatch 403 ^/?(var|config|src|migrations|templates|translations|vendor|node_modules|\.git)/.*$
+
+# Bot and scraper blocking
+<IfModule mod_rewrite.c>
+    # Block known bad bots and scrapers
+    RewriteCond %{HTTP_USER_AGENT} (bot|crawler|spider|scraper|wget|curl|python|ruby|perl|java|go-http|axios|requests|harvest) [NC]
+    RewriteRule .* - [F,L]
+    
+    # Block empty or suspicious user agents
+    RewriteCond %{HTTP_USER_AGENT} ^$ [OR]
+    RewriteCond %{HTTP_USER_AGENT} ^.{0,10}$
+    RewriteRule .* - [F,L]
+    
+    # Block requests without common browser headers
+    RewriteCond %{HTTP_ACCEPT} ^$
+    RewriteCond %{HTTP_USER_AGENT} !^(Mozilla|Opera|Chrome|Safari|Edge) [NC]
+    RewriteRule .* - [F,L]
+    
+    # Block common attack patterns in query strings
+    RewriteCond %{QUERY_STRING} (union.*select|insert.*into|delete.*from|update.*set|drop.*table) [NC,OR]
+    RewriteCond %{QUERY_STRING} (<script|<iframe|javascript:|vbscript:|on\w+\s*=) [NC,OR]
+    RewriteCond %{QUERY_STRING} (\.\.\/|\.\.\\|\/etc\/|\/bin\/|\/usr\/|\/var\/|\/tmp\/) [NC,OR]
+    RewriteCond %{QUERY_STRING} base64_(en|de)code [NC]
+    RewriteRule .* - [F,L]
+</IfModule>
+
+# Request size limits (if mod_php is available)
+<IfModule mod_php.c>
+    php_value post_max_size 10M
+    php_value upload_max_filesize 5M
+    php_value max_file_uploads 5
+    php_value max_input_vars 1000
+    php_value max_input_time 30
+    php_value max_execution_time 30
+</IfModule>
+
+<IfModule mod_negotiation.c>
+    Options -MultiViews
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect to URI without front controller to prevent duplicate content
+    # (with and without `/index.php`). Only do this redirect on the initial
+    # rewrite by Apache and not on subsequent cycles. Otherwise we would get an
+    # endless redirect loop (request -> rewrite to front controller ->
+    # redirect -> request -> ...).
+    # So in case you get a "too many redirects" error or you always get redirected
+    # to the start page because your Apache does not expose the REDIRECT_STATUS
+    # environment variable, you have 2 choices:
+    # - disable this feature by commenting the following 2 lines or
+    # - use Apache >= 2.3.9 and replace all L flags by END flags and remove the
+    #   following RewriteCond (best solution)
+    RewriteCond %{ENV:REDIRECT_STATUS} ^$
+    RewriteRule ^index\.php(?:/(.*)|$) %{ENV:BASE}/$1 [R=301,L]
+
+    # If the requested filename exists, don't do anything
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule .? - [L]
+
+    # Rewrite all other queries to the front controller.
+    RewriteRule .? %{ENV:BASE}/index.php [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        # When mod_rewrite is not available, we instruct a temporary redirect of
+        # the start page to the front controller explicitly so that the website
+        # and the generated links can still be used.
+        RedirectMatch 307 ^/$ /index.php/
+        # RedirectTemp cannot be used instead
+    </IfModule>
+</IfModule>

@@ -1,0 +1,724 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nowy dokument - {{ documentDefinition.title }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Nowy dokument: {{ documentDefinition.title }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .document-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .document-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1rem;
+        }
+        
+        .form-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .form-control {
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+        
+        .btn-enhanced {
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+        
+        .btn-outline-secondary {
+            border: 2px solid var(--gray-300);
+            color: var(--gray-600);
+        }
+        
+        .btn-outline-secondary:hover {
+            background: var(--gray-300);
+            color: var(--gray-800);
+        }
+        
+        .form-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        
+        .required::after {
+            content: ' *';
+            color: #ef4444;
+        }
+        
+        /* Enhanced Member Selection Styles (podobne do konferencji prasowej) */
+        .enhanced-multi-select-container {
+            position: relative;
+        }
+        
+        .enhanced-multi-select {
+            display: none;
+        }
+        
+        .enhanced-member-selection {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .member-controls {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .selected-members {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .selected-members-list {
+            min-height: 60px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+        
+        .selected-member-item {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .selected-member-item .remove-member {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .selected-member-item .remove-member:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .available-members {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 0.75rem;
+        }
+        
+        .member-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .member-card:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .member-card.selected {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6c757d, #545b62);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+        
+        .member-avatar.czlonek { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .member-avatar.funkcyjny { background: linear-gradient(135deg, #28a745, #20c997); }
+        .member-avatar.zarzad { background: linear-gradient(135deg, #fd7e14, #fd9843); }
+        
+        .member-info {
+            flex: 1;
+        }
+        
+        .member-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .member-details {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .member-actions {
+            display: flex;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+        
+        .member-search {
+            width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .member-counter {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .no-members-found,
+        .no-selection {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Document Header -->
+    <div class="document-header">
+        <div class="d-flex align-items-center">
+            <div class="header-icon">
+                <i class="fas fa-file-plus"></i>
+            </div>
+            <div class="ms-3">
+                <h1 class="mb-1">{{ documentDefinition.title }}</h1>
+                <p class="mb-0 opacity-90">{{ documentDefinition.description }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+        {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+        
+        <div class="row">
+            <div class="col-12">
+                <h4 class="mb-4">
+                    <i class="fas fa-edit me-2"></i>Dane dokumentu
+                </h4>
+            </div>
+        </div>
+
+        <!-- Form Fields -->
+        {% for child in form.children %}
+            {% if child.vars.name != '_token' %}
+                <div class="form-group">
+                    {% set is_required = child.vars.required %}
+                    {{ form_label(child, null, {'label_attr': {'class': is_required ? 'form-label required' : 'form-label'}}) }}
+                    
+                    {# Specjalne traktowanie dla pola członków oddziału #}
+                    {% if child.vars.name == 'czlonkowie_oddzialu' and child.vars.attr.class is defined and 'enhanced-multi-select' in child.vars.attr.class %}
+                        <!-- Enhanced Member Selection Panel -->
+                        <div class="enhanced-member-selection">
+                            <!-- Search and Filter Controls -->
+                            <div class="member-controls">
+                                <div class="row g-2">
+                                    <div class="col-md-8">
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-search"></i>
+                                            </span>
+                                            <input type="text" class="member-search" id="memberSearch" 
+                                                   placeholder="Szukaj członków po nazwisku lub imieniu...">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="memberTypeFilter">
+                                            <option value="">Wszystkie typy</option>
+                                            <option value="czlonek">Członkowie</option>
+                                            <option value="funkcyjny">Funkcyjni</option>
+                                            <option value="zarzad">Zarząd okręgu</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Selected Members -->
+                            <div class="selected-members" id="selectedMembers">
+                                <div class="selected-members-header">
+                                    <small class="text-muted">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Wybrani członkowie (<span id="selectedCount">0</span> / minimum 2):
+                                    </small>
+                                </div>
+                                <div class="selected-members-list" id="selectedMembersList">
+                                    <div class="no-selection text-muted text-center py-2">
+                                        <small>Nie wybrano żadnych członków</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Available Members -->
+                            <div class="available-members">
+                                <div class="available-members-header mb-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-users me-1"></i>
+                                        Dostępni członkowie w okręgu:
+                                    </small>
+                                </div>
+                                <div class="members-grid" id="membersGrid">
+                                    <div class="loading-message text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Ładowanie...</span>
+                                        </div>
+                                        <p class="mt-2 text-muted">Ładowanie listy członków...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden original select for form submission -->
+                            {{ form_widget(child, {'attr': {'style': 'display: none;'}}) }}
+                        </div>
+                        
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Kliknij na osobę aby dodać/usunąć ją z oddziału. Minimum 2 członków jest wymagane. Każdy użytkownik może być tylko w jednym oddziale.
+                        </div>
+                        {{ form_errors(child) }}
+                    {% else %}
+                        {# Standardowe renderowanie innych pól #}
+                        {% if child.vars.block_prefixes[1] == 'textarea' %}
+                            {{ form_widget(child, {'attr': {'class': 'form-control', 'rows': 4}}) }}
+                        {% elseif child.vars.block_prefixes[1] == 'choice' or child.vars.block_prefixes[1] == 'entity' %}
+                            {{ form_widget(child, {'attr': {'class': 'form-control'}}) }}
+                        {% elseif child.vars.block_prefixes[1] == 'date' %}
+                            {{ form_widget(child, {'attr': {'class': 'form-control'}}) }}
+                        {% else %}
+                            {{ form_widget(child, {'attr': {'class': 'form-control'}}) }}
+                        {% endif %}
+                        
+                        {% if child.vars.help %}
+                            <div class="form-text">{{ child.vars.help }}</div>
+                        {% endif %}
+                        
+                        {{ form_errors(child) }}
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Form Actions -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <hr class="mb-4">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ path('dokument_index') }}" class="btn btn-enhanced btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Anuluj
+                    </a>
+                    <button type="submit" class="btn btn-enhanced btn-primary-gradient">
+                        <i class="fas fa-save me-2"></i>Utwórz dokument
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Form validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('.needs-validation');
+            
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            });
+            
+            // Initialize enhanced member selection
+            initializeEnhancedMemberSelection();
+        });
+        
+        // Enhanced Member Selection System (podobny do konferencji prasowej)
+        if (typeof window.EnhancedMemberSelection === 'undefined') {
+            window.EnhancedMemberSelection = class EnhancedMemberSelection {
+            constructor() {
+                this.selectedMembers = new Set();
+                this.allMembers = [];
+                this.filteredMembers = [];
+                
+                // Znajdź oryginalny select dla członków oddziału
+                this.originalSelect = document.querySelector('select[multiple][name*="czlonkowie_oddzialu"]');
+                if (!this.originalSelect) {
+                    console.error('Original select for members not found');
+                    this.showFallbackMessage();
+                    return;
+                }
+                
+                this.membersGrid = document.getElementById('membersGrid');
+                this.selectedMembersList = document.getElementById('selectedMembersList');
+                this.selectedCount = document.getElementById('selectedCount');
+                this.searchInput = document.getElementById('memberSearch');
+                this.typeFilter = document.getElementById('memberTypeFilter');
+                
+                if (!this.membersGrid || !this.selectedMembersList) {
+                    console.error('Required elements not found');
+                    this.showFallbackMessage();
+                    return;
+                }
+                
+                this.init();
+            }
+            
+            init() {
+                this.extractMembersFromSelect();
+                this.setupEventListeners();
+                this.renderMembers();
+                this.updateSelectedDisplay();
+            }
+            
+            extractMembersFromSelect() {
+                const options = this.originalSelect.querySelectorAll('option');
+                if (options.length <= 1) { // Only empty option
+                    this.showNoMembersMessage();
+                    return;
+                }
+                
+                this.allMembers = Array.from(options).map(option => {
+                    if (option.value === '') return null;
+                    
+                    const fullText = option.textContent.trim();
+                    const emailMatch = fullText.match(/\(([^)]+)\)$/);
+                    const email = emailMatch ? emailMatch[1] : '';
+                    const name = emailMatch ? fullText.replace(/\s*\([^)]+\)$/, '') : fullText;
+                    
+                    // Określ typ użytkownika na podstawie email lub nazwy
+                    let userType = 'czlonek';
+                    if (email.includes('funkcyjny') || name.toLowerCase().includes('prezes') || 
+                        name.toLowerCase().includes('sekretarz') || name.toLowerCase().includes('wiceprezes')) {
+                        userType = 'funkcyjny';
+                    } else if (name.toLowerCase().includes('zarząd') || name.toLowerCase().includes('zarzad')) {
+                        userType = 'zarzad';
+                    }
+                    
+                    return {
+                        id: option.value,
+                        name: name,
+                        email: email,
+                        userType: userType,
+                        initials: this.getInitials(name)
+                    };
+                }).filter(member => member !== null);
+                
+                this.filteredMembers = [...this.allMembers];
+            }
+            
+            getInitials(name) {
+                return name.split(' ')
+                    .map(word => word.charAt(0))
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2);
+            }
+            
+            setupEventListeners() {
+                if (this.searchInput) {
+                    this.searchInput.addEventListener('input', () => this.applyFilters());
+                }
+                if (this.typeFilter) {
+                    this.typeFilter.addEventListener('change', () => this.applyFilters());
+                }
+            }
+            
+            applyFilters() {
+                const searchTerm = this.searchInput ? this.searchInput.value.toLowerCase() : '';
+                const typeFilter = this.typeFilter ? this.typeFilter.value : '';
+                
+                this.filteredMembers = this.allMembers.filter(member => {
+                    const matchesSearch = !searchTerm || 
+                        member.name.toLowerCase().includes(searchTerm) ||
+                        member.email.toLowerCase().includes(searchTerm);
+                    
+                    const matchesType = !typeFilter || member.userType === typeFilter;
+                    
+                    return matchesSearch && matchesType;
+                });
+                
+                this.renderMembers();
+            }
+            
+            renderMembers() {
+                if (this.filteredMembers.length === 0) {
+                    this.membersGrid.innerHTML = `
+                        <div class="no-members-found text-center py-4">
+                            <i class="fas fa-search text-muted mb-2" style="font-size: 2rem;"></i>
+                            <p class="text-muted">Nie znaleziono członków spełniających kryteria</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                this.membersGrid.innerHTML = this.filteredMembers
+                    .map(member => this.createMemberCard(member))
+                    .join('');
+                
+                // Dodaj event listenery do kart
+                this.membersGrid.querySelectorAll('.member-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        const memberId = card.dataset.memberId;
+                        this.toggleMember(memberId);
+                    });
+                });
+            }
+            
+            createMemberCard(member) {
+                const isSelected = this.selectedMembers.has(member.id);
+                let statusText = 'Członek';
+                let statusClass = 'czlonek';
+                
+                if (member.userType === 'funkcyjny') {
+                    statusText = 'Funkcyjny';
+                    statusClass = 'funkcyjny';
+                } else if (member.userType === 'zarzad') {
+                    statusText = 'Zarząd okręgu';
+                    statusClass = 'zarzad';
+                }
+                
+                return `
+                    <div class="member-card ${isSelected ? 'selected' : ''}" data-member-id="${member.id}">
+                        <div class="member-avatar ${statusClass}">
+                            ${member.initials}
+                        </div>
+                        <div class="member-info">
+                            <div class="member-name">${member.name}</div>
+                            <div class="member-details">
+                                <small class="text-muted">${statusText}</small>
+                                ${member.email ? `<small class="text-muted"> • ${member.email}</small>` : ''}
+                            </div>
+                        </div>
+                        <div class="member-actions">
+                            ${isSelected ? '<i class="fas fa-check-circle text-success"></i>' : '<i class="fas fa-plus-circle text-muted"></i>'}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            toggleMember(memberId) {
+                if (this.selectedMembers.has(memberId)) {
+                    this.selectedMembers.delete(memberId);
+                } else {
+                    this.selectedMembers.add(memberId);
+                }
+                
+                this.updateSelectedDisplay();
+                this.updateOriginalSelect();
+                this.renderMembers(); // Re-render to update selected states
+            }
+            
+            updateSelectedDisplay() {
+                const count = this.selectedMembers.size;
+                this.selectedCount.textContent = count;
+                
+                if (count === 0) {
+                    this.selectedMembersList.innerHTML = `
+                        <div class="no-selection text-muted text-center py-2">
+                            <small>Nie wybrano żadnych członków</small>
+                        </div>
+                    `;
+                } else {
+                    const selectedMembersData = this.allMembers.filter(member => 
+                        this.selectedMembers.has(member.id)
+                    );
+                    
+                    this.selectedMembersList.innerHTML = selectedMembersData
+                        .map(member => `
+                            <div class="selected-member-item">
+                                <span>${member.name}</span>
+                                <button type="button" class="remove-member" onclick="memberSelection.toggleMember('${member.id}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        `)
+                        .join('');
+                }
+            }
+            
+            updateOriginalSelect() {
+                // Wyczyść wszystkie wybory
+                Array.from(this.originalSelect.options).forEach(option => {
+                    option.selected = this.selectedMembers.has(option.value);
+                });
+            }
+            
+            showFallbackMessage() {
+                const membersGrid = document.getElementById('membersGrid');
+                if (membersGrid) {
+                    membersGrid.innerHTML = `
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Problem z ładowaniem interfejsu</h6>
+                            <p class="mb-0">Nie można załadować ulepszonego interfejsu wyboru członków. 
+                               Proszę odświeżyć stronę lub skontaktować się z administratorem.</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            showNoMembersMessage() {
+                const membersGrid = document.getElementById('membersGrid');
+                if (membersGrid) {
+                    membersGrid.innerHTML = `
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Brak dostępnych członków</h6>
+                            <p class="mb-0">W tym okręgu nie ma jeszcze dostępnych członków, którzy mogą zostać przypisani do oddziału 
+                               (członkowie bez przypisanego oddziału). Skontaktuj się z administratorem systemu.</p>
+                        </div>
+                    `;
+                }
+                
+                // Ukryj też sekcję wybranych członków
+                const selectedMembers = document.getElementById('selectedMembers');
+                if (selectedMembers) {
+                    selectedMembers.style.display = 'none';
+                }
+            }
+        };
+        }
+        
+        // Initialize member selection system
+        let memberSelection;
+        function initializeEnhancedMemberSelection() {
+            // Wait a bit for Symfony to fully render the form
+            setTimeout(function() {
+                memberSelection = new window.EnhancedMemberSelection();
+            }, 100);
+        }
+    </script>
+{% endblock %}

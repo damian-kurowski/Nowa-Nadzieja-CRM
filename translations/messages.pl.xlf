@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="pl" target-language="pl" datatype="plaintext" original="file.ext">
+    <header>
+      <tool tool-id="symfony" tool-name="Symfony"/>
+    </header>
+    <body>
+      <trans-unit id="G.0J0aQ" resname="Hello">
+        <source>Hello</source>
+        <target>Cześć</target>
+      </trans-unit>
+      <trans-unit id="GFVMxym" resname="Welcome">
+        <source>Welcome</source>
+        <target>Witaj</target>
+      </trans-unit>
+      <trans-unit id="xHsbIh6" resname="Dashboard">
+        <source>Dashboard</source>
+        <target>Panel główny</target>
+      </trans-unit>
+      <trans-unit id="4f3WEva" resname="Login">
+        <source>Login</source>
+        <target>Logowanie</target>
+      </trans-unit>
+      <trans-unit id="JKl2Twv" resname="Logout">
+        <source>Logout</source>
+        <target>Wyloguj</target>
+      </trans-unit>
+      <trans-unit id="JZi_tm0" resname="Email">
+        <source>Email</source>
+        <target>Adres e-mail</target>
+      </trans-unit>
+      <trans-unit id="GqmFSHc" resname="Password">
+        <source>Password</source>
+        <target>Hasło</target>
+      </trans-unit>
+      <trans-unit id="WevL4T_" resname="Remember me">
+        <source>Remember me</source>
+        <target>Zapamiętaj mnie</target>
+      </trans-unit>
+      <trans-unit id="pNIxNSX" resname="Sign in">
+        <source>Sign in</source>
+        <target>Zaloguj się</target>
+      </trans-unit>
+      <trans-unit id="gzEusjk" resname="Loading...">
+        <source>Loading...</source>
+        <target>Ładowanie...</target>
+      </trans-unit>
+      <trans-unit id="WrPqN4D" resname="Please wait...">
+        <source>Please wait...</source>
+        <target>Proszę czekać...</target>
+      </trans-unit>
+      <trans-unit id="B9r0Hn5" resname="Error">
+        <source>Error</source>
+        <target>Błąd</target>
+      </trans-unit>
+      <trans-unit id="jLYkHhI" resname="Success">
+        <source>Success</source>
+        <target>Sukces</target>
+      </trans-unit>
+      <trans-unit id="V9XnrRt" resname="Warning">
+        <source>Warning</source>
+        <target>Ostrzeżenie</target>
+      </trans-unit>
+      <trans-unit id="RmnBdRa" resname="Info">
+        <source>Info</source>
+        <target>Informacja</target>
+      </trans-unit>
+      <trans-unit id="qNghuqo" resname="Close">
+        <source>Close</source>
+        <target>Zamknij</target>
+      </trans-unit>
+      <trans-unit id="z9OKodR" resname="Save">
+        <source>Save</source>
+        <target>Zapisz</target>
+      </trans-unit>
+      <trans-unit id="EhytB4v" resname="Cancel">
+        <source>Cancel</source>
+        <target>Anuluj</target>
+      </trans-unit>
+      <trans-unit id="Z_crX_u" resname="Delete">
+        <source>Delete</source>
+        <target>Usuń</target>
+      </trans-unit>
+      <trans-unit id="M.l1CPU" resname="Edit">
+        <source>Edit</source>
+        <target>Edytuj</target>
+      </trans-unit>
+      <trans-unit id=".EmYZIu" resname="View">
+        <source>View</source>
+        <target>Zobacz</target>
+      </trans-unit>
+      <trans-unit id=".QFPbFe" resname="Back">
+        <source>Back</source>
+        <target>Powrót</target>
+      </trans-unit>
+      <trans-unit id="gefhnBC" resname="Next">
+        <source>Next</source>
+        <target>Dalej</target>
+      </trans-unit>
+      <trans-unit id="ouNrIYq" resname="Previous">
+        <source>Previous</source>
+        <target>Poprzedni</target>
+      </trans-unit>
+      <trans-unit id="SdNWA5t" resname="Search">
+        <source>Search</source>
+        <target>Szukaj</target>
+      </trans-unit>
+      <trans-unit id="o7tHpZ5" resname="Filter">
+        <source>Filter</source>
+        <target>Filtruj</target>
+      </trans-unit>
+      <trans-unit id="Rn72VE2" resname="Clear">
+        <source>Clear</source>
+        <target>Wyczyść</target>
+      </trans-unit>
+      <trans-unit id="tHdA52O" resname="All">
+        <source>All</source>
+        <target>Wszystkie</target>
+      </trans-unit>
+      <trans-unit id="35SQQqs" resname="None">
+        <source>None</source>
+        <target>Żadne</target>
+      </trans-unit>
+      <trans-unit id="pRCwpOT" resname="Yes">
+        <source>Yes</source>
+        <target>Tak</target>
+      </trans-unit>
+      <trans-unit id="wd1MvZW" resname="No">
+        <source>No</source>
+        <target>Nie</target>
+      </trans-unit>
+      <trans-unit id="9cDnY13" resname="OK">
+        <source>OK</source>
+        <target>OK</target>
+      </trans-unit>
+      <trans-unit id="1oNVu9J" resname="Loading failed">
+        <source>Loading failed</source>
+        <target>Błąd ładowania</target>
+      </trans-unit>
+      <trans-unit id="WT3XsDP" resname="Connection error">
+        <source>Connection error</source>
+        <target>Błąd połączenia</target>
+      </trans-unit>
+      <trans-unit id="g8RV4Uj" resname="Session expired">
+        <source>Session expired</source>
+        <target>Sesja wygasła</target>
+      </trans-unit>
+      <trans-unit id="_9u.dBq" resname="Page not found">
+        <source>Page not found</source>
+        <target>Strona nie została znaleziona</target>
+      </trans-unit>
+      <trans-unit id="3VbZhwl" resname="Access denied">
+        <source>Access denied</source>
+        <target>Dostęp zabroniony</target>
+      </trans-unit>
+      <trans-unit id="Agk1rOa" resname="Please try again">
+        <source>Please try again</source>
+        <target>Spróbuj ponownie</target>
+      </trans-unit>
+      <trans-unit id="MIRXTB5" resname="Invalid input">
+        <source>Invalid input</source>
+        <target>Nieprawidłowe dane</target>
+      </trans-unit>
+      <trans-unit id="KJJYb08" resname="Required field">
+        <source>Required field</source>
+        <target>Pole wymagane</target>
+      </trans-unit>
+      <trans-unit id="Y4hMQfd" resname="Invalid email format">
+        <source>Invalid email format</source>
+        <target>Nieprawidłowy format adresu e-mail</target>
+      </trans-unit>
+      <trans-unit id="yDFHv2r" resname="Password too short">
+        <source>Password too short</source>
+        <target>Hasło zbyt krótkie</target>
+      </trans-unit>
+      <trans-unit id="9GAN2.6" resname="Passwords do not match">
+        <source>Passwords do not match</source>
+        <target>Hasła nie pasują do siebie</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

@@ -1,0 +1,661 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Wystąpienia medialne - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Wystąpienia medialne{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .table-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .table-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .stat-box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+        
+        .enhanced-data-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            overflow: hidden;
+        }
+        
+        .data-container-header {
+            background: var(--bg-secondary);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        
+        .enhanced-table {
+            margin: 0;
+            background: transparent;
+        }
+        
+        .enhanced-table thead th {
+            background: var(--bg-secondary);
+            border-bottom: 2px solid var(--border-color);
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .enhanced-table tbody tr {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .enhanced-table tbody tr:hover {
+            background: var(--bg-secondary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+        }
+        
+        .enhanced-table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .media-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.1rem;
+            margin-right: 0.75rem;
+        }
+
+        .media-icon.tv { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .media-icon.radio { background: linear-gradient(135deg, #28a745, #1e7e34); }
+        .media-icon.internet { background: linear-gradient(135deg, #17a2b8, #138496); }
+        .media-icon.prasa { background: linear-gradient(135deg, #6f42c1, #5a32a3); }
+        .media-icon.default { background: linear-gradient(135deg, #6c757d, #545b62); }
+
+        .appearance-status {
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .appearance-status.planned {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(19, 132, 150, 0.1));
+            color: #17a2b8;
+            border: 1px solid rgba(23, 162, 184, 0.3);
+        }
+
+        .appearance-status.completed {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(30, 126, 52, 0.1));
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .speakers-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .speaker-badge {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Header -->
+    <div class="table-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="header-icon me-3">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <div>
+                        <h2 class="mb-0">Wystąpienia medialne</h2>
+                        <p class="mb-0 opacity-90">Zarządzaj obecnością w mediach</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-number">{{ pagination.totalItemCount }}</div>
+                        <div class="stat-label">Łącznie</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="action-buttons">
+                    <a href="{{ path('wystep_medialny_new') }}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Dodaj wystąpienie
+                    </a>
+                    {% if is_granted('ROLE_RZECZNIK_PRASOWY') %}
+                        <a href="{{ path('wystep_medialny_stats') }}" class="btn btn-light">
+                            <i class="fas fa-chart-bar me-2"></i>Statystyki
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtry -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <i class="fas fa-filter me-2"></i>Filtry wyszukiwania
+            </h6>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="toggleFilters">
+                <i class="fas fa-chevron-down me-1"></i>
+                <span id="filterToggleText">Ukryj filtry</span>
+            </button>
+        </div>
+        <div class="card-body" id="filtersContainer">
+            <form method="GET" id="filterForm">
+                <!-- Szybkie filtry -->
+                <div class="row g-3 mb-4 pb-3 border-bottom">
+                    <div class="col-md-4">
+                        <label class="form-label">Szybkie wyszukiwanie</label>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Medium, program, tematy..." 
+                               value="{{ app.request.query.get('search') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Status wystąpienia</label>
+                        <select name="status_wystapienia" class="form-select">
+                            <option value="">Wszystkie</option>
+                            <option value="planowane" {{ app.request.query.get('status_wystapienia') == 'planowane' ? 'selected' : '' }}>Planowane</option>
+                            <option value="zakonczone" {{ app.request.query.get('status_wystapienia') == 'zakonczone' ? 'selected' : '' }}>Zakończone</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Typ medium</label>
+                        <select name="typ_medium" class="form-select">
+                            <option value="">Wszystkie typy</option>
+                            <option value="telewizja" {{ app.request.query.get('typ_medium') == 'telewizja' ? 'selected' : '' }}>Telewizja</option>
+                            <option value="radio" {{ app.request.query.get('typ_medium') == 'radio' ? 'selected' : '' }}>Radio</option>
+                            <option value="internet" {{ app.request.query.get('typ_medium') == 'internet' ? 'selected' : '' }}>Internet</option>
+                            <option value="prasa" {{ app.request.query.get('typ_medium') == 'prasa' ? 'selected' : '' }}>Prasa</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Zaawansowane filtry -->
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Medium</label>
+                        <input type="text" name="medium" class="form-control" 
+                               placeholder="Nazwa stacji/portalu..." 
+                               value="{{ app.request.query.get('medium') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Program</label>
+                        <input type="text" name="program" class="form-control" 
+                               placeholder="Nazwa programu..." 
+                               value="{{ app.request.query.get('program') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Dziennikarz</label>
+                        <input type="text" name="dziennikarz" class="form-control" 
+                               placeholder="Imię i nazwisko..." 
+                               value="{{ app.request.query.get('dziennikarz') }}">
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-3">
+                        <label class="form-label">Data od</label>
+                        <input type="date" name="data_od" class="form-control" 
+                               value="{{ app.request.query.get('data_od') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Data do</label>
+                        <input type="date" name="data_do" class="form-control" 
+                               value="{{ app.request.query.get('data_do') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Godzina od</label>
+                        <input type="time" name="godzina_od" class="form-control" 
+                               value="{{ app.request.query.get('godzina_od') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Godzina do</label>
+                        <input type="time" name="godzina_do" class="form-control" 
+                               value="{{ app.request.query.get('godzina_do') }}">
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Mówca</label>
+                        <input type="text" name="mowca" class="form-control" 
+                               placeholder="Imię i nazwisko mówcy..." 
+                               value="{{ app.request.query.get('mowca') }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Z nagraniem</label>
+                        <select name="z_nagraniem" class="form-select">
+                            <option value="">Wszystkie</option>
+                            <option value="tak" {{ app.request.query.get('z_nagraniem') == 'tak' ? 'selected' : '' }}>Z nagraniem</option>
+                            <option value="nie" {{ app.request.query.get('z_nagraniem') == 'nie' ? 'selected' : '' }}>Bez nagrania</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Przyciski akcji -->
+                <div class="row g-3 mt-4 pt-3 border-top">
+                    <div class="col-md-12">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Szukaj
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="fas fa-times me-2"></i>Wyczyść filtry
+                            </button>
+                            <button type="button" class="btn btn-outline-info" onclick="toggleAdvancedFilters()">
+                                <i class="fas fa-cog me-2"></i>Zapisz filtry
+                            </button>
+                            <div class="ms-auto">
+                                <small class="text-muted">Znaleziono: <strong>{{ pagination.totalItemCount }}</strong> rekordów</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Enhanced Data Container -->
+    <div class="enhanced-data-container">
+        <div class="data-container-header">
+            <div class="d-flex align-items-center gap-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Lista wystąpień medialnych
+                </h5>
+                <small class="text-muted">{{ pagination.totalItemCount }} rekordów</small>
+            </div>
+        </div>
+        
+        <div class="p-0">
+            {% if pagination.items|length > 0 %}
+                <div class="table-responsive">
+                    <table class="enhanced-table table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Data i godzina</th>
+                                <th>Medium</th>
+                                <th>Program</th>
+                                <th>Mówcy</th>
+                                <th>Zgłosił</th>
+                                <th>Link</th>
+                                <th>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for wystep in pagination.items %}
+                                <tr onclick="window.location='{{ path('wystep_medialny_show', {id: wystep.id}) }}'">
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <strong class="mb-1">{{ wystep.dataIGodzina|date('d.m.Y H:i') }}</strong>
+                                            {% if wystep.dataIGodzina > "now"|date_modify("now") %}
+                                                <span class="appearance-status planned">
+                                                    <i class="fas fa-clock"></i>
+                                                    Planowane
+                                                </span>
+                                            {% else %}
+                                                <span class="appearance-status completed">
+                                                    <i class="fas fa-check-circle"></i>
+                                                    Zakończone
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% set mediaType = 'default' %}
+                                            {% if 'telewizj' in wystep.nazwaMediaRedakcji|lower %}
+                                                {% set mediaType = 'tv' %}
+                                            {% elseif 'radio' in wystep.nazwaMediaRedakcji|lower %}
+                                                {% set mediaType = 'radio' %}
+                                            {% elseif 'internet' in wystep.nazwaMediaRedakcji|lower or 'portal' in wystep.nazwaMediaRedakcji|lower %}
+                                                {% set mediaType = 'internet' %}
+                                            {% elseif 'gazeta' in wystep.nazwaMediaRedakcji|lower or 'prasa' in wystep.nazwaMediaRedakcji|lower %}
+                                                {% set mediaType = 'prasa' %}
+                                            {% endif %}
+                                            
+                                            <div class="media-icon {{ mediaType }}">
+                                                {% if mediaType == 'tv' %}
+                                                    <i class="fas fa-tv"></i>
+                                                {% elseif mediaType == 'radio' %}
+                                                    <i class="fas fa-broadcast-tower"></i>
+                                                {% elseif mediaType == 'internet' %}
+                                                    <i class="fas fa-globe"></i>
+                                                {% elseif mediaType == 'prasa' %}
+                                                    <i class="fas fa-newspaper"></i>
+                                                {% else %}
+                                                    <i class="fas fa-microphone"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <strong class="d-block">{{ wystep.nazwaMediaRedakcji }}</strong>
+                                                {% if wystep.dziennikarzProwadzacy %}
+                                                    <small class="text-muted">{{ wystep.dziennikarzProwadzacy }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if wystep.nazwaProgramu %}
+                                            <span class="fw-bold">{{ wystep.nazwaProgramu }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Nie określono</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if wystep.mowcy|length > 0 %}
+                                            <div class="speakers-list">
+                                                {% for mowca in wystep.mowcy %}
+                                                    <span class="speaker-badge">{{ mowca.fullName }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">Nie określono</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if wystep.zglaszajacy %}
+                                            <div class="d-flex flex-column">
+                                                <strong>{{ wystep.zglaszajacy.fullName }}</strong>
+                                                <small class="text-muted">{{ wystep.dataZgloszenia|date('d.m.Y') }}</small>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if wystep.linkDoNagrania %}
+                                            <a href="{{ wystep.linkDoNagrania }}" target="_blank" 
+                                               class="btn btn-sm btn-outline-info" onclick="event.stopPropagation();">
+                                                <i class="fas fa-external-link-alt me-1"></i>
+                                                <span class="d-none d-lg-inline">Nagranie</span>
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">Brak nagrania</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group" onclick="event.stopPropagation();">
+                                            <a href="{{ path('wystep_medialny_show', {id: wystep.id}) }}" 
+                                               class="btn btn-outline-primary" title="Zobacz szczegóły">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if is_granted('EDIT', wystep) %}
+                                                <a href="{{ path('wystep_medialny_edit', {id: wystep.id}) }}" 
+                                                   class="btn btn-outline-secondary" title="Edytuj">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            {% endif %}
+                                            {% if is_granted('ROLE_RZECZNIK_PRASOWY') %}
+                                                <form method="post" action="{{ path('wystep_medialny_delete', {id: wystep.id}) }}" 
+                                                      style="display: inline-block;"
+                                                      onsubmit="return confirm('Czy na pewno chcesz usunąć to wystąpienie?');">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ wystep.id) }}">
+                                                    <button type="submit" class="btn btn-outline-danger" title="Usuń">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Enhanced Pagination -->
+                <div class="d-flex justify-content-center p-4">
+                    {{ knp_pagination_render(pagination) }}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <div class="d-inline-block p-4 rounded-circle bg-light">
+                            <i class="fas fa-microphone fa-3x text-muted"></i>
+                        </div>
+                    </div>
+                    <h5 class="mb-3">Brak wystąpień medialnych</h5>
+                    <p class="text-muted mb-3">Nie znaleziono żadnych wystąpień spełniających kryteria wyszukiwania.</p>
+                    {% if is_granted('ROLE_PREZES_OKREGU') %}
+                        <a href="{{ path('wystep_medialny_new') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Dodaj pierwsze wystąpienie
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle filtrów
+            const toggleButton = document.getElementById('toggleFilters');
+            const filtersContainer = document.getElementById('filtersContainer');
+            const toggleText = document.getElementById('filterToggleText');
+            const toggleIcon = toggleButton.querySelector('i');
+
+            // Sprawdź czy filtry są aktywne (mają wartości)
+            const form = document.getElementById('filterForm');
+            const hasActiveFilters = Array.from(new FormData(form)).some(([key, value]) => value.trim() !== '');
+            
+            // Jeśli brak aktywnych filtrów, ukryj je domyślnie
+            if (!hasActiveFilters) {
+                filtersContainer.style.display = 'none';
+                toggleText.textContent = 'Pokaż filtry';
+                toggleIcon.className = 'fas fa-chevron-right me-1';
+            }
+
+            toggleButton.addEventListener('click', function() {
+                if (filtersContainer.style.display === 'none') {
+                    filtersContainer.style.display = 'block';
+                    toggleText.textContent = 'Ukryj filtry';
+                    toggleIcon.className = 'fas fa-chevron-down me-1';
+                } else {
+                    filtersContainer.style.display = 'none';
+                    toggleText.textContent = 'Pokaż filtry';
+                    toggleIcon.className = 'fas fa-chevron-right me-1';
+                }
+            });
+
+            // Auto-submit przy zmianie szybkich filtrów
+            const quickFilters = ['search', 'status_wystapienia', 'typ_medium'];
+            quickFilters.forEach(name => {
+                const element = document.querySelector(`[name="${name}"]`);
+                if (element) {
+                    element.addEventListener('change', function() {
+                        // Daj użytkownikowi czas na myślenie (300ms delay)
+                        clearTimeout(this.searchTimeout);
+                        this.searchTimeout = setTimeout(() => {
+                            form.submit();
+                        }, 300);
+                    });
+                    
+                    if (element.type === 'text') {
+                        element.addEventListener('input', function() {
+                            clearTimeout(this.searchTimeout);
+                            this.searchTimeout = setTimeout(() => {
+                                form.submit();
+                            }, 500); // Dłuższy delay dla tekstu
+                        });
+                    }
+                }
+            });
+        });
+
+        // Funkcja czyszczenia filtrów
+        function clearFilters() {
+            const form = document.getElementById('filterForm');
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.type === 'text' || input.type === 'date' || input.type === 'time') {
+                    input.value = '';
+                } else if (input.type === 'select-one') {
+                    input.selectedIndex = 0;
+                }
+            });
+            
+            // Wyślij formularz po wyczyszczeniu
+            form.submit();
+        }
+
+        // Funkcja zapisywania filtrów (localStorage)
+        function toggleAdvancedFilters() {
+            const form = document.getElementById('filterForm');
+            const formData = new FormData(form);
+            const filters = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (value.trim() !== '') {
+                    filters[key] = value;
+                }
+            }
+            
+            if (Object.keys(filters).length > 0) {
+                localStorage.setItem('wystepy_medialne_filtry', JSON.stringify(filters));
+                showToast('Filtry zostały zapisane', 'success');
+            } else {
+                localStorage.removeItem('wystepy_medialne_filtry');
+                showToast('Filtry zostały wyczyszczone', 'info');
+            }
+        }
+
+        // Funkcja ładowania zapisanych filtrów
+        function loadSavedFilters() {
+            const savedFilters = localStorage.getItem('wystepy_medialne_filtry');
+            if (savedFilters) {
+                const filters = JSON.parse(savedFilters);
+                const form = document.getElementById('filterForm');
+                
+                Object.entries(filters).forEach(([key, value]) => {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input) {
+                        input.value = value;
+                    }
+                });
+            }
+        }
+
+        // Prosta funkcja toast
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 3000);
+        }
+
+        // Załaduj zapisane filtry przy starcie (jeśli brak parametrów URL)
+        if (window.location.search === '') {
+            loadSavedFilters();
+        }
+    </script>
+{% endblock %}

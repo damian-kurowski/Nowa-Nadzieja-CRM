@@ -1,0 +1,290 @@
+/* Meeting Progress Bar Styles */
+.meeting-progress-container {
+    margin: 2rem 0;
+}
+
+.steps-container {
+    margin-top: 1rem;
+    padding: 0 1rem;
+}
+
+.step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    flex: 1;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9ecef;
+    border: 2px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.step-number {
+    font-weight: 600;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.step-check {
+    display: none;
+    color: white;
+    font-size: 0.875rem;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+    max-width: 80px;
+}
+
+/* Active step */
+.step-indicator.active .step-circle {
+    background: #667eea;
+    border-color: #667eea;
+    transform: scale(1.1);
+}
+
+.step-indicator.active .step-number {
+    color: white;
+}
+
+.step-indicator.active .step-label {
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* Completed step */
+.step-indicator.completed .step-circle {
+    background: #28a745;
+    border-color: #28a745;
+}
+
+.step-indicator.completed .step-number {
+    display: none;
+}
+
+.step-indicator.completed .step-check {
+    display: block;
+}
+
+.step-indicator.completed .step-label {
+    color: #28a745;
+}
+
+/* Connection lines between steps */
+.step-indicator:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: calc(50% + 20px);
+    width: calc(100% - 40px);
+    height: 2px;
+    background: #dee2e6;
+    z-index: -1;
+}
+
+.step-indicator.completed:not(:last-child)::after {
+    background: #28a745;
+}
+
+/* Real-time notification enhancements */
+#meeting-notifications {
+    max-width: 350px;
+}
+
+.toast {
+    margin-bottom: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast-body {
+    padding: 1rem;
+}
+
+/* Highlight animation for document sections */
+.highlight {
+    animation: highlightPulse 2s ease-in-out;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+}
+
+@keyframes highlightPulse {
+    0% {
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+    50% {
+        background-color: rgba(255, 193, 7, 0.3);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+/* Enhanced meeting cards with better visual feedback */
+.meeting-card {
+    transition: all 0.3s ease;
+    border: 1px solid var(--border-color);
+}
+
+.meeting-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.status-indicator.pending {
+    background: rgba(255, 193, 7, 0.1);
+    color: #856404;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.status-indicator.active {
+    background: rgba(40, 167, 69, 0.1);
+    color: #155724;
+    border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.status-indicator.completed {
+    background: rgba(102, 126, 234, 0.1);
+    color: #4c63d2;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+/* Pulse animation for active elements */
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+    }
+}
+
+/* Loading states */
+.loading-overlay {
+    position: relative;
+}
+
+.loading-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced buttons */
+.btn-enhanced {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.btn-enhanced:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .steps-container {
+        padding: 0 0.5rem;
+    }
+    
+    .step-label {
+        font-size: 0.65rem;
+        max-width: 60px;
+    }
+    
+    .step-circle {
+        width: 32px;
+        height: 32px;
+    }
+    
+    #meeting-notifications {
+        left: 1rem;
+        right: 1rem;
+        max-width: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .step-circle {
+        background: #343a40;
+        border-color: #495057;
+    }
+    
+    .step-indicator:not(:last-child)::after {
+        background: #495057;
+    }
+    
+    .highlight {
+        border-color: #ffc107;
+        background-color: rgba(255, 193, 7, 0.1);
+    }
+}

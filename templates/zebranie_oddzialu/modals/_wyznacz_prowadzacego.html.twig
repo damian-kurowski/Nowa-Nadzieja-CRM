@@ -1,0 +1,49 @@
+<!-- Modal Wyznaczenia Prowadzącego -->
+<div class="modal fade" id="prowadzacyModal" tabindex="-1" aria-labelledby="prowadzacyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="prowadzacyModalLabel">
+                    <i class="fas fa-user-tie"></i>
+                    Wyznacz Prowadzącego Zebrania
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ path('zebranie_oddzialu_wyznacz_prowadzacego', {'id': zebranie.id}) }}" method="POST">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Prowadzący będzie kierował przebiegiem zebrania i współuczestniczył w wyborze przewodniczącego zebrania.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="prowadzacy" class="form-label">Wybierz Prowadzącego</label>
+                        <select class="form-select" id="prowadzacy" name="prowadzacy" required>
+                            <option value="">-- Wybierz członka --</option>
+                            {% for member in availableMembers %}
+                                {% if member.id != zebranie.obserwator.id and member.id != zebranie.protokolant.id %}
+                                    <option value="{{ member.id }}">
+                                        {{ member.fullName }} (ID: {{ member.id }})
+                                    </option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">
+                            Prowadzący nie może być jednocześnie obserwatorem ani protokolantem.
+                        </small>
+                    </div>
+                    
+                    <input type="hidden" name="_token" value="{{ csrf_token('wyznacz_prowadzacego' ~ zebranie.id) }}">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Anuluj
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Wyznacz Prowadzącego
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

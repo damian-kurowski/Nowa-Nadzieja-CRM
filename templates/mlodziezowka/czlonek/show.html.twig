@@ -1,0 +1,1333 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ czlonek.fullName }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Profil członka{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            object-fit: cover;
+            background: white;
+        }
+        
+        .info-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--shadow-medium);
+        }
+        
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .info-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .info-card-icon.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .info-card-icon.success { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; }
+        .info-card-icon.info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
+        .info-card-icon.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .info-card-icon.danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .info-item {
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+        
+        .info-item:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .info-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            color: var(--text-primary);
+            font-size: 1rem;
+            word-break: break-word;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            gap: 0.5rem;
+        }
+        
+        .status-badge.active {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+        
+        .status-badge.inactive {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+        
+        .status-badge.suspended {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            gap: 0.5rem;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--btn-hover-shadow);
+        }
+        
+        .tab-navigation {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        
+        .tab-btn.active {
+            color: var(--brand-primary);
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--brand-primary);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            gap: 0.5rem;
+        }
+        
+        .social-link:hover {
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+        }
+        
+        .progress-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        
+        .progress-item {
+            position: relative;
+            padding-bottom: 2rem;
+        }
+        
+        .progress-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+        }
+        
+        .progress-item.completed::before {
+            background: #22c55e;
+            border-color: #22c55e;
+        }
+        
+        .progress-item::after {
+            content: '';
+            position: absolute;
+            left: -1.44rem;
+            top: 1.5rem;
+            width: 2px;
+            height: calc(100% - 1rem);
+            background: var(--border-color);
+        }
+        
+        .progress-item:last-child::after {
+            display: none;
+        }
+        
+        .editable-field {
+            position: relative;
+            padding-right: 2rem;
+        }
+        
+        .edit-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .editable-field:hover .edit-btn {
+            opacity: 1;
+        }
+        
+        .edit-btn:hover {
+            color: var(--brand-primary);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .profile-header {
+                padding: 1.5rem;
+            }
+            
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .tab-navigation {
+                flex-wrap: nowrap;
+                overflow-x: scroll;
+            }
+        }
+        
+        /* Dark Mode Adjustments */
+        [data-theme="dark"] .info-card {
+            background: var(--bg-secondary);
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .profile-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+        }
+        
+        [data-theme="dark"] .social-link {
+            background: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .social-link:hover {
+            background: #3a3a3a;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                {% if czlonek.zdjecie %}
+                    <img src="{{ asset('uploads/photos/' ~ czlonek.zdjecie) }}" class="profile-avatar" alt="Zdjęcie">
+                {% else %}
+                    <div class="profile-avatar d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.2);">
+                        <i class="fas fa-user fa-3x text-white"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col">
+                <h2 class="mb-1">{{ czlonek.fullName }}</h2>
+                {% if czlonek.drugieImie %}
+                    <p class="mb-2 opacity-75">Drugie imię: {{ czlonek.drugieImie }}</p>
+                {% endif %}
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    {% set statusClass = czlonek.status == 'aktywny' ? 'active' : (czlonek.status == 'nieaktywny' ? 'inactive' : 'suspended') %}
+                    <span class="status-badge {{ statusClass }}">
+                        <i class="fas fa-circle"></i>
+                        {{ czlonek.status|title }}
+                    </span>
+                    <span class="status-badge" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                        <i class="fas fa-user-tag"></i>
+                        {{ czlonek.typUzytkownika|title }}
+                    </span>
+                    {% if czlonek.numerWPartii %}
+                        <span class="status-badge" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+                            <i class="fas fa-hashtag"></i>
+                            {{ czlonek.numerWPartii }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="action-buttons">
+                    <a href="{{ path('czlonek_edit', {id: czlonek.id}) }}" class="action-btn btn btn-light">
+                        <i class="fas fa-edit"></i>
+                        Edytuj
+                    </a>
+                    <a href="{{ path('czlonek_photo', {id: czlonek.id}) }}" class="action-btn btn btn-light">
+                        <i class="fas fa-camera"></i>
+                        Zdjęcie
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+        <button class="tab-btn active" onclick="switchTab('podstawowe')">
+            <i class="fas fa-user me-2"></i>Podstawowe
+        </button>
+        <button class="tab-btn" onclick="switchTab('kontakt')">
+            <i class="fas fa-address-book me-2"></i>Kontakt
+        </button>
+        <button class="tab-btn" onclick="switchTab('organizacja')">
+            <i class="fas fa-sitemap me-2"></i>Organizacja
+        </button>
+        <button class="tab-btn" onclick="switchTab('czlonkostwo')">
+            <i class="fas fa-id-card me-2"></i>Członkostwo
+        </button>
+        <button class="tab-btn" onclick="switchTab('skladka')">
+            <i class="fas fa-coins me-2"></i>Składka
+        </button>
+        <button class="tab-btn" onclick="switchTab('zatrudnienie')">
+            <i class="fas fa-building me-2"></i>Zatrudnienie
+        </button>
+        {% if is_granted('ROLE_FUNKCYJNY') %}
+            <button class="tab-btn" onclick="switchTab('wewnetrzne')">
+                <i class="fas fa-lock me-2"></i>Wewnętrzne
+            </button>
+        {% endif %}
+        <button class="tab-btn" onclick="switchTab('dokumenty')">
+            <i class="fas fa-file-alt me-2"></i>Dokumenty
+        </button>
+    </div>
+    
+    <!-- Tab Contents -->
+    <div id="podstawowe" class="tab-content active">
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-card-icon primary">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h5 class="mb-0">Dane osobowe</h5>
+            </div>
+            <div class="info-grid">
+                <div class="info-item editable-field">
+                    <div class="info-label">Imię i nazwisko</div>
+                    <div class="info-value">{{ czlonek.imie }} {{ czlonek.nazwisko }}</div>
+                    <button class="edit-btn" onclick="editField('name')"><i class="fas fa-pen"></i></button>
+                </div>
+                {% if czlonek.drugieImie %}
+                    <div class="info-item editable-field">
+                        <div class="info-label">Drugie imię</div>
+                        <div class="info-value">{{ czlonek.drugieImie }}</div>
+                        <button class="edit-btn" onclick="editField('secondName')"><i class="fas fa-pen"></i></button>
+                    </div>
+                {% endif %}
+                <div class="info-item editable-field">
+                    <div class="info-label">PESEL</div>
+                    <div class="info-value">{{ czlonek.pesel ?? 'Nie podano' }}</div>
+                    <button class="edit-btn" onclick="editField('pesel')"><i class="fas fa-pen"></i></button>
+                </div>
+                <div class="info-item editable-field">
+                    <div class="info-label">Data urodzenia</div>
+                    <div class="info-value">
+                        {{ czlonek.dataUrodzenia ? czlonek.dataUrodzenia|date('d.m.Y') : 'Nie podano' }}
+                        {% if czlonek.dataUrodzenia %}
+                            <small class="text-muted">({{ czlonek.dataUrodzenia|date('now')|date('Y') - czlonek.dataUrodzenia|date('Y') }} lat)</small>
+                        {% endif %}
+                    </div>
+                    <button class="edit-btn" onclick="editField('birthDate')"><i class="fas fa-pen"></i></button>
+                </div>
+                <div class="info-item editable-field">
+                    <div class="info-label">Płeć</div>
+                    <div class="info-value">{{ czlonek.plec ? czlonek.plec|title : 'Nie podano' }}</div>
+                    <button class="edit-btn" onclick="editField('gender')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        {% if czlonek.informacjeOmnie %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h5 class="mb-0">O mnie</h5>
+                </div>
+                <div class="editable-field">
+                    <p>{{ czlonek.informacjeOmnie|nl2br }}</p>
+                    <button class="edit-btn" onclick="editField('about')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div id="kontakt" class="tab-content">
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-card-icon success">
+                    <i class="fas fa-phone"></i>
+                </div>
+                <h5 class="mb-0">Dane kontaktowe</h5>
+            </div>
+            <div class="info-grid">
+                <div class="info-item editable-field">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">
+                        <a href="mailto:{{ czlonek.email }}">{{ czlonek.email }}</a>
+                    </div>
+                    <button class="edit-btn" onclick="editField('email')"><i class="fas fa-pen"></i></button>
+                </div>
+                <div class="info-item editable-field">
+                    <div class="info-label">Telefon</div>
+                    <div class="info-value">
+                        {% if czlonek.telefon %}
+                            <a href="tel:{{ czlonek.telefon }}">{{ czlonek.telefon }}</a>
+                        {% else %}
+                            Nie podano
+                        {% endif %}
+                    </div>
+                    <button class="edit-btn" onclick="editField('phone')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        {% if czlonek.adresZamieszkania %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon warning">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h5 class="mb-0">Adres zamieszkania</h5>
+                </div>
+                <div class="editable-field">
+                    <p>{{ czlonek.adresZamieszkania|nl2br }}</p>
+                    <button class="edit-btn" onclick="editField('address')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if czlonek.socialMedia %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                    <h5 class="mb-0">Media społecznościowe</h5>
+                </div>
+                <div class="editable-field">
+                    <p>{{ czlonek.socialMedia }}</p>
+                    <button class="edit-btn" onclick="editField('social')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div id="organizacja" class="tab-content">
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-card-icon primary">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <h5 class="mb-0">Struktura organizacyjna</h5>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Okręg</div>
+                    <div class="info-value">
+                        {% if czlonek.okreg %}
+                            <span class="badge bg-primary">{{ czlonek.okreg.nazwa }}</span>
+                        {% else %}
+                            <span class="text-muted">Brak przypisania</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Oddział</div>
+                    <div class="info-value">
+                        {% if czlonek.oddzial %}
+                            <span class="badge bg-info">{{ czlonek.oddzial.nazwa }}</span>
+                        {% else %}
+                            <span class="text-muted">Brak przypisania</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if czlonek.roles|length > 1 or czlonek.roles[0] != 'ROLE_USER' %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon danger">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <h5 class="mb-0">Role systemowe</h5>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for role in czlonek.roles %}
+                        {% if role != 'ROLE_USER' %}
+                            <span class="badge bg-danger">{{ role|replace({'ROLE_': ''})|title }}</span>
+                        {% endif %}
+                    {% endfor %}
+                    {% if czlonek.roles|length == 1 and czlonek.roles[0] == 'ROLE_USER' %}
+                        <span class="badge bg-secondary">Użytkownik podstawowy</span>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div id="czlonkostwo" class="tab-content">
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-card-icon success">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h5 class="mb-0">Informacje członkowskie</h5>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Data rejestracji</div>
+                    <div class="info-value">{{ czlonek.dataRejestracji|date('d.m.Y H:i') }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Data przyjęcia do partii</div>
+                    <div class="info-value">{{ czlonek.dataPrzyjeciaDoPartii ? czlonek.dataPrzyjeciaDoPartii|date('d.m.Y') : 'Nie podano' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Data złożenia deklaracji</div>
+                    <div class="info-value">{{ czlonek.dataZlozeniaDeklaracji ? czlonek.dataZlozeniaDeklaracji|date('d.m.Y') : 'Nie podano' }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Numer w partii</div>
+                    <div class="info-value">{{ czlonek.numerWPartii ?? 'Nie przydzielono' }}</div>
+                </div>
+            </div>
+        </div>
+        
+        {% if czlonek.typUzytkownika == 'kandydat' %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h5 class="mb-0">Postęp procesu rekrutacji</h5>
+                </div>
+                <div class="progress-timeline">
+                    <div class="progress-item {% if czlonek.dataWypelnienieFormularza %}completed{% endif %}">
+                        <h6>Wypełnienie formularza</h6>
+                        <small class="text-muted">
+                            {% if czlonek.dataWypelnienieFormularza %}
+                                Ukończono: {{ czlonek.dataWypelnienieFormularza|date('d.m.Y') }}
+                            {% else %}
+                                Oczekuje
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="progress-item {% if czlonek.dataWeryfikacjaDokumentow %}completed{% endif %}">
+                        <h6>Weryfikacja dokumentów</h6>
+                        <small class="text-muted">
+                            {% if czlonek.dataWeryfikacjaDokumentow %}
+                                Ukończono: {{ czlonek.dataWeryfikacjaDokumentow|date('d.m.Y') }}
+                            {% else %}
+                                Oczekuje
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="progress-item {% if czlonek.dataRozmowaPrekwalifikacyjna %}completed{% endif %}">
+                        <h6>Rozmowa prekwalifikacyjna</h6>
+                        <small class="text-muted">
+                            {% if czlonek.dataRozmowaPrekwalifikacyjna %}
+                                Ukończono: {{ czlonek.dataRozmowaPrekwalifikacyjna|date('d.m.Y') }}
+                            {% else %}
+                                Oczekuje
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="progress-item {% if czlonek.dataOpiniaRadyOddzialu %}completed{% endif %}">
+                        <h6>Opinia Rady Oddziału</h6>
+                        <small class="text-muted">
+                            {% if czlonek.dataOpiniaRadyOddzialu %}
+                                Ukończono: {{ czlonek.dataOpiniaRadyOddzialu|date('d.m.Y') }}
+                            {% else %}
+                                Oczekuje
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="progress-item {% if czlonek.dataDecyzjaZarzadu %}completed{% endif %}">
+                        <h6>Decyzja Zarządu</h6>
+                        <small class="text-muted">
+                            {% if czlonek.dataDecyzjaZarzadu %}
+                                Ukończono: {{ czlonek.dataDecyzjaZarzadu|date('d.m.Y') }}
+                            {% else %}
+                                Oczekuje
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="progress-item {% if czlonek.dataPrzyjecieUroczyste %}completed{% endif %}">
+                        <h6>Przyjęcie uroczyste</h6>
+                        <small class="text-muted">
+                            {% if czlonek.dataPrzyjecieUroczyste %}
+                                Ukończono: {{ czlonek.dataPrzyjecieUroczyste|date('d.m.Y') }}
+                            {% else %}
+                                Oczekuje
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div id="skladka" class="tab-content">
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-card-icon warning">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <h5 class="mb-0">Składka członkowska</h5>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Status składki</div>
+                    <div class="info-value">
+                        {% if czlonek.skladkaOplacona %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Opłacona
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-times-circle me-1"></i>
+                                Nieopłacona
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Kwota miesięczna</div>
+                    <div class="info-value">
+                        <strong class="text-primary">{{ czlonek.kwotaSkladki ?? '20,00' }} PLN</strong>
+                    </div>
+                </div>
+                {% if czlonek.dataOplaceniaSkladki %}
+                    <div class="info-item">
+                        <div class="info-label">Data opłacenia</div>
+                        <div class="info-value">{{ czlonek.dataOplaceniaSkladki|date('d.m.Y') }}</div>
+                    </div>
+                {% endif %}
+                {% if czlonek.dataWaznosciSkladki %}
+                    <div class="info-item">
+                        <div class="info-label">Ważna do</div>
+                        <div class="info-value">
+                            {% set isPast = czlonek.dataWaznosciSkladki < date() %}
+                            <span class="{% if isPast %}text-danger{% else %}text-success{% endif %}">
+                                {{ czlonek.dataWaznosciSkladki|date('d.m.Y') }}
+                                {% if isPast %}
+                                    <i class="fas fa-exclamation-triangle text-warning ms-1"></i>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if not czlonek.skladkaOplacona %}
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Uwaga:</strong> Składka nie została jeszcze opłacona. 
+                    Standardowa kwota miesięczna wynosi 20,00 PLN.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div id="zatrudnienie" class="tab-content">
+        {% if czlonek.zatrudnienieSpolkiMiejskie or czlonek.zatrudnienieSpolkiSkarbuPanstwa or czlonek.zatrudnienieSpolkiKomunalne %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon primary">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h5 class="mb-0">Zatrudnienie w spółkach</h5>
+                </div>
+                {% if czlonek.zatrudnienieSpolkiMiejskie %}
+                    <div class="mb-3 editable-field">
+                        <h6><i class="fas fa-city me-2"></i>Spółki miejskie</h6>
+                        <p class="ps-3">{{ czlonek.zatrudnienieSpolkiMiejskie|nl2br }}</p>
+                        <button class="edit-btn" onclick="editField('employmentMiejskie')"><i class="fas fa-pen"></i></button>
+                    </div>
+                {% endif %}
+                {% if czlonek.zatrudnienieSpolkiSkarbuPanstwa %}
+                    <div class="mb-3 editable-field">
+                        <h6><i class="fas fa-landmark me-2"></i>Spółki Skarbu Państwa</h6>
+                        <p class="ps-3">{{ czlonek.zatrudnienieSpolkiSkarbuPanstwa|nl2br }}</p>
+                        <button class="edit-btn" onclick="editField('employmentSkarbu')"><i class="fas fa-pen"></i></button>
+                    </div>
+                {% endif %}
+                {% if czlonek.zatrudnienieSpolkiKomunalne %}
+                    <div class="mb-3 editable-field">
+                        <h6><i class="fas fa-home me-2"></i>Spółki komunalne</h6>
+                        <p class="ps-3">{{ czlonek.zatrudnienieSpolkiKomunalne|nl2br }}</p>
+                        <button class="edit-btn" onclick="editField('employmentKomunalne')"><i class="fas fa-pen"></i></button>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        {% if czlonek.historiaWyborow %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon success">
+                        <i class="fas fa-vote-yea"></i>
+                    </div>
+                    <h5 class="mb-0">Historia startów w wyborach</h5>
+                </div>
+                <p>{{ czlonek.historiaWyborow|nl2br }}</p>
+            </div>
+        {% endif %}
+        
+        {% if czlonek.zatrudnienieSpolki %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h5 class="mb-0">Inne zatrudnienie</h5>
+                </div>
+                <div class="editable-field">
+                    <p>{{ czlonek.zatrudnienieSpolki|nl2br }}</p>
+                    <button class="edit-btn" onclick="editField('employment')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    {% if is_granted('ROLE_FUNKCYJNY') %}
+        <div id="wewnetrzne" class="tab-content">
+            {% if czlonek.notatkaWewnetrzna %}
+                <div class="info-card border-warning">
+                    <div class="info-card-header">
+                        <div class="info-card-icon warning">
+                            <i class="fas fa-sticky-note"></i>
+                        </div>
+                        <h5 class="mb-0">Notatka wewnętrzna</h5>
+                        <small class="text-muted ms-auto">Widoczna tylko dla osób funkcyjnych</small>
+                    </div>
+                    <div class="editable-field">
+                        <p>{{ czlonek.notatkaWewnetrzna|nl2br }}</p>
+                        <button class="edit-btn" onclick="editField('internalNote')"><i class="fas fa-pen"></i></button>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-comment-alt"></i>
+                    </div>
+                    <h5 class="mb-0">
+                        Opinie o członku
+                        <span class="badge bg-info ms-2">{{ opinie|length }}</span>
+                    </h5>
+                    {% if app.user.id != czlonek.id %}
+                        <a href="{{ path('opinia_czlonka_new', {'id': czlonek.id}) }}" class="btn btn-sm btn-primary ms-auto">
+                            <i class="fas fa-plus me-1"></i>Dodaj opinię
+                        </a>
+                    {% endif %}
+                </div>
+                {% if opinie|length > 0 %}
+                    {% for opinia in opinie|slice(0, 3) %}
+                        <div class="border-start border-primary border-3 ps-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <strong>{{ opinia.autor.fullName }}</strong>
+                                    <span class="badge bg-primary ms-2">{{ opinia.funkcjaAutora }}</span>
+                                </div>
+                                <small class="text-muted">{{ opinia.dataUtworzenia|date('d.m.Y') }}</small>
+                            </div>
+                            <p class="mb-0">{{ opinia.opinia|length > 200 ? opinia.opinia|slice(0, 200) ~ '...' : opinia.opinia }}</p>
+                        </div>
+                    {% endfor %}
+                    {% if opinie|length > 3 %}
+                        <div class="text-center">
+                            <a href="{{ path('opinia_czlonka_list', {'id': czlonek.id}) }}" class="btn btn-outline-primary btn-sm">
+                                Zobacz wszystkie ({{ opinie|length }})
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                        <p>Brak opinii o tym członku</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+    
+    <div id="dokumenty" class="tab-content">
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-card-icon success">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <h5 class="mb-0">CV i Dokumenty</h5>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">CV (Curriculum Vitae)</div>
+                    {% if czlonek.cv %}
+                        <div class="d-flex align-items-center gap-3">
+                            <a href="{{ asset('uploads/cv/' ~ czlonek.cv) }}" 
+                               target="_blank" 
+                               class="btn btn-danger btn-sm d-inline-flex align-items-center gap-2"
+                               style="background: linear-gradient(135deg, #ef4444, #dc2626); border: none;">
+                                <i class="fas fa-download"></i>
+                                Pobierz CV
+                            </a>
+                            <span class="text-muted small">{{ czlonek.cv }}</span>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Brak CV w systemie
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Zdjęcie profilowe</div>
+                    {% if czlonek.zdjecie %}
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="{{ asset('uploads/photos/' ~ czlonek.zdjecie) }}" 
+                                 alt="Zdjęcie {{ czlonek.fullName }}"
+                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px; border: 2px solid var(--border-color);">
+                            <span class="text-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                Wgrane
+                            </span>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Brak zdjęcia profilowego
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        {% if czlonek.dodatkoweInformacje %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-sticky-note"></i>
+                    </div>
+                    <h5 class="mb-0">Dodatkowe informacje</h5>
+                </div>
+                <div class="editable-field">
+                    <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; white-space: pre-wrap;">{{ czlonek.dodatkoweInformacje }}</div>
+                    <button class="edit-btn" onclick="editField('additionalInfo')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        {% endif %}
+        
+        <!-- Professional Information Summary -->
+        {% if czlonek.zatrudnienieSpolki or czlonek.zatrudnienieSpolkiMiejskie or czlonek.zatrudnienieSpolkiSkarbuPanstwa or czlonek.zatrudnienieSpolkiKomunalne or czlonek.historiaWyborow %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon primary">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h5 class="mb-0">Informacje zawodowe - podsumowanie</h5>
+                </div>
+                
+                {% if czlonek.zatrudnienieSpolki %}
+                    <div class="mb-3">
+                        <h6 class="text-primary mb-2">
+                            <i class="fas fa-building me-2"></i>Zatrudnienie w spółkach
+                        </h6>
+                        <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; white-space: pre-wrap; margin-left: 1rem;">{{ czlonek.zatrudnienieSpolki }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if czlonek.zatrudnienieSpolkiMiejskie %}
+                    <div class="mb-3">
+                        <h6 class="text-info mb-2">
+                            <i class="fas fa-city me-2"></i>Spółki miejskie
+                        </h6>
+                        <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; white-space: pre-wrap; margin-left: 1rem;">{{ czlonek.zatrudnienieSpolkiMiejskie }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if czlonek.zatrudnienieSpolkiSkarbuPanstwa %}
+                    <div class="mb-3">
+                        <h6 class="text-warning mb-2">
+                            <i class="fas fa-landmark me-2"></i>Spółki Skarbu Państwa
+                        </h6>
+                        <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; white-space: pre-wrap; margin-left: 1rem;">{{ czlonek.zatrudnienieSpolkiSkarbuPanstwa }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if czlonek.zatrudnienieSpolkiKomunalne %}
+                    <div class="mb-3">
+                        <h6 class="text-success mb-2">
+                            <i class="fas fa-building-user me-2"></i>Spółki komunalne
+                        </h6>
+                        <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; white-space: pre-wrap; margin-left: 1rem;">{{ czlonek.zatrudnienieSpolkiKomunalne }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if czlonek.historiaWyborow %}
+                    <div class="mb-3">
+                        <h6 class="text-danger mb-2">
+                            <i class="fas fa-vote-yea me-2"></i>Historia startów w wyborach
+                        </h6>
+                        <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; white-space: pre-wrap; margin-left: 1rem;">{{ czlonek.historiaWyborow }}</div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        <!-- Personal Information Summary -->
+        {% if czlonek.informacjeOmnie or czlonek.socialMedia %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <h5 class="mb-0">Informacje osobiste</h5>
+                </div>
+                
+                {% if czlonek.informacjeOmnie %}
+                    <div class="mb-3">
+                        <h6 class="text-primary mb-2">
+                            <i class="fas fa-heart me-2"></i>O sobie
+                        </h6>
+                        <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; white-space: pre-wrap; margin-left: 1rem;">{{ czlonek.informacjeOmnie }}</div>
+                    </div>
+                {% endif %}
+                
+                {% if czlonek.socialMedia %}
+                    <div class="mb-3">
+                        <h6 class="text-info mb-2">
+                            <i class="fas fa-share-alt me-2"></i>Media społecznościowe
+                        </h6>
+                        <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; white-space: pre-wrap; margin-left: 1rem;">{{ czlonek.socialMedia }}</div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        <!-- Generated Documents Section -->
+        {% if dokumenty|length > 0 %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon warning">
+                        <i class="fas fa-file-signature"></i>
+                    </div>
+                    <h5 class="mb-0">Dokumenty systemowe ({{ dokumenty|length }})</h5>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th><i class="fas fa-file-alt me-2"></i>Dokument</th>
+                                <th><i class="fas fa-hashtag me-2"></i>Numer</th>
+                                <th><i class="fas fa-calendar me-2"></i>Data utworzenia</th>
+                                <th><i class="fas fa-info-circle me-2"></i>Status</th>
+                                <th><i class="fas fa-cogs me-2"></i>Akcje</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dokument in dokumenty %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% set iconClass = '' %}
+                                            {% set bgClass = '' %}
+                                            {% if dokument.typ starts with 'przyjecie_czlonka' %}
+                                                {% set iconClass = 'fas fa-user-plus' %}
+                                                {% set bgClass = 'bg-success' %}
+                                            {% elseif dokument.typ starts with 'powolanie' %}
+                                                {% set iconClass = 'fas fa-user-tie' %}
+                                                {% set bgClass = 'bg-primary' %}
+                                            {% elseif dokument.typ starts with 'odwolanie' %}
+                                                {% set iconClass = 'fas fa-user-minus' %}
+                                                {% set bgClass = 'bg-warning' %}
+                                            {% elseif dokument.typ starts with 'wyznaczenie' %}
+                                                {% set iconClass = 'fas fa-user-check' %}
+                                                {% set bgClass = 'bg-info' %}
+                                            {% elseif dokument.typ starts with 'utworzenie' %}
+                                                {% set iconClass = 'fas fa-plus-circle' %}
+                                                {% set bgClass = 'bg-secondary' %}
+                                            {% else %}
+                                                {% set iconClass = 'fas fa-file-alt' %}
+                                                {% set bgClass = 'bg-light' %}
+                                            {% endif %}
+                                            
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center me-3 {{ bgClass }} text-white" 
+                                                 style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                                <i class="{{ iconClass }}"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-primary">{{ dokument.tytul }}</div>
+                                                <small class="text-muted">
+                                                    {{ dokument.typ|replace({'_': ' '})|title }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <code class="bg-light px-2 py-1 rounded small">{{ dokument.numerDokumentu }}</code>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-bold">{{ dokument.dataUtworzenia|date('d.m.Y') }}</span>
+                                            <small class="text-muted">{{ dokument.dataUtworzenia|date('H:i') }}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if dokument.status == 'signed' %}
+                                            <span class="badge bg-success d-flex align-items-center gap-1">
+                                                <i class="fas fa-check-circle"></i>
+                                                Podpisany
+                                            </span>
+                                        {% elseif dokument.status == 'pending' %}
+                                            <span class="badge bg-warning d-flex align-items-center gap-1">
+                                                <i class="fas fa-clock"></i>
+                                                Oczekuje na podpis
+                                            </span>
+                                        {% elseif dokument.status == 'draft' %}
+                                            <span class="badge bg-secondary d-flex align-items-center gap-1">
+                                                <i class="fas fa-edit"></i>
+                                                Projekt
+                                            </span>
+                                        {% elseif dokument.status == 'rejected' %}
+                                            <span class="badge bg-danger d-flex align-items-center gap-1">
+                                                <i class="fas fa-times-circle"></i>
+                                                Odrzucony
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">{{ dokument.status|title }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ path('dokument_show', {id: dokument.id}) }}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="Zobacz szczegóły">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if dokument.status == 'signed' %}
+                                                <a href="{{ path('dokument_pdf', {id: dokument.id}) }}" 
+                                                   class="btn btn-sm btn-outline-danger" 
+                                                   target="_blank" 
+                                                   title="Pobierz PDF">
+                                                    <i class="fas fa-file-pdf"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-3 p-3 bg-light rounded">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="fw-bold text-success">
+                                {{ dokumenty|filter(d => d.status == 'signed')|length }}
+                            </div>
+                            <small class="text-muted">Podpisane</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="fw-bold text-warning">
+                                {{ dokumenty|filter(d => d.status == 'pending')|length }}
+                            </div>
+                            <small class="text-muted">Oczekujące</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="fw-bold text-secondary">
+                                {{ dokumenty|filter(d => d.status == 'draft')|length }}
+                            </div>
+                            <small class="text-muted">Projekty</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="fw-bold text-primary">
+                                {{ dokumenty|length }}
+                            </div>
+                            <small class="text-muted">Razem</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if not czlonek.cv and not czlonek.zdjecie and not czlonek.dodatkoweInformacje and not czlonek.zatrudnienieSpolki and not czlonek.zatrudnienieSpolkiMiejskie and not czlonek.zatrudnienieSpolkiSkarbuPanstwa and not czlonek.zatrudnienieSpolkiKomunalne and not czlonek.historiaWyborow and not czlonek.informacjeOmnie and not czlonek.socialMedia and dokumenty|length == 0 %}
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-file-alt fa-3x mb-3"></i>
+                <h5>Brak dokumentów i dodatkowych informacji</h5>
+                <p>Ten członek nie ma jeszcze wgranych dokumentów ani dodatkowych informacji.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Back Button -->
+    <div class="mt-4">
+        <a href="{{ path('czlonek_index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Powrót do listy
+        </a>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edytuj pole</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <div class="mb-3">
+                            <label class="form-label" id="editLabel">Wartość</label>
+                            <input type="text" class="form-control" id="editInput">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-primary" onclick="saveField()">Zapisz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Mark button as active
+            event.target.closest('.tab-btn').classList.add('active');
+        }
+        
+        let currentField = null;
+        
+        function editField(field) {
+            currentField = field;
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            
+            // Set appropriate label and current value
+            const labels = {
+                'name': 'Imię i nazwisko',
+                'secondName': 'Drugie imię',
+                'pesel': 'PESEL',
+                'birthDate': 'Data urodzenia',
+                'gender': 'Płeć',
+                'email': 'Email',
+                'phone': 'Telefon',
+                'address': 'Adres',
+                'about': 'O mnie',
+                'social': 'Media społecznościowe',
+                'employment': 'Inne zatrudnienie',
+                'employmentMiejskie': 'Spółki miejskie',
+                'employmentSkarbu': 'Spółki Skarbu Państwa',
+                'employmentKomunalne': 'Spółki komunalne',
+                'internalNote': 'Notatka wewnętrzna',
+                'additionalInfo': 'Dodatkowe informacje'
+            };
+            
+            document.getElementById('editLabel').textContent = labels[field] || 'Wartość';
+            
+            // Here you would load the current value from the database
+            // This is just a placeholder
+            document.getElementById('editInput').value = '';
+            
+            modal.show();
+        }
+        
+        function saveField() {
+            const value = document.getElementById('editInput').value;
+            
+            // Here you would send the update to the server
+            fetch(`/czlonkowie/{{ czlonek.id }}/edit-field`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    field: currentField,
+                    value: value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page or update the field dynamically
+                    location.reload();
+                } else {
+                    alert('Błąd podczas zapisywania');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Wystąpił błąd');
+            });
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,1151 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ dokument.numerDokumentu }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}{{ dokument.numerDokumentu }}{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Document Header -->
+    <div class="document-show-header">
+        <div class="text-center">
+            <div class="header-icon mx-auto">
+                <i class="fas fa-file-signature"></i>
+            </div>
+            <h1 class="mb-2">{{ dokument.tytul }}</h1>
+            <div class="document-meta mb-2">
+                <span class="doc-number">{{ dokument.numerDokumentu }}</span>
+                <span class="mx-2">•</span>
+                <span class="doc-type">{{ dokument.typDisplayName }}</span>
+            </div>
+            <div class="status-display">
+                <span class="enhanced-status-badge {{ dokument.statusBadgeClass }}">
+                    <i class="fas fa-circle"></i>
+                    {{ dokument.statusDisplayName }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Integrity Warning -->
+            {% if not isIntegrityValid %}
+                <div class="integrity-warning">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0">
+                            <div class="warning-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="mb-1 text-danger">Naruszenie integralności!</h5>
+                            <p class="mb-0">Wykryto naruszenie integralności dokumentu. Dokument mógł zostać zmodyfikowany po utworzeniu.</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Enhanced Document Content -->
+            <div class="document-content-card">
+                <div class="content-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>Treść dokumentu
+                    </h5>
+                </div>
+                <div class="content-body">
+                    <div class="enhanced-document-content">
+                        {{ dokument.tresc|nl2br }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Cancellation Notice -->
+            {% if dokument.status == 'anulowany' %}
+                <div class="cancellation-notice">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0">
+                            <div class="cancel-icon">
+                                <i class="fas fa-ban"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="mb-1 text-danger">Dokument anulowany</h5>
+                            <p class="mb-0">Ten dokument został anulowany i nie można go już podpisać ani edytować.</p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Enhanced Actions Section -->
+            {% if (canSign or dokument.status == 'podpisany' or isViewOnlyForAdmin) and dokument.status != 'anulowany' %}
+                <div class="actions-card">
+                    <div class="actions-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tools me-2"></i>Akcje
+                        </h5>
+                    </div>
+                    <div class="actions-body">
+                        {% if isViewOnlyForAdmin %}
+                            <div class="admin-notice">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Przeglądasz dokument z okręgu <strong>{{ dokument.okreg ? dokument.okreg.nazwa : 'Brak przypisania' }}</strong> 
+                                w trybie tylko do odczytu.
+                            </div>
+                        {% endif %}
+                        
+                        <div class="action-buttons d-flex gap-3 flex-wrap">
+                            {% if canSign %}
+                                <a href="{{ path('dokument_sign', {id: dokument.id}) }}" class="btn btn-enhanced btn-success-gradient">
+                                    <i class="fas fa-signature me-2"></i>Podpisz dokument
+                                </a>
+                                <a href="{{ path('dokument_reject', {id: dokument.id}) }}" class="btn btn-enhanced btn-danger-gradient">
+                                    <i class="fas fa-times me-2"></i>Odrzuć dokument
+                                </a>
+                            {% endif %}
+                            
+                            {% if dokument.status == 'podpisany' %}
+                                <a href="{{ path('dokument_pdf', {id: dokument.id}) }}" class="btn btn-enhanced btn-pdf-gradient">
+                                    <i class="fas fa-file-pdf me-2"></i>Pobierz PDF
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Enhanced Document Information -->
+            <div class="info-card mb-4">
+                <div class="info-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Informacje o dokumencie
+                    </h5>
+                </div>
+                <div class="info-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-hashtag me-2"></i>Numer dokumentu
+                            </div>
+                            <div class="info-value font-monospace">{{ dokument.numerDokumentu }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-file-alt me-2"></i>Typ dokumentu
+                            </div>
+                            <div class="info-value">
+                                <span class="type-badge">{{ dokument.typDisplayName }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-flag me-2"></i>Status
+                            </div>
+                            <div class="info-value">
+                                <span class="status-badge {{ dokument.statusBadgeClass }}">
+                                    <i class="fas fa-circle me-1"></i>{{ dokument.statusDisplayName }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-user me-2"></i>Utworzył
+                            </div>
+                            <div class="info-value">{{ dokument.tworca.fullName }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-calendar-plus me-2"></i>Data utworzenia
+                            </div>
+                            <div class="info-value">{{ dokument.dataUtworzenia|date('d.m.Y H:i') }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-map-marker-alt me-2"></i>Okręg
+                            </div>
+                            <div class="info-value">{{ dokument.okreg ? dokument.okreg.nazwa : 'Brak przypisania' }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-calendar-check me-2"></i>Wejście w życie
+                            </div>
+                            <div class="info-value">{{ dokument.dataWejsciaWZycie|date('d.m.Y') }}</div>
+                        </div>
+                        
+                        {% if dokument.dataPodpisania %}
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-signature me-2"></i>Data podpisania
+                                </div>
+                                <div class="info-value text-success">
+                                    <i class="fas fa-check me-1"></i>
+                                    {{ dokument.dataPodpisania|date('d.m.Y H:i') }}
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if dokument.kandydat %}
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-user-tag me-2"></i>Dotyczy
+                                </div>
+                                <div class="info-value">
+                                    <strong>{{ dokument.kandydat.fullName }}</strong>
+                                    <small class="text-muted d-block">{{ dokument.kandydat.email }}</small>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Signatures Section -->
+            <div class="signatures-card mb-4">
+                <div class="signatures-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-users me-2"></i>Status podpisów
+                        </h5>
+                        <div class="signature-counter">
+                            {% set signedCount = 0 %}
+                            {% for podpis in dokument.podpisy %}
+                                {% if podpis.signed %}
+                                    {% set signedCount = signedCount + 1 %}
+                                {% endif %}
+                            {% endfor %}
+                            <span class="count-badge">{{ signedCount }}/{{ dokument.podpisy|length }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="signatures-body">
+                    <!-- Enhanced Progress bar -->
+                    {% set totalSignatures = dokument.podpisy|length %}
+                    {% set progressPercent = totalSignatures > 0 ? (signedCount / totalSignatures * 100)|round : 0 %}
+                    <div class="enhanced-progress mb-4">
+                        <div class="progress-label d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Postęp podpisów</span>
+                            <span class="progress-percentage">{{ progressPercent }}%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: {{ progressPercent }}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Enhanced Signatures List -->
+                    <div class="signatures-list">
+                        {% for podpis in dokument.podpisy %}
+                            <div class="enhanced-signature-item {{ podpis.signed ? 'signed' : (podpis.rejected ? 'rejected' : 'pending') }}">
+                                <div class="signature-main">
+                                    <div class="signature-step">
+                                        <div class="step-circle">{{ podpis.kolejnosc }}</div>
+                                        <div class="signature-user">
+                                            <div class="user-name">{{ podpis.podpisujacyFullInfo }}</div>
+                                            {% if podpis.podpisujacy == app.user %}
+                                                <span class="current-user-badge">To Ty</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="signature-status">
+                                        <span class="enhanced-status-badge {{ podpis.statusBadgeClass }}">
+                                            {% if podpis.signed %}
+                                                <i class="fas fa-check me-1"></i>
+                                            {% elseif podpis.rejected %}
+                                                <i class="fas fa-times me-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-clock me-1"></i>
+                                            {% endif %}
+                                            {{ podpis.statusDisplayName }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                {% if podpis.dataPodpisania %}
+                                    <div class="signature-meta">
+                                        <div class="meta-item">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            {{ podpis.dataPodpisania|date('d.m.Y H:i') }}
+                                        </div>
+                                        {% if podpis.adresIp %}
+                                            <div class="meta-item">
+                                                <i class="fas fa-globe me-1"></i>
+                                                IP: {{ podpis.adresIp }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if podpis.komentarz %}
+                                    <div class="signature-comment">
+                                        <div class="comment-content">
+                                            <i class="fas fa-comment me-2"></i>
+                                            <em>{{ podpis.komentarz }}</em>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if not loop.last %}
+                                <div class="signature-divider"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Integrity Verification -->
+            {% if isIntegrityValid %}
+                <div class="integrity-card">
+                    <div class="integrity-header">
+                        <h5 class="mb-0 text-success">
+                            <i class="fas fa-shield-alt me-2"></i>Weryfikacja integralności
+                        </h5>
+                    </div>
+                    <div class="integrity-body">
+                        <div class="integrity-status">
+                            <div class="status-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="status-text">
+                                <div class="status-title">Dokument zweryfikowany</div>
+                                <div class="status-description">Dokument nie został zmodyfikowany od momentu utworzenia</div>
+                            </div>
+                        </div>
+                        <div class="hash-display">
+                            <small class="text-muted">
+                                <i class="fas fa-fingerprint me-1"></i>
+                                Hash: <code>{{ dokument.hashDokumentu|slice(0, 16) }}...</code>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Enhanced Navigation -->
+    <div class="document-navigation">
+        <div class="nav-buttons">
+            <a href="{{ path('dokument_index') }}" class="btn btn-enhanced btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Powrót do listy
+            </a>
+            <button onclick="window.print()" class="btn btn-enhanced btn-outline-secondary">
+                <i class="fas fa-print me-2"></i>Drukuj
+            </button>
+            <button onclick="copyDocumentNumber()" class="btn btn-enhanced btn-outline-info" title="Skopiuj numer dokumentu (Ctrl+Shift+C)">
+                <i class="fas fa-copy me-2"></i>Kopiuj numer
+            </button>
+        </div>
+        <div class="breadcrumb-enhanced">
+            <span class="breadcrumb-item">
+                <a href="{{ path('dokument_index') }}">Dokumenty</a>
+            </span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item active">{{ dokument.numerDokumentu }}</span>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Enhanced Document Show Header */
+        .document-show-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .document-show-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1.5rem;
+        }
+        
+        .document-meta {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .doc-number {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .doc-type {
+            font-weight: 500;
+        }
+        
+        .enhanced-status-badge {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Warning Messages */
+        .integrity-warning {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(184, 45, 58, 0.05));
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .warning-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .cancellation-notice {
+            background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(184, 45, 58, 0.05));
+            border: 1px solid rgba(220, 53, 69, 0.2);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .cancel-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        /* Enhanced Cards */
+        .document-content-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .document-content-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .content-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .content-header h5 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .content-body {
+            padding: 2rem;
+        }
+        
+        .enhanced-document-content {
+            background: var(--bg-secondary);
+            padding: 2.5rem;
+            border-radius: 12px;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            white-space: pre-line;
+            border: 2px solid var(--border-color);
+            box-shadow: inset 0 2px 8px var(--shadow-light);
+            color: var(--text-primary);
+        }
+        
+        /* Actions Section */
+        .actions-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .actions-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .actions-header {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(33, 136, 56, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .actions-header h5 {
+            color: #28a745;
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .actions-body {
+            padding: 2rem;
+        }
+        
+        .admin-notice {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(19, 132, 150, 0.05));
+            border: 1px solid rgba(23, 162, 184, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+        
+        /* Enhanced Buttons */
+        .btn-enhanced {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .btn-success-gradient {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .btn-success-gradient:hover {
+            box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+        
+        .btn-danger-gradient {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger-gradient:hover {
+            box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+            color: white;
+        }
+        
+        .btn-pdf-gradient {
+            background: linear-gradient(135deg, #6f42c1, #5a32a3);
+            border-color: #6f42c1;
+            color: white;
+        }
+        
+        .btn-pdf-gradient:hover {
+            box-shadow: 0 4px 16px rgba(111, 66, 193, 0.3);
+            color: white;
+        }
+        
+        /* Information Card */
+        .info-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .info-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .info-header h5 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .info-body {
+            padding: 2rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: all 0.2s ease;
+        }
+        
+        .info-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .info-label {
+            flex: 0 0 40%;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-value {
+            flex: 1;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .type-badge {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        /* Signatures Section */
+        .signatures-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .signatures-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .signatures-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .signatures-header h5 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .signature-counter .count-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .signatures-body {
+            padding: 2rem;
+        }
+        
+        .enhanced-progress {
+            margin-bottom: 2rem;
+        }
+        
+        .progress-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .progress-percentage {
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        .progress-bar-container {
+            height: 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-radius: 6px;
+            transition: width 0.6s ease;
+            position: relative;
+        }
+        
+        .progress-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0.2) 50%, transparent 50%, transparent 75%, rgba(255,255,255,0.2) 75%);
+            background-size: 20px 20px;
+            animation: progress-stripes 1s linear infinite;
+        }
+        
+        @keyframes progress-stripes {
+            from { background-position: 0 0; }
+            to { background-position: 20px 0; }
+        }
+        
+        /* Enhanced Signature Items */
+        .signatures-list {
+            margin-top: 1rem;
+        }
+        
+        .enhanced-signature-item {
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .enhanced-signature-item.signed {
+            border-left-color: #28a745;
+            background: rgba(40, 167, 69, 0.05);
+        }
+        
+        .enhanced-signature-item.rejected {
+            border-left-color: #dc3545;
+            background: rgba(220, 53, 69, 0.05);
+        }
+        
+        .enhanced-signature-item.pending {
+            border-left-color: #ffc107;
+            background: rgba(255, 193, 7, 0.05);
+        }
+        
+        .enhanced-signature-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .signature-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .signature-step {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #6c757d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .enhanced-signature-item.signed .step-circle {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+        
+        .enhanced-signature-item.rejected .step-circle {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+        
+        .enhanced-signature-item.pending .step-circle {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #000;
+        }
+        
+        .signature-user {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .current-user-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .signature-status {
+            flex-shrink: 0;
+        }
+        
+        .signature-meta {
+            background: var(--bg-primary);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin: 1rem 0;
+        }
+        
+        .meta-item {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .meta-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .signature-comment {
+            background: var(--bg-primary);
+            border-left: 3px solid #667eea;
+            border-radius: 0 8px 8px 0;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .comment-content {
+            color: var(--text-primary);
+            font-style: italic;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .signature-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+            margin: 1.5rem 0;
+        }
+        
+        /* Integrity Card */
+        .integrity-card {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(33, 136, 56, 0.05));
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .integrity-header {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(33, 136, 56, 0.1));
+            border-bottom: 1px solid rgba(40, 167, 69, 0.2);
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .integrity-body {
+            padding: 2rem;
+        }
+        
+        .integrity-status {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .status-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+        
+        .status-title {
+            font-weight: 600;
+            color: #28a745;
+            font-size: 1.1rem;
+        }
+        
+        .status-description {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .hash-display code {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* Enhanced Navigation */
+        .document-navigation {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .breadcrumb-enhanced {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+        
+        .breadcrumb-item a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .breadcrumb-item a:hover {
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-item.active {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .btn-outline-primary {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .btn-outline-primary:hover {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+        
+        .btn-outline-secondary {
+            border-color: #6c757d;
+            color: #6c757d;
+        }
+        
+        .btn-outline-secondary:hover {
+            background: #6c757d;
+            border-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-outline-info {
+            border-color: #06b6d4;
+            color: #06b6d4;
+        }
+        
+        .btn-outline-info:hover {
+            background: #06b6d4;
+            border-color: #06b6d4;
+            color: white;
+        }
+        
+        /* Print styles */
+        @media print {
+            .document-navigation, .actions-card, .btn {
+                display: none !important;
+            }
+            
+            .document-show-header {
+                background: white !important;
+                color: black !important;
+                border: 2px solid #000 !important;
+            }
+            
+            .enhanced-document-content {
+                background: white !important;
+                border: 2px solid #000 !important;
+                color: black !important;
+            }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .document-navigation {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .nav-buttons {
+                justify-content: center;
+            }
+            
+            .info-label {
+                flex: 0 0 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .signature-main {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add print functionality (Ctrl+P)
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'p') {
+                    e.preventDefault();
+                    window.print();
+                }
+            });
+            
+            // Copy document number to clipboard
+            const documentNumber = '{{ dokument.numerDokumentu }}';
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'c' && e.shiftKey) {
+                    e.preventDefault();
+                    copyDocumentNumber();
+                }
+            });
+        });
+        
+        function copyDocumentNumber() {
+            const documentNumber = '{{ dokument.numerDokumentu }}';
+            navigator.clipboard.writeText(documentNumber).then(function() {
+                showToast('Numer dokumentu skopiowany do schowka', 'success');
+            }).catch(function() {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = documentNumber;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showToast('Numer dokumentu skopiowany do schowka', 'success');
+            });
+        }
+        
+        function showToast(message, type = 'info') {
+            // Simple toast notification
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.remove();
+                }
+            }, 3000);
+        }
+    </script>
+{% endblock %}

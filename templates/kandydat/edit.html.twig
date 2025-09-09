@@ -1,0 +1,917 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edytuj {{ kandydat.fullName }} - Kandydat - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Edytuj kandydata na członka{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --brand-secondary: #3b82f6;
+            --bg-tertiary: #e5e7eb;
+            --text-secondary: #6b7280;
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+            --btn-hover-shadow: rgba(59, 130, 246, 0.3);
+            --focus-ring: rgba(59, 130, 246, 0.1);
+            --candidate-primary: #ffc107;
+            --candidate-secondary: #fd7e14;
+        }
+        
+        [data-theme="dark"] {
+            --brand-secondary: #64a8ff;
+            --bg-tertiary: #2a2a2a;
+            --text-secondary: #9ca3af;
+            --shadow-medium: rgba(0, 0, 0, 0.5);
+            --btn-hover-shadow: rgba(100, 168, 255, 0.3);
+            --candidate-primary: #fbbf24;
+            --candidate-secondary: #f59e0b;
+        }
+        
+        /* Enhanced Form Header */
+        .form-header {
+            background: linear-gradient(135deg, var(--candidate-primary) 0%, var(--candidate-secondary) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        .form-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid rgba(255,255,255,0.3);
+            margin-bottom: 1rem;
+        }
+        
+        .form-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .form-avatar-placeholder {
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .form-title {
+            font-size: 1.75rem;
+            font-weight: bold;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .form-subtitle {
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        /* Enhanced Form Container */
+        .form-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            overflow: hidden;
+        }
+        
+        /* Enhanced Progress Stepper */
+        .progress-stepper {
+            background: linear-gradient(90deg, var(--bg-secondary), var(--bg-tertiary));
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .stepper-nav {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 20px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .step-item.active {
+            background: var(--candidate-primary);
+            border-color: var(--candidate-primary);
+            color: white;
+        }
+        
+        .step-item.completed {
+            background: var(--candidate-secondary);
+            border-color: var(--candidate-secondary);
+            color: white;
+        }
+        
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .step-item.active .step-icon,
+        .step-item.completed .step-icon {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .progress-bar-container {
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--candidate-primary), var(--candidate-secondary));
+            width: 33%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Enhanced Form Sections */
+        .form-section {
+            display: none;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .form-section.active {
+            display: block;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .section-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .section-icon.personal { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .section-icon.contact { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .section-icon.candidacy { background: linear-gradient(135deg, var(--candidate-primary), var(--candidate-secondary)); }
+        
+        .section-title {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* Enhanced Form Fields */
+        .form-group-enhanced {
+            margin-bottom: 2rem;
+        }
+        
+        .form-label-enhanced {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+        
+        .form-label-enhanced .required {
+            color: #ef4444;
+            margin-left: 0.25rem;
+        }
+        
+        .form-control-enhanced,
+        .form-select-enhanced {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .form-control-enhanced:focus,
+        .form-select-enhanced:focus {
+            outline: none;
+            border-color: var(--candidate-primary);
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+        }
+        
+        .form-textarea-enhanced {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .form-error {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        .form-help {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* Enhanced File Upload */
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            background: var(--bg-secondary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .file-upload-area:hover {
+            border-color: var(--candidate-primary);
+            background: rgba(255, 193, 7, 0.05);
+        }
+        
+        .file-upload-area.has-file {
+            border-color: var(--candidate-primary);
+            background: rgba(255, 193, 7, 0.1);
+        }
+        
+        .file-upload-icon {
+            font-size: 2rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .file-upload-text {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .file-upload-hint {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        /* Enhanced Navigation */
+        .form-navigation {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .btn-enhanced {
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--btn-hover-shadow);
+        }
+        
+        .btn-enhanced.btn-primary {
+            background: linear-gradient(135deg, var(--candidate-primary), var(--candidate-secondary));
+            color: white;
+            border-color: var(--candidate-primary);
+        }
+        
+        .btn-enhanced.btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        /* Two Column Layout */
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .form-header {
+                padding: 1.5rem;
+                text-align: center;
+            }
+            
+            .form-title {
+                font-size: 1.5rem;
+            }
+            
+            .stepper-nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .step-item {
+                justify-content: center;
+            }
+            
+            .form-section {
+                padding: 1.5rem;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .form-navigation {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .btn-enhanced {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        /* Dark Mode Adjustments */
+        [data-theme="dark"] .form-container {
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .file-upload-area {
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .file-upload-area:hover {
+            border-color: var(--candidate-primary);
+        }
+        
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.4s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Form Header -->
+    <div class="form-header fade-in">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-avatar">
+                        {% if kandydat.zdjecie %}
+                            <img src="{{ asset('uploads/photos/' ~ kandydat.zdjecie) }}" alt="{{ kandydat.fullName }}">
+                        {% else %}
+                            <div class="form-avatar-placeholder">
+                                {{ kandydat.imie|first }}{{ kandydat.nazwisko|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h1 class="form-title">Edytuj kandydata</h1>
+                        <p class="form-subtitle">{{ kandydat.fullName }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ path('kandydat_show', {'id': kandydat.id}) }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Powrót do profilu
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Form Container -->
+    <div class="form-container slide-up">
+        <!-- Progress Stepper -->
+        <div class="progress-stepper">
+            <div class="stepper-nav">
+                <div class="step-item active" data-step="1">
+                    <div class="step-icon">1</div>
+                    <span>Dane osobowe</span>
+                </div>
+                <div class="step-item" data-step="2">
+                    <div class="step-icon">2</div>
+                    <span>Kontakt i organizacja</span>
+                </div>
+                <div class="step-item" data-step="3">
+                    <div class="step-icon">3</div>
+                    <span>Kandydatura</span>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progressBarFill"></div>
+            </div>
+        </div>
+
+        <!-- Form Content -->
+        {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': false, 'id': 'candidateForm'}}) }}
+        
+        <!-- Step 1: Personal Data -->
+        <div class="form-section active" id="step1">
+            <div class="section-header">
+                <div class="section-icon personal">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h3 class="section-title">Dane osobowe</h3>
+            </div>
+            
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Informacja:</strong> Dane osobowe (imię, nazwisko, PESEL, data urodzenia, płeć) nie podlegają edycji. 
+                W przypadku konieczności zmiany tych danych, skontaktuj się z administratorem systemu.
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.imie, null, {'label_attr': {'class': ''}}) }}
+                        <span class="required">*</span>
+                    </label>
+                    {{ form_widget(form.imie, {'attr': {'class': 'form-control-enhanced'}}) }}
+                    {{ form_errors(form.imie, {'attr': {'class': 'form-error'}}) }}
+                </div>
+                
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.nazwisko, null, {'label_attr': {'class': ''}}) }}
+                        <span class="required">*</span>
+                    </label>
+                    {{ form_widget(form.nazwisko, {'attr': {'class': 'form-control-enhanced'}}) }}
+                    {{ form_errors(form.nazwisko, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.drugieImie, null, {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.drugieImie, {'attr': {'class': 'form-control-enhanced'}}) }}
+                    {{ form_errors(form.drugieImie, {'attr': {'class': 'form-error'}}) }}
+                </div>
+                
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.pesel, null, {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.pesel, {'attr': {'class': 'form-control-enhanced'}}) }}
+                    {{ form_errors(form.pesel, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.dataUrodzenia, null, {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.dataUrodzenia, {'attr': {'class': 'form-control-enhanced'}}) }}
+                    {{ form_errors(form.dataUrodzenia, {'attr': {'class': 'form-error'}}) }}
+                </div>
+                
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.plec, null, {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.plec, {'attr': {'class': 'form-select-enhanced'}}) }}
+                    {{ form_errors(form.plec, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Contact & Organization -->
+        <div class="form-section" id="step2">
+            <div class="section-header">
+                <div class="section-icon contact">
+                    <i class="fas fa-address-book"></i>
+                </div>
+                <h3 class="section-title">Kontakt i organizacja</h3>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.email, null, {'label_attr': {'class': ''}}) }}
+                        <span class="required">*</span>
+                    </label>
+                    {{ form_widget(form.email, {'attr': {'class': 'form-control-enhanced'}}) }}
+                    {{ form_errors(form.email, {'attr': {'class': 'form-error'}}) }}
+                </div>
+                
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.telefon, null, {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.telefon, {'attr': {'class': 'form-control-enhanced'}}) }}
+                    {{ form_errors(form.telefon, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.okreg, null, {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.okreg, {'attr': {'class': 'form-select-enhanced'}}) }}
+                    {{ form_errors(form.okreg, {'attr': {'class': 'form-error'}}) }}
+                </div>
+                
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.oddzial, null, {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.oddzial, {'attr': {'class': 'form-select-enhanced'}}) }}
+                    {{ form_errors(form.oddzial, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.status, null, {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.status, {'attr': {'class': 'form-select-enhanced'}}) }}
+                    {{ form_errors(form.status, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+            
+            <div class="form-row single">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.adresZamieszkania, null, {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.adresZamieszkania, {'attr': {'class': 'form-control-enhanced form-textarea-enhanced', 'rows': 3}}) }}
+                    {{ form_errors(form.adresZamieszkania, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Candidacy Details -->
+        <div class="form-section" id="step3">
+            <div class="section-header">
+                <div class="section-icon candidacy">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <h3 class="section-title">Informacje o kandydaturze</h3>
+            </div>
+            
+            <div class="form-row single">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.zatrudnienieSpolki, 'Obecne zatrudnienie/działalność', {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.zatrudnienieSpolki, {'attr': {'class': 'form-control-enhanced form-textarea-enhanced', 'rows': 3, 'placeholder': 'Opisz obecne zatrudnienie lub działalność zawodową'}}) }}
+                    {{ form_errors(form.zatrudnienieSpolki, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+            
+            <div class="form-row single">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.informacjeOmnie, 'Motywacja do wstąpienia do partii', {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.informacjeOmnie, {'attr': {'class': 'form-control-enhanced form-textarea-enhanced', 'rows': 4, 'placeholder': 'Dlaczego chcesz wstąpić do naszej partii? Jakie masz doświadczenie polityczne lub społeczne?'}}) }}
+                    {{ form_errors(form.informacjeOmnie, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+            
+            <div class="form-row single">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.socialMedia, 'Profile w mediach społecznościowych', {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.socialMedia, {'attr': {'class': 'form-control-enhanced form-textarea-enhanced', 'rows': 2, 'placeholder': 'Facebook, Twitter, LinkedIn itp. - podaj linki do profili'}}) }}
+                    {{ form_errors(form.socialMedia, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.zdjecie, null, {'label_attr': {'class': ''}}) }}
+                    </label>
+                    <div class="file-upload-area" onclick="document.getElementById('{{ form.zdjecie.vars.id }}').click()">
+                        <div class="file-upload-icon">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <div class="file-upload-text">Kliknij aby wybrać zdjęcie</div>
+                        <div class="file-upload-hint">PNG, JPG do 2MB</div>
+                    </div>
+                    {{ form_widget(form.zdjecie, {'attr': {'class': 'form-control-enhanced', 'style': 'display: none'}}) }}
+                    {{ form_errors(form.zdjecie, {'attr': {'class': 'form-error'}}) }}
+                    {% if kandydat.zdjecie %}
+                        <div class="form-help">
+                            Aktualne zdjęcie: <strong>{{ kandydat.zdjecie }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.cv, 'CV kandydata', {'label_attr': {'class': ''}}) }}
+                    </label>
+                    <div class="file-upload-area" onclick="document.getElementById('{{ form.cv.vars.id }}').click()">
+                        <div class="file-upload-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="file-upload-text">Kliknij aby wybrać CV</div>
+                        <div class="file-upload-hint">PDF, DOC do 5MB</div>
+                    </div>
+                    {{ form_widget(form.cv, {'attr': {'class': 'form-control-enhanced', 'style': 'display: none'}}) }}
+                    {{ form_errors(form.cv, {'attr': {'class': 'form-error'}}) }}
+                    {% if kandydat.cv %}
+                        <div class="form-help">
+                            Aktualne CV: <strong>{{ kandydat.cv }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="form-row single">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.dodatkoweInformacje, 'Dodatkowe informacje', {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.dodatkoweInformacje, {'attr': {'class': 'form-control-enhanced form-textarea-enhanced', 'rows': 3, 'placeholder': 'Inne istotne informacje o kandydacie'}}) }}
+                    {{ form_errors(form.dodatkoweInformacje, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+            
+            <div class="form-row single">
+                <div class="form-group-enhanced">
+                    <label class="form-label-enhanced">
+                        {{ form_label(form.notatkaWewnetrzna, 'Notatka wewnętrzna', {'label_attr': {'class': ''}}) }}
+                    </label>
+                    {{ form_widget(form.notatkaWewnetrzna, {'attr': {'class': 'form-control-enhanced form-textarea-enhanced', 'rows': 3, 'placeholder': 'Uwagi dla zarządu oddziału/okręgu (niewidoczne dla kandydata)'}}) }}
+                    {{ form_errors(form.notatkaWewnetrzna, {'attr': {'class': 'form-error'}}) }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Navigation -->
+        <div class="form-navigation">
+            <button type="button" class="btn-enhanced btn-secondary" id="prevBtn" onclick="changeStep(-1)" style="display: none;">
+                <i class="fas fa-chevron-left"></i>
+                <span>Poprzedni</span>
+            </button>
+            <div></div>
+            <div class="d-flex gap-2">
+                <a href="{{ path('kandydat_show', {'id': kandydat.id}) }}" class="btn-enhanced btn-secondary">
+                    <i class="fas fa-times"></i>
+                    <span>Anuluj</span>
+                </a>
+                <button type="button" class="btn-enhanced btn-primary" id="nextBtn" onclick="changeStep(1)">
+                    <span>Dalej</span>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <button type="submit" class="btn-enhanced btn-primary" id="submitBtn" style="display: none;">
+                    <i class="fas fa-save"></i>
+                    <span>Zapisz zmiany</span>
+                </button>
+            </div>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            updateProgressBar();
+            setupFileUploadPreview();
+        });
+        
+        function changeStep(direction) {
+            const newStep = currentStep + direction;
+            
+            if (newStep < 1 || newStep > totalSteps) {
+                return;
+            }
+            
+            // Hide current step
+            document.getElementById(`step${currentStep}`).classList.remove('active');
+            document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.remove('active');
+            
+            // Show new step
+            currentStep = newStep;
+            document.getElementById(`step${currentStep}`).classList.add('active');
+            document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.add('active');
+            
+            // Update completed steps
+            for (let i = 1; i < currentStep; i++) {
+                document.querySelector(`.step-item[data-step="${i}"]`).classList.add('completed');
+            }
+            
+            // Update navigation buttons
+            updateNavigationButtons();
+            updateProgressBar();
+            
+            // Scroll to top of form
+            document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-flex';
+            nextBtn.style.display = currentStep === totalSteps ? 'none' : 'inline-flex';
+            submitBtn.style.display = currentStep === totalSteps ? 'inline-flex' : 'none';
+        }
+        
+        function updateProgressBar() {
+            const progressBar = document.getElementById('progressBarFill');
+            const progress = (currentStep / totalSteps) * 100;
+            progressBar.style.width = progress + '%';
+        }
+        
+        function setupFileUploadPreview() {
+            // Photo upload
+            const photoInput = document.getElementById('{{ form.zdjecie.vars.id }}');
+            if (photoInput) {
+                photoInput.addEventListener('change', function(e) {
+                    const area = this.closest('.form-group-enhanced').querySelector('.file-upload-area');
+                    if (this.files.length > 0) {
+                        area.classList.add('has-file');
+                        area.querySelector('.file-upload-text').textContent = this.files[0].name;
+                    }
+                });
+            }
+            
+            // CV upload
+            const cvInput = document.getElementById('{{ form.cv.vars.id }}');
+            if (cvInput) {
+                cvInput.addEventListener('change', function(e) {
+                    const area = this.closest('.form-group-enhanced').querySelector('.file-upload-area');
+                    if (this.files.length > 0) {
+                        area.classList.add('has-file');
+                        area.querySelector('.file-upload-text').textContent = this.files[0].name;
+                    }
+                });
+            }
+        }
+        
+        // Step navigation by clicking
+        document.querySelectorAll('.step-item').forEach((item, index) => {
+            item.addEventListener('click', function() {
+                if (index + 1 <= currentStep + 1) { // Allow clicking next step or previous steps
+                    const targetStep = index + 1;
+                    const direction = targetStep - currentStep;
+                    
+                    if (Math.abs(direction) === 1) {
+                        changeStep(direction);
+                    } else {
+                        // Jump to step
+                        document.getElementById(`step${currentStep}`).classList.remove('active');
+                        document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.remove('active');
+                        
+                        currentStep = targetStep;
+                        document.getElementById(`step${currentStep}`).classList.add('active');
+                        document.querySelector(`.step-item[data-step="${currentStep}"]`).classList.add('active');
+                        
+                        updateNavigationButtons();
+                        updateProgressBar();
+                    }
+                }
+            });
+        });
+        
+        // Form validation before step change
+        function validateCurrentStep() {
+            const currentSection = document.getElementById(`step${currentStep}`);
+            const requiredFields = currentSection.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            return isValid;
+        }
+        
+        // Override next button to validate
+        const originalChangeStep = changeStep;
+        changeStep = function(direction) {
+            if (direction > 0 && !validateCurrentStep()) {
+                showToast('Wypełnij wszystkie wymagane pola', 'warning');
+                return;
+            }
+            originalChangeStep(direction);
+        };
+        
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} position-fixed fade-in`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);';
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close ms-auto" onclick="this.closest('.alert').remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 3000);
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ region.nazwa }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">{{ region.nazwa }}</h1>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_region_edit', {'id': region.id}) }}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edytuj
+                    </a>
+                    <a href="{{ path('app_region_index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Powrót do listy
+                    </a>
+                </div>
+            </div>
+
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            <div class="row">
+                <!-- Informacje podstawowe -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informacje podstawowe</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th width="40%">ID:</th>
+                                    <td>{{ region.id }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Nazwa:</th>
+                                    <td>{{ region.nazwa }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Województwo:</th>
+                                    <td>{{ region.wojewodztwo|title }}</td>
+                                </tr>
+                            </table>
+                            
+                            <hr>
+                            
+                            <form method="post" action="{{ path('app_region_delete', {'id': region.id}) }}" 
+                                  onsubmit="return confirm('Czy na pewno chcesz usunąć ten region?');">
+                                <button type="submit" class="btn btn-danger btn-sm w-100">
+                                    <i class="fas fa-trash"></i> Usuń Region
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Okręgi -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Okręgi ({{ okregi|length }})</h5>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignOkregModal">
+                                <i class="fas fa-plus"></i> Przypisz
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if okregi is empty %}
+                                <p class="text-muted text-center">Brak przypisanych okręgów</p>
+                            {% else %}
+                                <div class="list-group">
+                                    {% for okreg in okregi %}
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>{{ okreg.nazwa }}</strong><br>
+                                                <small class="text-muted">Nr {{ okreg.numer }}</small>
+                                            </div>
+                                            <form method="post" action="{{ path('app_region_remove_okreg', {'id': region.id, 'okresId': okreg.id}) }}" 
+                                                  class="d-inline" onsubmit="return confirm('Czy na pewno chcesz usunąć ten okręg z regionu?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prezesi regionu -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Prezesi Regionu ({{ prezesi|length }})</h5>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#assignPrezesModal">
+                                <i class="fas fa-plus"></i> Przypisz
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if prezesi is empty %}
+                                <p class="text-muted text-center">Brak przypisanych prezesów</p>
+                            {% else %}
+                                <div class="list-group">
+                                    {% for prezes in prezesi %}
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>{{ prezes.imie }} {{ prezes.nazwisko }}</strong><br>
+                                                <small class="text-muted">{{ prezes.email }}</small>
+                                            </div>
+                                            <form method="post" action="{{ path('app_region_remove_prezes', {'id': region.id, 'prezesId': prezes.id}) }}" 
+                                                  class="d-inline" onsubmit="return confirm('Czy na pewno chcesz usunąć tego prezesa regionu?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal przypisywania okręgu -->
+<div class="modal fade" id="assignOkregModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ path('app_region_assign_okreg', {'id': region.id}) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Przypisz Okręg do Regionu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="okreg_id" class="form-label">Wybierz Okręg</label>
+                        <select class="form-select" id="okreg_id" name="okreg_id" required>
+                            <option value="">-- Wybierz okręg --</option>
+                            {# Tu będą opcje okręgów bez przypisanego regionu #}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="submit" class="btn btn-primary">Przypisz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal przypisywania prezesa -->
+<div class="modal fade" id="assignPrezesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{{ path('app_region_assign_prezes', {'id': region.id}) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Przypisz Prezesa Regionu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="user_id" class="form-label">Wybierz Użytkownika</label>
+                        <select class="form-select" id="user_id" name="user_id" required>
+                            <option value="">-- Wybierz użytkownika --</option>
+                            {# Tu będą opcje użytkowników #}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="submit" class="btn btn-primary">Przypisz</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,958 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Faktury{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Enhanced Header -->
+            <div class="page-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="header-content">
+                            <div class="header-icon">
+                                <div class="icon-wrapper">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </div>
+                            </div>
+                            <div class="header-text">
+                                <h1 class="page-title mb-1">
+                                    {% if isSkarbnikPartii %}
+                                        System Faktur
+                                    {% else %}
+                                        Moje Faktury
+                                    {% endif %}
+                                </h1>
+                                <p class="page-subtitle mb-0">
+                                    {% if isSkarbnikPartii %}
+                                        Zarządzanie wszystkimi fakturami w organizacji
+                                    {% else %}
+                                        Zarządzaj swoimi wnioskami o płatność
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="header-actions">
+                            {% if canCreateFaktury %}
+                                <a href="{{ path('faktura_new') }}" class="btn btn-primary btn-lg header-btn">
+                                    <i class="fas fa-plus me-2"></i>
+                                    <span>Nowa Faktura</span>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats Bar -->
+                <div class="quick-stats-bar mt-3">
+                    <div class="row">
+                        <div class="col">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="stats-summary">
+                                    <span class="stats-text">
+                                        <i class="fas fa-chart-bar me-2"></i>
+                                        <strong>{{ statistics.total.count }}</strong> faktur 
+                                        na łączną kwotę <strong>{{ statistics.total.suma }} PLN</strong>
+                                    </span>
+                                </div>
+                                <div class="header-breadcrumb">
+                                    <nav aria-label="breadcrumb">
+                                        <ol class="breadcrumb mb-0">
+                                            <li class="breadcrumb-item">
+                                                <a href="{{ path('dashboard') }}">
+                                                    <i class="fas fa-home me-1"></i>Dashboard
+                                                </a>
+                                            </li>
+                                            <li class="breadcrumb-item active">Faktury</li>
+                                        </ol>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statystyki -->
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card stats-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);">
+                        <div class="card-body text-center position-relative overflow-hidden">
+                            <div class="position-absolute top-0 end-0 p-3 opacity-10">
+                                <i class="fas fa-clock" style="font-size: 4rem;"></i>
+                            </div>
+                            <div class="position-relative z-1">
+                                <div class="text-white mb-2">
+                                    <i class="fas fa-clock fa-2x"></i>
+                                </div>
+                                <h3 class="text-white fw-bold mb-1">{{ statistics.wprowadzone.count }}</h3>
+                                <h6 class="text-white mb-2">Wprowadzone</h6>
+                                <div class="badge bg-white text-dark px-3 py-2">
+                                    <strong>{{ statistics.wprowadzone.suma }} PLN</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card stats-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #00b894 0%, #00a085 100%);">
+                        <div class="card-body text-center position-relative overflow-hidden">
+                            <div class="position-absolute top-0 end-0 p-3 opacity-10">
+                                <i class="fas fa-check-circle" style="font-size: 4rem;"></i>
+                            </div>
+                            <div class="position-relative z-1">
+                                <div class="text-white mb-2">
+                                    <i class="fas fa-check-circle fa-2x"></i>
+                                </div>
+                                <h3 class="text-white fw-bold mb-1">{{ statistics.zaakceptowane.count }}</h3>
+                                <h6 class="text-white mb-2">Zaakceptowane</h6>
+                                <div class="badge bg-white text-dark px-3 py-2">
+                                    <strong>{{ statistics.zaakceptowane.suma }} PLN</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card stats-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #e17055 0%, #d63031 100%);">
+                        <div class="card-body text-center position-relative overflow-hidden">
+                            <div class="position-absolute top-0 end-0 p-3 opacity-10">
+                                <i class="fas fa-times-circle" style="font-size: 4rem;"></i>
+                            </div>
+                            <div class="position-relative z-1">
+                                <div class="text-white mb-2">
+                                    <i class="fas fa-times-circle fa-2x"></i>
+                                </div>
+                                <h3 class="text-white fw-bold mb-1">{{ statistics.odrzucone.count }}</h3>
+                                <h6 class="text-white mb-2">Odrzucone</h6>
+                                <div class="badge bg-white text-dark px-3 py-2">
+                                    <strong>{{ statistics.odrzucone.suma }} PLN</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card stats-card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);">
+                        <div class="card-body text-center position-relative overflow-hidden">
+                            <div class="position-absolute top-0 end-0 p-3 opacity-10">
+                                <i class="fas fa-money-check-alt" style="font-size: 4rem;"></i>
+                            </div>
+                            <div class="position-relative z-1">
+                                <div class="text-white mb-2">
+                                    <i class="fas fa-money-check-alt fa-2x"></i>
+                                </div>
+                                <h3 class="text-white fw-bold mb-1">{{ statistics.zrealizowane.count }}</h3>
+                                <h6 class="text-white mb-2">Zrealizowane</h6>
+                                <div class="badge bg-white text-dark px-3 py-2">
+                                    <strong>{{ statistics.zrealizowane.suma }} PLN</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                /* Enhanced Page Header */
+                .page-header {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 16px;
+                    padding: 2rem;
+                    color: white;
+                    position: relative;
+                    overflow: hidden;
+                    margin-bottom: 2rem;
+                    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+                }
+                
+                .page-header::before {
+                    content: '';
+                    position: absolute;
+                    top: -50%;
+                    right: -20%;
+                    width: 300px;
+                    height: 300px;
+                    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+                    border-radius: 50%;
+                }
+                
+                .header-content {
+                    display: flex;
+                    align-items: center;
+                    position: relative;
+                    z-index: 2;
+                }
+                
+                .header-icon {
+                    margin-right: 1.5rem;
+                }
+                
+                .icon-wrapper {
+                    width: 70px;
+                    height: 70px;
+                    background: rgba(255, 255, 255, 0.15);
+                    border-radius: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(10px);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                }
+                
+                .icon-wrapper i {
+                    font-size: 2rem;
+                    color: white;
+                }
+                
+                .page-title {
+                    font-size: 2.5rem;
+                    font-weight: 700;
+                    color: white;
+                    margin-bottom: 0.5rem;
+                }
+                
+                .page-subtitle {
+                    font-size: 1.1rem;
+                    color: rgba(255, 255, 255, 0.8);
+                    font-weight: 400;
+                }
+                
+                .header-actions {
+                    position: relative;
+                    z-index: 2;
+                }
+                
+                .header-btn {
+                    background: rgba(255, 255, 255, 0.2) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+                    color: white !important;
+                    backdrop-filter: blur(10px);
+                    transition: all 0.3s ease;
+                    border-radius: 12px;
+                    padding: 0.75rem 1.5rem;
+                    font-weight: 600;
+                }
+                
+                .header-btn:hover {
+                    background: rgba(255, 255, 255, 0.3) !important;
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+                }
+                
+                .quick-stats-bar {
+                    border-top: 1px solid rgba(255, 255, 255, 0.2);
+                    padding-top: 1rem;
+                    position: relative;
+                    z-index: 2;
+                }
+                
+                .stats-text {
+                    color: rgba(255, 255, 255, 0.9);
+                    font-size: 1rem;
+                }
+                
+                .breadcrumb {
+                    background: transparent;
+                    padding: 0;
+                }
+                
+                .breadcrumb-item a {
+                    color: rgba(255, 255, 255, 0.8);
+                    text-decoration: none;
+                    transition: color 0.2s ease;
+                }
+                
+                .breadcrumb-item a:hover {
+                    color: white;
+                }
+                
+                .breadcrumb-item.active {
+                    color: rgba(255, 255, 255, 0.9);
+                }
+                
+                .breadcrumb-item + .breadcrumb-item::before {
+                    content: "›";
+                    color: rgba(255, 255, 255, 0.6);
+                }
+                
+                .stats-card {
+                    transition: all 0.3s ease;
+                    cursor: pointer;
+                }
+                
+                .stats-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+                }
+                
+                .opacity-10 {
+                    opacity: 0.1;
+                }
+                
+                .z-1 {
+                    z-index: 1;
+                }
+                
+                /* Mobile responsiveness for header */
+                @media (max-width: 768px) {
+                    .page-header {
+                        padding: 1.5rem;
+                        text-align: center;
+                    }
+                    
+                    .header-content {
+                        flex-direction: column;
+                        text-align: center;
+                    }
+                    
+                    .header-icon {
+                        margin-right: 0;
+                        margin-bottom: 1rem;
+                    }
+                    
+                    .page-title {
+                        font-size: 2rem;
+                    }
+                    
+                    .quick-stats-bar .d-flex {
+                        flex-direction: column;
+                        gap: 1rem;
+                        text-align: center;
+                    }
+                    
+                    .header-breadcrumb {
+                        order: -1;
+                    }
+                }
+            </style>
+
+            <!-- Alerty -->
+            {% if urgentFaktury is not empty %}
+            <div class="alert border-0 shadow-sm" style="background: linear-gradient(135deg, #ff7675 0%, #fd79a8 100%); color: white;" role="alert">
+                <div class="d-flex align-items-start">
+                    <div class="alert-icon me-3">
+                        <div class="rounded-circle bg-white d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-exclamation-triangle text-danger fa-lg"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="text-white fw-bold mb-2">
+                            <i class="fas fa-fire me-2"></i>Pilne faktury wymagają uwagi!
+                        </h5>
+                        <p class="text-white-50 mb-3">{{ urgentFaktury|length }} faktur zostało oznaczonych jako pilnych</p>
+                        <div class="row g-2">
+                            {% for faktura in urgentFaktury %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card bg-white bg-opacity-10 border-0">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="text-white fw-bold mb-0">{{ faktura.numerFaktury }}</h6>
+                                            <span class="badge bg-warning text-dark">PILNE</span>
+                                        </div>
+                                        <p class="text-white-50 small mb-2">{{ faktura.kwota }} PLN</p>
+                                        <p class="text-white-50 small mb-2">
+                                            <i class="fas fa-calendar me-1"></i>{{ faktura.dataPlatnosci|date('d.m.Y') }}
+                                        </p>
+                                        <a href="{{ path('faktura_show', {id: faktura.id}) }}" 
+                                           class="btn btn-light btn-sm">
+                                            <i class="fas fa-eye me-1"></i>Sprawdź
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if isSkarbnikPartii and pendingApproval is not empty %}
+            <div class="alert border-0 shadow-sm" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%); color: white;" role="alert">
+                <div class="d-flex align-items-start">
+                    <div class="alert-icon me-3">
+                        <div class="rounded-circle bg-white d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                            <i class="fas fa-hourglass-half text-primary fa-lg"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h5 class="text-white fw-bold mb-2">
+                            <i class="fas fa-clipboard-check me-2"></i>Faktury oczekują na akceptację
+                        </h5>
+                        <p class="text-white-50 mb-3">{{ pendingApproval|length }} faktur wymaga Twojej decyzji</p>
+                        <div class="row g-2">
+                            {% for faktura in pendingApproval %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card bg-white bg-opacity-10 border-0">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="text-white fw-bold mb-0">{{ faktura.numerFaktury }}</h6>
+                                            {% if faktura.isPilna %}
+                                                <span class="badge bg-warning text-dark">PILNE</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-white-50 small mb-1">{{ faktura.kwota }} PLN</p>
+                                        <p class="text-white-50 small mb-2">
+                                            <i class="fas fa-user me-1"></i>{{ faktura.skarbnik.imie }} {{ faktura.skarbnik.nazwisko }}
+                                            <br><i class="fas fa-map-marker-alt me-1"></i>{{ faktura.okreg.nazwa }}
+                                        </p>
+                                        <a href="{{ path('faktura_show', {id: faktura.id}) }}" 
+                                           class="btn btn-light btn-sm">
+                                            <i class="fas fa-gavel me-1"></i>Rozpatrz
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Quick Filters -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="quick-filters-container">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between">
+                            <div class="quick-filters d-flex flex-wrap gap-2 mb-2 mb-md-0">
+                                <a href="{{ path('faktura_index', {status: 'wprowadzone'}) }}" 
+                                   class="btn btn-outline-warning btn-sm quick-filter {% if currentFilters.status == 'wprowadzone' %}active{% endif %}">
+                                    <i class="fas fa-clock me-1"></i>Wprowadzone
+                                    {% if statistics.wprowadzone.count > 0 %}
+                                        <span class="badge bg-warning text-dark ms-1">{{ statistics.wprowadzone.count }}</span>
+                                    {% endif %}
+                                </a>
+                                <a href="{{ path('faktura_index', {status: 'zaakceptowane'}) }}" 
+                                   class="btn btn-outline-success btn-sm quick-filter {% if currentFilters.status == 'zaakceptowane' %}active{% endif %}">
+                                    <i class="fas fa-check-circle me-1"></i>Zaakceptowane
+                                    {% if statistics.zaakceptowane.count > 0 %}
+                                        <span class="badge bg-success ms-1">{{ statistics.zaakceptowane.count }}</span>
+                                    {% endif %}
+                                </a>
+                                <a href="{{ path('faktura_index', {pilnosc: 'pilna'}) }}" 
+                                   class="btn btn-outline-danger btn-sm quick-filter {% if currentFilters.pilnosc == 'pilna' %}active{% endif %}">
+                                    <i class="fas fa-fire me-1"></i>Pilne
+                                </a>
+                                <a href="{{ path('faktura_index') }}" 
+                                   class="btn btn-outline-secondary btn-sm {% if not (currentFilters.status or currentFilters.kategoria or currentFilters.pilnosc) %}active{% endif %}">
+                                    <i class="fas fa-list me-1"></i>Wszystkie
+                                </a>
+                            </div>
+                            <div class="filter-actions">
+                                {% if currentFilters.status or currentFilters.kategoria or currentFilters.pilnosc %}
+                                    <a href="{{ path('faktura_index') }}" class="btn btn-outline-secondary btn-sm me-2">
+                                        <i class="fas fa-times me-1"></i>Wyczyść
+                                    </a>
+                                {% endif %}
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#advancedFilters">
+                                    <i class="fas fa-sliders-h me-1"></i>Więcej filtrów
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Filters -->
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="collapse" id="advancedFilters">
+                    <div class="card-body">
+                        <form method="GET" action="{{ path('faktura_index') }}">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <label class="form-label">Status</label>
+                                    <select name="status" class="form-select form-select-sm">
+                                        <option value="">Wszystkie</option>
+                                        {% for label, value in statusChoices %}
+                                            <option value="{{ value }}" {% if currentFilters.status == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Kategoria</label>
+                                    <select name="kategoria" class="form-select form-select-sm">
+                                        <option value="">Wszystkie</option>
+                                        {% for label, value in kategoriaChoices %}
+                                            <option value="{{ value }}" {% if currentFilters.kategoria == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Priorytet</label>
+                                    <select name="pilnosc" class="form-select form-select-sm">
+                                        <option value="">Wszystkie</option>
+                                        {% for label, value in pilnoscChoices %}
+                                            <option value="{{ value }}" {% if currentFilters.pilnosc == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Data od</label>
+                                    <input type="date" name="data_od" class="form-control form-control-sm" 
+                                           value="{{ currentFilters.data_od }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Data do</label>
+                                    <input type="date" name="data_do" class="form-control form-control-sm" 
+                                           value="{{ currentFilters.data_do }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Numer faktury</label>
+                                    <input type="text" name="numer_faktury" class="form-control form-control-sm" 
+                                           placeholder="FA/2024..." value="{{ currentFilters.numer_faktury }}">
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-2">
+                                    <label class="form-label">Kwota od</label>
+                                    <input type="number" name="kwota_od" class="form-control form-control-sm" 
+                                           step="0.01" placeholder="0.00" value="{{ currentFilters.kwota_od }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Kwota do</label>
+                                    <input type="number" name="kwota_do" class="form-control form-control-sm" 
+                                           step="0.01" placeholder="0.00" value="{{ currentFilters.kwota_do }}">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Sortuj po</label>
+                                    <select name="sortuj_po" class="form-select form-select-sm">
+                                        <option value="data_utworzenia" {% if currentFilters.sortuj_po == 'data_utworzenia' %}selected{% endif %}>
+                                            Data utworzenia
+                                        </option>
+                                        <option value="data_platnosci" {% if currentFilters.sortuj_po == 'data_platnosci' %}selected{% endif %}>
+                                            Data płatności
+                                        </option>
+                                        <option value="kwota" {% if currentFilters.sortuj_po == 'kwota' %}selected{% endif %}>
+                                            Kwota
+                                        </option>
+                                        <option value="status" {% if currentFilters.sortuj_po == 'status' %}selected{% endif %}>
+                                            Status
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Kierunek</label>
+                                    <select name="kierunek" class="form-select form-select-sm">
+                                        <option value="desc" {% if currentFilters.kierunek == 'desc' %}selected{% endif %}>Malejąco</option>
+                                        <option value="asc" {% if currentFilters.kierunek == 'asc' %}selected{% endif %}>Rosnąco</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary btn-sm me-2">
+                                        <i class="fas fa-search me-1"></i>Filtruj
+                                    </button>
+                                    <a href="{{ path('faktura_index') }}" class="btn btn-outline-secondary btn-sm">
+                                        <i class="fas fa-times me-1"></i>Wyczyść
+                                    </a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista faktur -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        Lista faktur ({{ pagination.totalItemCount }})
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if pagination.items is empty %}
+                        <div class="empty-state py-5">
+                            <div class="text-center">
+                                <div class="empty-state-icon mb-4">
+                                    <div class="icon-container">
+                                        <i class="fas fa-file-invoice-dollar"></i>
+                                        <div class="icon-bg"></div>
+                                    </div>
+                                </div>
+                                <h4 class="empty-state-title">
+                                    {% if currentFilters.status or currentFilters.kategoria or currentFilters.pilnosc %}
+                                        Brak faktur spełniających kryteria
+                                    {% else %}
+                                        {% if isSkarbnikPartii %}Brak faktur w systemie{% else %}Nie masz jeszcze faktur{% endif %}
+                                    {% endif %}
+                                </h4>
+                                <p class="empty-state-description text-muted mb-4">
+                                    {% if currentFilters.status or currentFilters.kategoria or currentFilters.pilnosc %}
+                                        Spróbuj zmienić filtry aby znaleźć faktury, których szukasz.
+                                    {% else %}
+                                        {% if isSkarbnikPartii %}
+                                            Faktury utworzone przez skarbników okręgów pojawią się tutaj.
+                                        {% else %}
+                                            Zacznij od utworzenia swojej pierwszej faktury do akceptacji.
+                                        {% endif %}
+                                    {% endif %}
+                                </p>
+                                <div class="empty-state-actions">
+                                    {% if currentFilters.status or currentFilters.kategoria or currentFilters.pilnosc %}
+                                        <a href="{{ path('faktura_index') }}" class="btn btn-outline-secondary me-2">
+                                            <i class="fas fa-times me-2"></i>Wyczyść filtry
+                                        </a>
+                                    {% endif %}
+                                    <a href="{{ path('faktura_new') }}" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-plus me-2"></i>
+                                        {% if currentFilters.status or currentFilters.kategoria or currentFilters.pilnosc %}
+                                            Dodaj nową fakturę
+                                        {% else %}
+                                            {% if isSkarbnikPartii %}Zobacz wszystkie faktury{% else %}Utwórz pierwszą fakturę{% endif %}
+                                        {% endif %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Numer faktury</th>
+                                        <th>Kwota</th>
+                                        <th>Data płatności</th>
+                                        <th>Kategoria</th>
+                                        <th>Status</th>
+                                        <th>Priorytet</th>
+                                        {% if isSkarbnikPartii %}
+                                        <th>Skarbnik/Okręg</th>
+                                        {% endif %}
+                                        <th>Data utworzenia</th>
+                                        <th width="120">Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for faktura in pagination %}
+                                        <tr>
+                                            <td>
+                                                <a href="{{ path('faktura_show', {id: faktura.id}) }}" 
+                                                   class="text-decoration-none fw-bold">
+                                                    {{ faktura.numerFaktury }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="fw-bold">{{ faktura.kwota }} PLN</span>
+                                            </td>
+                                            <td>{{ faktura.dataPlatnosci|date('d.m.Y') }}</td>
+                                            <td>
+                                                {% if faktura.kategoria == 'obsluga_biura' %}
+                                                    <span class="badge" style="background: #6c5ce7; color: white;">
+                                                        <i class="fas fa-building me-1"></i>{{ faktura.kategoriaLabel }}
+                                                    </span>
+                                                {% elseif faktura.kategoria == 'wydarzenia' %}
+                                                    <span class="badge" style="background: #a29bfe; color: white;">
+                                                        <i class="fas fa-calendar-alt me-1"></i>{{ faktura.kategoriaLabel }}
+                                                    </span>
+                                                {% elseif faktura.kategoria == 'kampania' %}
+                                                    <span class="badge" style="background: #fd79a8; color: white;">
+                                                        <i class="fas fa-bullhorn me-1"></i>{{ faktura.kategoriaLabel }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge" style="background: #636e72; color: white;">
+                                                        <i class="fas fa-tag me-1"></i>{{ faktura.kategoriaLabel }}
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if faktura.isWprowadzone %}
+                                                    <span class="badge status-badge status-pending">
+                                                        <i class="fas fa-clock me-1"></i>{{ faktura.statusLabel }}
+                                                    </span>
+                                                {% elseif faktura.isZaakceptowane %}
+                                                    <span class="badge status-badge status-approved">
+                                                        <i class="fas fa-check-circle me-1"></i>{{ faktura.statusLabel }}
+                                                    </span>
+                                                {% elseif faktura.isOdrzucone %}
+                                                    <span class="badge status-badge status-rejected">
+                                                        <i class="fas fa-times-circle me-1"></i>{{ faktura.statusLabel }}
+                                                    </span>
+                                                {% elseif faktura.isZrealizowane %}
+                                                    <span class="badge status-badge status-completed">
+                                                        <i class="fas fa-money-check-alt me-1"></i>{{ faktura.statusLabel }}
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if faktura.isPilna %}
+                                                    <span class="badge priority-urgent">
+                                                        <i class="fas fa-fire me-1"></i>Pilna
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge priority-normal">
+                                                        <i class="fas fa-clock me-1"></i>Normalna
+                                                    </span>
+                                                {% endif %}
+                                            </td>
+                                            {% if isSkarbnikPartii %}
+                                            <td>
+                                                <div class="small">
+                                                    <strong>{{ faktura.skarbnik.imie }} {{ faktura.skarbnik.nazwisko }}</strong><br>
+                                                    <span class="text-muted">{{ faktura.okreg.nazwa }}</span>
+                                                </div>
+                                            </td>
+                                            {% endif %}
+                                            <td>{{ faktura.dataUtworzenia|date('d.m.Y H:i') }}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="{{ path('faktura_show', {id: faktura.id}) }}" 
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    {% if faktura.skarbnik == app.user and faktura.isWprowadzone %}
+                                                        <a href="{{ path('faktura_edit', {id: faktura.id}) }}" 
+                                                           class="btn btn-sm btn-outline-secondary">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                    <a href="{{ path('faktura_copy', {id: faktura.id}) }}" 
+                                                       class="btn btn-sm btn-outline-info">
+                                                        <i class="fas fa-copy"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+                {% if pagination.totalItemCount > 0 %}
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted">
+                                Wyników {{ pagination|length }} z {{ pagination.totalItemCount }}
+                            </small>
+                        </div>
+                        <div>
+                            {{ knp_pagination_render(pagination) }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Enhanced Badge Styles */
+    .status-badge {
+        padding: 0.5rem 0.75rem;
+        font-weight: 500;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .status-pending {
+        background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+        color: #2d3436;
+        box-shadow: 0 2px 4px rgba(253, 203, 110, 0.3);
+    }
+    
+    .status-approved {
+        background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(0, 184, 148, 0.3);
+    }
+    
+    .status-rejected {
+        background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(225, 112, 85, 0.3);
+    }
+    
+    .status-completed {
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(116, 185, 255, 0.3);
+    }
+    
+    .priority-urgent {
+        background: linear-gradient(135deg, #ff7675 0%, #e84393 100%);
+        color: white;
+        animation: pulse-urgent 2s infinite;
+        box-shadow: 0 2px 8px rgba(255, 118, 117, 0.4);
+    }
+    
+    .priority-normal {
+        background: linear-gradient(135deg, #b2bec3 0%, #636e72 100%);
+        color: white;
+    }
+    
+    @keyframes pulse-urgent {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); box-shadow: 0 4px 12px rgba(255, 118, 117, 0.6); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Table Row Hover Effects */
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9ff;
+        transform: scale(1.01);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Enhanced Action Buttons */
+    .btn-group .btn {
+        transition: all 0.2s ease;
+        border-radius: 8px !important;
+        margin: 0 2px;
+    }
+    
+    .btn-group .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Empty State Styling */
+    .empty-state {
+        padding: 4rem 2rem;
+    }
+    
+    .empty-state-icon {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .icon-container {
+        position: relative;
+        display: inline-block;
+        padding: 2rem;
+    }
+    
+    .icon-container i {
+        font-size: 4rem;
+        color: #74b9ff;
+        position: relative;
+        z-index: 2;
+    }
+    
+    .icon-bg {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, rgba(116, 185, 255, 0.1) 0%, rgba(9, 132, 227, 0.1) 100%);
+        border-radius: 50%;
+        animation: pulse-bg 3s infinite;
+    }
+    
+    @keyframes pulse-bg {
+        0% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+        50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.4; }
+        100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    }
+    
+    .empty-state-title {
+        color: #2d3436;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state-description {
+        font-size: 1.1rem;
+        max-width: 500px;
+        margin: 0 auto 2rem auto;
+        line-height: 1.6;
+    }
+    
+    .empty-state-actions .btn {
+        transition: all 0.3s ease;
+    }
+    
+    .empty-state-actions .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Quick Filters */
+    .quick-filters-container {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+    }
+    
+    .quick-filter {
+        transition: all 0.2s ease;
+        border-radius: 20px !important;
+        font-weight: 500;
+    }
+    
+    .quick-filter:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .quick-filter.active {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .filter-actions .btn {
+        border-radius: 20px !important;
+        transition: all 0.2s ease;
+    }
+    
+    .filter-actions .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+        .quick-filters-container .d-flex {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .quick-filters {
+            justify-content: center;
+        }
+        
+        .filter-actions {
+            text-align: center;
+        }
+        
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state {
+            padding: 2rem 1rem;
+        }
+        
+        .empty-state-icon .icon-container {
+            padding: 1.5rem;
+        }
+        
+        .empty-state-icon .icon-container i {
+            font-size: 3rem;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,180 @@
+no ale<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dostęp zablokowany - Nowa Nadzieja CRM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container-fluid d-flex justify-content-center align-items-center vh-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="card shadow-lg border-0" style="max-width: 500px; border-radius: 20px; background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);">
+            <div class="card-body p-4 text-center">
+                <div class="mb-4">
+                    <div class="mx-auto mb-3 d-flex align-items-center justify-content-center"
+                         style="width: 80px; height: 80px; background: linear-gradient(135deg, #dc3545 0%, #fd5c70 100%); border-radius: 50%; position: relative;">
+                        <i class="fas fa-shield-alt text-white" style="font-size: 2rem;"></i>
+                        <div style="position: absolute; bottom: -5px; right: -5px; width: 30px; height: 30px; background: #dc3545; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white;">
+                            <i class="fas fa-times text-white" style="font-size: 0.8rem;"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-danger fw-bold">Dostęp zablokowany</h3>
+                    <p class="text-muted">{{ error_message }}</p>
+                </div>
+
+                {% if reason == 'geoblocked' %}
+                <div class="alert alert-warning text-start">
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="fas fa-globe-europe text-warning flex-shrink-0" style="margin-top: 2px;"></i>
+                        <div>
+                            <strong>Ograniczenie geograficzne:</strong><br>
+                            System CRM "Nowa Nadzieja" jest dostępny wyłącznie z terytorium Polski ze względów bezpieczeństwa.
+                            {% if country %}
+                                <br><small class="text-muted">Wykryty kraj: {{ country }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if reason == 'rate_limited' or reason == 'ip_blocked' %}
+                <div class="alert alert-danger text-start">
+                    <div class="d-flex align-items-start gap-3">
+                        <i class="fas fa-clock text-danger flex-shrink-0" style="margin-top: 2px;"></i>
+                        <div>
+                            <strong>Zbyt wiele nieudanych prób:</strong><br>
+                            Adres IP został tymczasowo zablokowany po przekroczeniu limitu nieudanych logowań (5 prób w ciągu 15 minut).
+                            <br><small class="text-muted">Blokada zostanie automatycznie zniesiona za 30 minut.</small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mb-4">
+                    <div class="row text-start">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-2">
+                                <i class="fas fa-info-circle me-2"></i>Informacje techniczne:
+                            </h6>
+                            <div class="bg-light p-3 rounded">
+                                <div class="row g-2">
+                                    <div class="col-sm-4">
+                                        <strong>Adres IP:</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        <code>{{ ip_address }}</code>
+                                    </div>
+                                    {% if country %}
+                                    <div class="col-sm-4">
+                                        <strong>Kraj:</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        {{ country }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="col-sm-4">
+                                        <strong>Czas:</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        {{ "now"|date('d.m.Y H:i:s') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if reason != 'geoblocked' %}
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">
+                        <i class="fas fa-lightbulb me-2"></i>Co możesz zrobić:
+                    </h6>
+                    <ul class="list-unstyled text-start text-muted small">
+                        <li class="mb-2">
+                            <i class="fas fa-clock text-primary me-2"></i>
+                            Poczekaj 30 minut i spróbuj ponownie
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-key text-primary me-2"></i>
+                            Upewnij się, że używasz poprawnego hasła
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-phone text-primary me-2"></i>
+                            Skontaktuj się z administratorem systemu
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+
+                {% if reason == 'geoblocked' %}
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">
+                        <i class="fas fa-question-circle me-2"></i>Potrzebujesz pomocy?
+                    </h6>
+                    <p class="text-muted small text-start">
+                        Jeśli znajdujesz się w Polsce i nadal widzisz ten komunikat, skontaktuj się z administratorem systemu.
+                        Możliwe przyczyny to korzystanie z VPN, proxy lub niepoprawne dane geolokalizacyjne.
+                    </p>
+                </div>
+                {% endif %}
+
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{{ path('login') }}" class="btn btn-primary">
+                        <i class="fas fa-redo me-2"></i>
+                        Spróbuj ponownie
+                    </a>
+                </div>
+            </div>
+
+            <div class="card-footer bg-light text-center py-3" style="border-radius: 0 0 20px 20px;">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    System zabezpieczeń Nowa Nadzieja CRM
+                </small>
+            </div>
+        </div>
+    </div>
+
+    {% if reason == 'rate_limited' or reason == 'ip_blocked' %}
+    <script>
+        // Auto refresh after 30 minutes
+        setTimeout(function() {
+            window.location.reload();
+        }, 30 * 60 * 1000);
+
+        // Show countdown
+        let timeLeft = 30 * 60; // 30 minutes in seconds
+
+        function updateCountdown() {
+            if (timeLeft <= 0) {
+                window.location.reload();
+                return;
+            }
+
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+
+            // Find all elements that should show countdown and update them
+            const countdownElements = document.querySelectorAll('.countdown');
+            countdownElements.forEach(element => {
+                element.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            });
+
+            timeLeft--;
+        }
+
+        // Add countdown display
+        document.addEventListener('DOMContentLoaded', function() {
+            const alertElement = document.querySelector('.alert-danger small');
+            if (alertElement) {
+                alertElement.innerHTML = 'Blokada zostanie automatycznie zniesiona za <span class="countdown">30:00</span>.';
+                setInterval(updateCountdown, 1000);
+                updateCountdown();
+            }
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

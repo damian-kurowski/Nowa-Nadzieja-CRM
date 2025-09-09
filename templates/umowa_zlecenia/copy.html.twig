@@ -1,0 +1,618 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Kopiowanie umowy zlecenia{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Enhanced Header for Copy Contract -->
+            <div class="page-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="header-content">
+                            <div class="header-icon">
+                                <div class="icon-wrapper">
+                                    <i class="fas fa-copy"></i>
+                                </div>
+                            </div>
+                            <div class="header-text">
+                                <h1 class="page-title mb-1">Kopiowanie umowy zlecenia</h1>
+                                <p class="page-subtitle mb-0">Utwórz kopię umowy {{ originalUmowa.numerUmowy }} z możliwością modyfikacji</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="header-actions">
+                            <a href="{{ path('umowa_show', {id: originalUmowa.id}) }}" class="btn btn-outline-light btn-lg header-btn me-2">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                <span>Anuluj</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Original Contract Info -->
+                <div class="quick-stats-bar mt-3">
+                    <div class="row">
+                        <div class="col">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="original-info">
+                                    <div class="d-flex align-items-center">
+                                        <div class="info-badge">
+                                            <i class="fas fa-file-alt me-2"></i>
+                                            <strong>Oryginał:</strong> {{ originalUmowa.numerUmowy }}
+                                        </div>
+                                        <div class="info-badge ms-3">
+                                            <i class="fas fa-user me-2"></i>
+                                            <strong>Zleceniobiorca:</strong> {{ originalUmowa.zleceniobiorca.fullName }}
+                                        </div>
+                                        <div class="info-badge ms-3">
+                                            <i class="fas fa-money-bill-wave me-2"></i>
+                                            <strong>Wynagrodzenie:</strong> {{ originalUmowa.formattedWynagrodzenie }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Copy Form Card -->
+            <div class="enhanced-card">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <div class="header-icon-small me-3">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-0">Modyfikacja danych umowy</h4>
+                            <small class="text-muted">Dostosuj dane kopiowanej umowy do nowych wymagań</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+                    
+                    <div class="row">
+                        <!-- Left Column -->
+                        <div class="col-lg-6">
+                            <!-- Basic Information -->
+                            <div class="form-section mb-4">
+                                <h5 class="form-section-title">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Podstawowe informacje
+                                </h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_row(form.numerUmowy, {
+                                            'label': 'Numer umowy',
+                                            'attr': {
+                                                'class': 'form-control form-control-lg',
+                                                'placeholder': 'np. UZ/2024/001'
+                                            }
+                                        }) }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_row(form.wynagrodzenie, {
+                                            'label': 'Wynagrodzenie brutto (PLN)',
+                                            'attr': {
+                                                'class': 'form-control form-control-lg',
+                                                'placeholder': '0.00',
+                                                'step': '0.01'
+                                            }
+                                        }) }}
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_row(form.zakresUmowy, {
+                                            'label': 'Zakres umowy',
+                                            'attr': {'class': 'form-select form-select-lg'}
+                                        }) }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_row(form.typOkresu, {
+                                            'label': 'Typ okresu',
+                                            'attr': {'class': 'form-select form-select-lg'}
+                                        }) }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Personnel -->
+                            <div class="form-section mb-4">
+                                <h5 class="form-section-title">
+                                    <i class="fas fa-users me-2"></i>
+                                    Osoby odpowiedzialne
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    {{ form_row(form.zleceniobiorca, {
+                                        'label': 'Zleceniobiorca',
+                                        'attr': {'class': 'form-select form-select-lg'}
+                                    }) }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form_row(form.sekretarzPartii, {
+                                        'label': 'Sekretarz partii (opcjonalnie)',
+                                        'attr': {'class': 'form-select form-select-lg'}
+                                    }) }}
+                                </div>
+                            </div>
+                            
+                            <!-- Additional Options -->
+                            <div class="form-section">
+                                <h5 class="form-section-title">
+                                    <i class="fas fa-cog me-2"></i>
+                                    Dodatkowe opcje
+                                </h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mb-3">
+                                            {{ form_widget(form.czyStudent, {
+                                                'attr': {'class': 'form-check-input', 'role': 'switch'}
+                                            }) }}
+                                            {{ form_label(form.czyStudent, 'Status studenta', {
+                                                'label_attr': {'class': 'form-check-label'}
+                                            }) }}
+                                            <small class="form-text text-muted">Wpływa na wysokość podatku</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mb-3">
+                                            {{ form_widget(form.pobranieKontaZSkladek, {
+                                                'attr': {'class': 'form-check-input', 'role': 'switch'}
+                                            }) }}
+                                            {{ form_label(form.pobranieKontaZSkladek, 'Pobranie z konta składek', {
+                                                'label_attr': {'class': 'form-check-label'}
+                                            }) }}
+                                            <small class="form-text text-muted">Płatność ze składek członkowskich</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Column -->
+                        <div class="col-lg-6">
+                            <!-- Period -->
+                            <div class="form-section mb-4">
+                                <h5 class="form-section-title">
+                                    <i class="fas fa-calendar-alt me-2"></i>
+                                    Okres realizacji
+                                </h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_row(form.dataOd, {
+                                            'label': 'Data rozpoczęcia',
+                                            'attr': {
+                                                'class': 'form-control form-control-lg',
+                                                'type': 'date'
+                                            }
+                                        }) }}
+                                    </div>
+                                    <div class="col-md-6 mb-3" id="data-do-field">
+                                        {{ form_row(form.dataDo, {
+                                            'label': 'Data zakończenia',
+                                            'attr': {
+                                                'class': 'form-control form-control-lg',
+                                                'type': 'date'
+                                            }
+                                        }) }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Description -->
+                            <div class="form-section mb-4">
+                                <h5 class="form-section-title">
+                                    <i class="fas fa-align-left me-2"></i>
+                                    Opis zakresu prac
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    {{ form_row(form.opisZakresu, {
+                                        'label': 'Szczegółowy opis zakresu',
+                                        'attr': {
+                                            'class': 'form-control',
+                                            'rows': '8',
+                                            'placeholder': 'Opisz szczegółowo zakres prac, oczekiwane rezultaty i terminy realizacji...'
+                                        }
+                                    }) }}
+                                </div>
+                            </div>
+                            
+                            <!-- Notes -->
+                            <div class="form-section">
+                                <h5 class="form-section-title">
+                                    <i class="fas fa-sticky-note me-2"></i>
+                                    Uwagi dodatkowe
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    {{ form_row(form.uwagi, {
+                                        'label': 'Uwagi i dodatkowe informacje',
+                                        'attr': {
+                                            'class': 'form-control',
+                                            'rows': '4',
+                                            'placeholder': 'Dodatkowe uwagi, wymagania, informacje o płatnościach...'
+                                        }
+                                    }) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Account Number (if not from membership fees) -->
+                    <div class="row" id="numer-konta-row" style="display: none;">
+                        <div class="col-lg-6">
+                            <div class="form-section">
+                                <h5 class="form-section-title">
+                                    <i class="fas fa-university me-2"></i>
+                                    Dane do przelewu
+                                </h5>
+                                
+                                <div class="mb-3">
+                                    {{ form_row(form.numerKonta, {
+                                        'label': 'Numer konta IBAN',
+                                        'attr': {
+                                            'class': 'form-control form-control-lg',
+                                            'placeholder': 'PL XX XXXX XXXX XXXX XXXX XXXX XXXX'
+                                        }
+                                    }) }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="form-actions">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Nowa umowa będzie utworzona jako projekt do akceptacji przez sekretarza partii
+                                        </small>
+                                    </div>
+                                    <div class="btn-group">
+                                        <a href="{{ path('umowa_show', {id: originalUmowa.id}) }}" class="btn btn-outline-secondary btn-lg">
+                                            <i class="fas fa-times me-2"></i>
+                                            Anuluj
+                                        </a>
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-copy me-2"></i>
+                                            Utwórz kopię umowy
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+}
+
+.header-icon .icon-wrapper {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    backdrop-filter: blur(10px);
+}
+
+.header-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.page-subtitle {
+    opacity: 0.9;
+    font-size: 1rem;
+}
+
+.header-btn {
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.header-btn:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.5);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.quick-stats-bar {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 1rem;
+    backdrop-filter: blur(10px);
+}
+
+.info-badge {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.9rem;
+}
+
+.enhanced-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    border: none;
+    overflow: hidden;
+}
+
+.enhanced-card .card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.5rem;
+}
+
+.header-icon-small {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.form-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.form-section-title {
+    color: #495057;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.form-actions {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.btn-lg {
+    padding: 0.75rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+}
+
+.form-control-lg, .form-select-lg {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+/* Account message styling */
+.account-message {
+    font-size: 0.9rem;
+    border-radius: 8px;
+    border: none;
+    animation: fadeIn 0.3s ease-in;
+}
+.account-message i {
+    opacity: 0.8;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typOkresuSelect = document.querySelector('#umowa_zlecenia_typOkresu');
+    const dataDoField = document.getElementById('data-do-field');
+    const pobranieZSkladekCheckbox = document.querySelector('#umowa_zlecenia_pobranieKontaZSkladek');
+    const numerKontaRow = document.getElementById('numer-konta-row');
+    
+    function toggleDataDoField() {
+        if (typOkresuSelect && dataDoField) {
+            if (typOkresuSelect.value === 'od') {
+                dataDoField.style.display = 'none';
+            } else {
+                dataDoField.style.display = 'block';
+            }
+        }
+    }
+    
+    // Enhanced account handling with AJAX
+    const zleceniobiorcaSelect = document.querySelector('select[name="umowa_zlecenia[zleceniobiorca]"]');
+    const numerKontaInput = document.querySelector('input[name="umowa_zlecenia[numerKonta]"]');
+    
+    function toggleNumerKontaField() {
+        if (pobranieZSkladekCheckbox && numerKontaRow) {
+            if (pobranieZSkladekCheckbox.checked) {
+                numerKontaRow.style.display = 'none';
+                
+                // Fetch account number if contractor is selected
+                if (zleceniobiorcaSelect && zleceniobiorcaSelect.value) {
+                    fetchUserAccountNumber(zleceniobiorcaSelect.value);
+                } else {
+                    showAccountMessage('Najpierw wybierz zleceniobiorcę', 'warning');
+                }
+            } else {
+                numerKontaRow.style.display = 'block';
+                hideAccountMessage();
+            }
+        }
+    }
+    
+    function fetchUserAccountNumber(userId) {
+        if (!userId) return;
+        
+        showAccountMessage('Pobieranie numeru konta...', 'info');
+        
+        fetch(`/umowy-zlecenia/api/user/${userId}/account-number`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.hasAccountNumber) {
+                    if (numerKontaInput) numerKontaInput.value = data.accountNumber;
+                    showAccountMessage(data.message, 'success');
+                } else {
+                    if (numerKontaInput) numerKontaInput.value = '';
+                    showAccountMessage(data.message, 'warning');
+                }
+            } else {
+                showAccountMessage('Błąd podczas pobierania numeru konta', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching account number:', error);
+            showAccountMessage('Błąd połączenia z serwerem', 'error');
+        });
+    }
+    
+    function showAccountMessage(message, type) {
+        let messageDiv = document.querySelector('#account-message');
+        if (!messageDiv) {
+            messageDiv = document.createElement('div');
+            messageDiv.id = 'account-message';
+            messageDiv.className = 'account-message';
+            if (numerKontaRow) {
+                numerKontaRow.parentNode.insertBefore(messageDiv, numerKontaRow.nextSibling);
+            } else {
+                // Fallback insertion point
+                const formSection = document.querySelector('.form-section');
+                if (formSection) formSection.appendChild(messageDiv);
+            }
+        }
+        
+        messageDiv.className = `account-message alert alert-${getBootstrapClass(type)} mt-2`;
+        messageDiv.innerHTML = `<i class="fas fa-${getIcon(type)} me-2"></i>${message}`;
+        messageDiv.style.display = 'block';
+    }
+    
+    function hideAccountMessage() {
+        const messageDiv = document.querySelector('#account-message');
+        if (messageDiv) {
+            messageDiv.style.display = 'none';
+        }
+    }
+    
+    function getBootstrapClass(type) {
+        const classes = {
+            'success': 'success',
+            'error': 'danger',
+            'warning': 'warning',
+            'info': 'info'
+        };
+        return classes[type] || 'info';
+    }
+    
+    function getIcon(type) {
+        const icons = {
+            'success': 'check-circle',
+            'error': 'exclamation-circle',
+            'warning': 'exclamation-triangle',
+            'info': 'info-circle'
+        };
+        return icons[type] || 'info-circle';
+    }
+    
+    if (typOkresuSelect) {
+        typOkresuSelect.addEventListener('change', toggleDataDoField);
+        toggleDataDoField();
+    }
+    
+    if (pobranieZSkladekCheckbox) {
+        pobranieZSkladekCheckbox.addEventListener('change', toggleNumerKontaField);
+        toggleNumerKontaField();
+    }
+    
+    // Handle contractor selection change when checkbox is checked
+    if (zleceniobiorcaSelect && pobranieZSkladekCheckbox) {
+        zleceniobiorcaSelect.addEventListener('change', function() {
+            if (pobranieZSkladekCheckbox.checked) {
+                if (this.value) {
+                    fetchUserAccountNumber(this.value);
+                } else {
+                    if (numerKontaInput) numerKontaInput.value = '';
+                    showAccountMessage('Wybierz zleceniobiorcę', 'info');
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

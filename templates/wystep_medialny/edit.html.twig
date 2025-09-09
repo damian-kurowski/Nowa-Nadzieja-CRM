@@ -1,0 +1,516 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edytuj wystąpienie medialne - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Edytuj wystąpienie medialne{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Enhanced Edit Form */
+        .edit-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .edit-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Enhanced Form Sections */
+        .form-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .form-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .form-section-header {
+            background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(19, 132, 150, 0.05));
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .form-section-header h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .form-section-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+        
+        /* Enhanced Form Controls */
+        .enhanced-form-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .enhanced-form-group .form-label {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .enhanced-form-group .form-label i {
+            margin-right: 0.5rem;
+            width: 16px;
+            text-align: center;
+            color: #17a2b8;
+        }
+        
+        .enhanced-form-control {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary);
+        }
+        
+        .enhanced-form-control:focus {
+            border-color: #17a2b8;
+            box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+            background: var(--bg-primary);
+        }
+        
+        .enhanced-form-control:hover {
+            border-color: rgba(23, 162, 184, 0.5);
+        }
+        
+        /* Enhanced Select */
+        .enhanced-select {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            transition: all 0.3s ease;
+        }
+        
+        .enhanced-select:focus {
+            border-color: #17a2b8;
+            box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+            background: var(--bg-primary);
+        }
+        
+        /* Enhanced Textarea */
+        .enhanced-textarea {
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary);
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .enhanced-textarea:focus {
+            border-color: #17a2b8;
+            box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+            background: var(--bg-primary);
+        }
+        
+        /* Enhanced Buttons */
+        .btn-enhanced {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .btn-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-enhanced:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary-gradient:hover {
+            color: white;
+            box-shadow: 0 4px 16px rgba(23, 162, 184, 0.3);
+        }
+        
+        .btn-secondary-gradient {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            border: none;
+            color: white;
+        }
+        
+        .btn-secondary-gradient:hover {
+            color: white;
+            box-shadow: 0 4px 16px rgba(108, 117, 125, 0.3);
+        }
+        
+        /* Info Panel Enhanced */
+        .info-panel {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(32, 201, 151, 0.02));
+            border: 1px solid rgba(40, 167, 69, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .info-panel-header {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.05));
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+            border-bottom: 1px solid rgba(40, 167, 69, 0.1);
+        }
+        
+        .info-panel-header h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-panel-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .help-text {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .help-text i {
+            margin-right: 0.5rem;
+            color: #17a2b8;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Edit Header -->
+    <div class="edit-header">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="header-icon me-3">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <div>
+                            <h1 class="mb-0">Edycja wystąpienia medialnego</h1>
+                            <p class="mb-0 opacity-90 fs-5">
+                                {{ wystep.nazwaMediaRedakcji ?: 'Wystąpienie medialne' }} • ID: #{{ wystep.id }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="form-section">
+                {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': ''}}) }}
+                
+                <div class="row">
+                    <!-- Podstawowe informacje o wystąpieniu -->
+                    <div class="col-md-6">
+                        <div class="form-section-header">
+                            <h6>
+                                <div class="form-section-icon">
+                                    <i class="fas fa-tv"></i>
+                                </div>
+                                Informacje o medium
+                            </h6>
+                        </div>
+                        
+                        <div class="enhanced-form-group">
+                            <label class="form-label">
+                                <i class="fas fa-calendar-alt"></i>{{ form.dataIGodzina.vars.label }}
+                            </label>
+                            {{ form_widget(form.dataIGodzina, {'attr': {'class': 'enhanced-form-control'}}) }}
+                            {{ form_errors(form.dataIGodzina) }}
+                        </div>
+
+                        <div class="enhanced-form-group">
+                            <label class="form-label">
+                                <i class="fas fa-broadcast-tower"></i>{{ form.nazwaMediaRedakcji.vars.label }}
+                            </label>
+                            {{ form_widget(form.nazwaMediaRedakcji, {'attr': {'class': 'enhanced-form-control', 'placeholder': 'np. TVP Info, Polsat News, Gazeta.pl'}}) }}
+                            {{ form_errors(form.nazwaMediaRedakcji) }}
+                        </div>
+
+                        <div class="enhanced-form-group">
+                            <label class="form-label">
+                                <i class="fas fa-film"></i>{{ form.nazwaProgramu.vars.label }}
+                            </label>
+                            {{ form_widget(form.nazwaProgramu, {'attr': {'class': 'enhanced-form-control', 'placeholder': 'np. Wiadomości, Debata, Wywiad'}}) }}
+                            {{ form_errors(form.nazwaProgramu) }}
+                        </div>
+
+                        <div class="enhanced-form-group">
+                            <label class="form-label">
+                                <i class="fas fa-user-tie"></i>{{ form.dziennikarzProwadzacy.vars.label }}
+                            </label>
+                            {{ form_widget(form.dziennikarzProwadzacy, {'attr': {'class': 'enhanced-form-control', 'placeholder': 'Imię i nazwisko dziennikarza'}}) }}
+                            {{ form_errors(form.dziennikarzProwadzacy) }}
+                        </div>
+                    </div>
+
+                    <!-- Szczegóły wystąpienia -->
+                    <div class="col-md-6">
+                        <div class="form-section-header">
+                            <h6>
+                                <div class="form-section-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                Uczestnicy i kontakt
+                            </h6>
+                        </div>
+
+                        <div class="enhanced-form-group">
+                            <label class="form-label">
+                                <i class="fas fa-microphone"></i>{{ form.mowcy.vars.label }}
+                            </label>
+                            {{ form_widget(form.mowcy, {'attr': {'class': 'enhanced-select', 'multiple': 'multiple', 'size': '4'}}) }}
+                            <div class="help-text">
+                                <i class="fas fa-info-circle"></i>
+                                Przytrzymaj Ctrl aby wybrać wielu mówców
+                            </div>
+                            {{ form_errors(form.mowcy) }}
+                        </div>
+
+                        <div class="enhanced-form-group">
+                            <label class="form-label">
+                                <i class="fas fa-phone"></i>{{ form.numerTelefonu.vars.label }}
+                            </label>
+                            {{ form_widget(form.numerTelefonu, {'attr': {'class': 'enhanced-form-control', 'placeholder': '+48 123 456 789'}}) }}
+                            {{ form_errors(form.numerTelefonu) }}
+                        </div>
+
+                        <div class="enhanced-form-group">
+                            <label class="form-label">
+                                <i class="fas fa-link"></i>{{ form.linkDoNagrania.vars.label }}
+                            </label>
+                            {{ form_widget(form.linkDoNagrania, {'attr': {'class': 'enhanced-form-control', 'placeholder': 'https://'}}) }}
+                            <div class="help-text">
+                                <i class="fas fa-info-circle"></i>
+                                Link do nagrania lub transmisji na żywo
+                            </div>
+                            {{ form_errors(form.linkDoNagrania) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tematy rozmowy -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="form-section-header">
+                            <h6>
+                                <div class="form-section-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                Tematy i treść
+                            </h6>
+                        </div>
+                        
+                        <div class="enhanced-form-group">
+                            <label class="form-label">
+                                <i class="fas fa-edit"></i>{{ form.tematyRozmowy.vars.label }}
+                            </label>
+                            {{ form_widget(form.tematyRozmowy, {'attr': {'class': 'enhanced-textarea', 'placeholder': 'Opisz główne tematy, które będą poruszane podczas wystąpienia...'}}) }}
+                            {{ form_errors(form.tematyRozmowy) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Przyciski -->
+                <div class="d-flex justify-content-between mt-4 pt-3" style="border-top: 1px solid var(--border-color);">
+                    <a href="{{ path('wystep_medialny_show', {'id': wystep.id}) }}" class="btn btn-enhanced btn-secondary-gradient">
+                        <i class="fas fa-times me-2"></i>Anuluj
+                    </a>
+                    <button type="submit" class="btn btn-enhanced btn-primary-gradient">
+                        <i class="fas fa-save me-2"></i>Zapisz zmiany
+                    </button>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+
+            <!-- Enhanced Info Panel -->
+            <div class="info-panel">
+                <div class="info-panel-header">
+                    <h6>
+                        <div class="info-panel-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        Informacje o edycji
+                    </h6>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">Pierwotne zgłoszenie</h6>
+                        <div class="small">
+                            <div class="d-flex justify-content-between py-2 border-bottom">
+                                <span><strong>Zgłaszający:</strong></span>
+                                <span>{{ wystep.zglaszajacy.fullName }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between py-2 border-bottom">
+                                <span><strong>Data zgłoszenia:</strong></span>
+                                <span>{{ wystep.dataZgloszenia|date('d.m.Y H:i') }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between py-2">
+                                <span><strong>ID wystąpienia:</strong></span>
+                                <span>#{{ wystep.id }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">Wskazówki edycji</h6>
+                        <ul class="small mb-0 list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Wszystkie zmiany są automatycznie zapisywane
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-link text-info me-2"></i>
+                                Dodaj link do nagrania po zakończeniu wystąpienia
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-eye text-warning me-2"></i>
+                                Sprawdź poprawność danych przed zapisaniem
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Bootstrap form validation
+        (function() {
+            'use strict';
+            window.addEventListener('load', function() {
+                var forms = document.getElementsByClassName('needs-validation');
+                var validation = Array.prototype.filter.call(forms, function(form) {
+                    form.addEventListener('submit', function(event) {
+                        if (form.checkValidity() === false) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+
+        // Auto-focus na pierwszym polu
+        document.querySelector('input[type=\"datetime-local\"]').focus();
+        
+        // Podpowiedzi dla różnych mediów
+        const mediaInput = document.querySelector('input[name=\"wystep_medialny[nazwaMediaRedakcji]\"]');
+        if (mediaInput) {
+            mediaInput.addEventListener('blur', function() {
+                const value = this.value.toLowerCase();
+                const programInput = document.querySelector('input[name=\"wystep_medialny[nazwaProgramu]\"]');
+                
+                if (programInput && !programInput.value) {
+                    if (value.includes('tvp')) {
+                        programInput.placeholder = 'np. Wiadomości, Gość Wiadomości, Studio Polska';
+                    } else if (value.includes('polsat')) {
+                        programInput.placeholder = 'np. Wydarzenia, Graffiti, Debata';
+                    } else if (value.includes('tvn')) {
+                        programInput.placeholder = 'np. Fakty, Kropka nad i, Szkło kontaktowe';
+                    }
+                }
+            });
+        }
+    </script>
+{% endblock %}

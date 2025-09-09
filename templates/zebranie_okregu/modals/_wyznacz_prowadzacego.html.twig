@@ -1,0 +1,46 @@
+<!-- Modal Wyznacz Prowadzącego -->
+<div class="modal fade" id="wyznaczProwadzacegoModal" tabindex="-1" aria-labelledby="wyznaczProwadzacegoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="wyznaczProwadzacegoModalLabel">
+                    <i class="fas fa-user-tie"></i> Wyznacz prowadzącego zebranie
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Prowadzący będzie kierować przebiegiem zebrania i wraz z protokolantem dokona wyboru zarządu okręgu.
+                    <br><strong>Uwaga:</strong> Prowadzący musi być członkiem okręgu {{ zebranie.okreg.nazwa }}.
+                </div>
+                
+                <div class="mb-3">
+                    <label for="prowadzacy_id" class="form-label">Wybierz prowadzącego</label>
+                    <select id="prowadzacy_id" class="form-select">
+                        <option value="">-- Wybierz prowadzącego --</option>
+                        {% for member in usersInOkreg %}
+                            <option value="{{ member.id }}">
+                                {{ member.imie }} {{ member.nazwisko }}
+                                ({{ member.najwyzszaFunkcja }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Uwaga:</h6>
+                    Po wyznaczeniu prowadzącego, obserwator odda mu kierowanie zebraniem. Prowadzący będzie mógł przejść do wyboru zarządu okręgu.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Anuluj
+                </button>
+                <button type="button" class="btn btn-primary" onclick="wyznaczProwadzacego()">
+                    <i class="fas fa-check"></i> Wyznacz prowadzącego
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

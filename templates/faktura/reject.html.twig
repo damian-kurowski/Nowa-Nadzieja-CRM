@@ -1,0 +1,164 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Odrzuć fakturę {{ faktura.numerFaktury }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-times-circle me-2 text-danger"></i>Odrzuć fakturę {{ faktura.numerFaktury }}
+                </h1>
+                <a href="{{ path('faktura_show', {id: faktura.id}) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Powrót
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Odrzucanie faktury
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <strong>Uwaga!</strong> Odrzucenie faktury spowoduje, że skarbnik okręgu będzie musiał utworzyć nową fakturę.
+                        Podaj szczegółowe uzasadnienie odrzucenia.
+                    </div>
+
+                    <!-- Szczegóły faktury -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Szczegóły faktury:</h6>
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td width="120"><strong>Numer:</strong></td>
+                                    <td>{{ faktura.numerFaktury }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Kwota:</strong></td>
+                                    <td class="fw-bold">{{ faktura.kwota }} PLN</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Kategoria:</strong></td>
+                                    <td>{{ faktura.kategoriaLabel }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Data płatności:</strong></td>
+                                    <td>{{ faktura.dataPlatnosci|date('d.m.Y') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Skarbnik/Okręg:</h6>
+                            <table class="table table-borderless table-sm">
+                                <tr>
+                                    <td width="120"><strong>Skarbnik:</strong></td>
+                                    <td>{{ faktura.skarbnik.imie }} {{ faktura.skarbnik.nazwisko }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Okręg:</strong></td>
+                                    <td>{{ faktura.okreg.nazwa }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Utworzono:</strong></td>
+                                    <td>{{ faktura.dataUtworzenia|date('d.m.Y H:i') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>Cel płatności:</h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ faktura.celPlatnosci|nl2br }}
+                        </div>
+                    </div>
+
+                    <!-- Formularz odrzucenia -->
+                    <form method="post" action="{{ path('faktura_reject', {id: faktura.id}) }}">
+                        <div class="mb-3">
+                            <label for="uzasadnienie" class="form-label">
+                                <strong>Uzasadnienie odrzucenia <span class="text-danger">*</span></strong>
+                            </label>
+                            <textarea name="uzasadnienie" id="uzasadnienie" class="form-control" rows="6" 
+                                      placeholder="Podaj szczegółowe uzasadnienie, dlaczego faktura została odrzucona. Opisz, co należy poprawić lub dlaczego płatność nie może zostać zrealizowana..."
+                                      required></textarea>
+                            <div class="form-text">
+                                Uzasadnienie powinno być szczegółowe i konstruktywne, aby skarbnik okręgu wiedział, jak poprawić fakturę.
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ path('faktura_show', {id: faktura.id}) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Anuluj
+                            </a>
+                            <button type="submit" class="btn btn-danger" 
+                                    onclick="return confirm('Czy na pewno chcesz odrzucić tę fakturę? Ta operacja nie może być cofnięta.')">
+                                <i class="fas fa-times-circle me-2"></i>Odrzuć fakturę
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Automatycznie zaznacz pole uzasadnienia
+    const uzasadnienieTextarea = document.getElementById('uzasadnienie');
+    if (uzasadnienieTextarea) {
+        uzasadnienieTextarea.focus();
+    }
+
+    // Walidacja długości uzasadnienia
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            const uzasadnienie = uzasadnienieTextarea.value.trim();
+            
+            if (uzasadnienie.length < 20) {
+                event.preventDefault();
+                alert('Uzasadnienie musi mieć co najmniej 20 znaków. Podaj szczegółowe wyjaśnienie.');
+                uzasadnienieTextarea.focus();
+                return;
+            }
+
+            if (uzasadnienie.length > 1000) {
+                event.preventDefault();
+                alert('Uzasadnienie jest za długie. Maksymalnie 1000 znaków.');
+                uzasadnienieTextarea.focus();
+                return;
+            }
+        });
+    }
+
+    // Licznik znaków
+    if (uzasadnienieTextarea) {
+        const charCountDiv = document.createElement('div');
+        charCountDiv.className = 'form-text text-end';
+        charCountDiv.id = 'char-count';
+        uzasadnienieTextarea.parentNode.appendChild(charCountDiv);
+
+        function updateCharCount() {
+            const length = uzasadnienieTextarea.value.length;
+            charCountDiv.textContent = `${length}/1000 znaków`;
+            
+            if (length < 20) {
+                charCountDiv.className = 'form-text text-end text-danger';
+            } else if (length > 800) {
+                charCountDiv.className = 'form-text text-end text-warning';
+            } else {
+                charCountDiv.className = 'form-text text-end text-success';
+            }
+        }
+
+        uzasadnienieTextarea.addEventListener('input', updateCharCount);
+        updateCharCount();
+    }
+});
+</script>
+{% endblock %}

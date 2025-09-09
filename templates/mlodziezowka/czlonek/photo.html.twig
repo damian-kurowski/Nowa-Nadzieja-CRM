@@ -1,0 +1,216 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Zarządzaj zdjęciem - {{ czlonek.fullName }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Zarządzaj zdjęciem - {{ czlonek.fullName }}{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-camera me-2"></i>Wgraj nowe zdjęcie dla {{ czlonek.fullName }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Informacje o zdjęciu:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Dozwolone formaty: JPEG, PNG, GIF, WebP</li>
+                            <li>Maksymalny rozmiar: 5 MB</li>
+                            <li>Zdjęcie zostanie automatycznie przycięte do rozmiaru 500x500 pikseli</li>
+                            <li>Przycinanie odbywa się ze środka obrazu w celu zachowania najważniejszych detali</li>
+                        </ul>
+                    </div>
+
+                    {{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
+                        <div class="mb-3">
+                            {{ form_label(form.photo, null, {'attr': {'class': 'form-label'}}) }}
+                            {{ form_widget(form.photo) }}
+                            {{ form_errors(form.photo) }}
+                            <div class="form-text">
+                                Wybierz zdjęcie z dysku. Zostanie ono automatycznie przycięte do kwadratu 500x500px.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                            {{ form_widget(form.upload, {'attr': {'class': 'btn btn-primary me-md-2'}}) }}
+                            <a href="{{ path('czlonek_show', {id: czlonek.id}) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Powrót do profilu członka
+                            </a>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+
+            <!-- Podgląd aktualnego zdjęcia -->
+            {% if czlonek.zdjecie %}
+                <div class="card mt-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-image me-2"></i>Aktualne zdjęcie
+                        </h5>
+                        <form method="post" action="{{ path('czlonek_delete_photo', {id: czlonek.id}) }}" 
+                              onsubmit="return confirm('Czy na pewno chcesz usunąć zdjęcie?');">
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash me-2"></i>Usuń zdjęcie
+                            </button>
+                        </form>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="{{ asset('uploads/photos/' ~ czlonek.zdjecie) }}" 
+                             class="img-thumbnail" 
+                             alt="Zdjęcie {{ czlonek.fullName }}"
+                             style="max-width: 300px; max-height: 300px;">
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                Rozmiar: 500x500px | Format: {{ czlonek.zdjecie|split('.')|last|upper }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>Informacje o członku
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        {% if czlonek.zdjecie %}
+                            <img src="{{ asset('uploads/photos/' ~ czlonek.zdjecie) }}" 
+                                 class="rounded-circle" 
+                                 width="80" height="80" 
+                                 alt="Zdjęcie {{ czlonek.fullName }}"
+                                 style="object-fit: cover;">
+                        {% else %}
+                            <i class="fas fa-user-circle fa-4x text-muted"></i>
+                        {% endif %}
+                    </div>
+                    <h6 class="text-center">{{ czlonek.fullName }}</h6>
+                    <p class="text-center text-muted">{{ czlonek.email }}</p>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between py-1">
+                        <small>Status:</small>
+                        <small><strong>{{ czlonek.status|title }}</strong></small>
+                    </div>
+                    
+                    {% if czlonek.okreg %}
+                    <div class="d-flex justify-content-between py-1">
+                        <small>Okręg:</small>
+                        <small><strong>{{ czlonek.okreg.nazwa }}</strong></small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if czlonek.oddzial %}
+                    <div class="d-flex justify-content-between py-1">
+                        <small>Oddział:</small>
+                        <small><strong>{{ czlonek.oddzial.nazwa }}</strong></small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Wskazówki
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>Jak przygotować dobre zdjęcie profilowe:</h6>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Użyj zdjęcia wysokiej jakości
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Upewnij się, że twarz jest wyraźnie widoczna
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Wybierz zdjęcie z dobrym oświetleniem
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Unikaj zdjęć rozmazanych lub zbyt ciemnych
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-info-circle text-info me-2"></i>
+                            System automatycznie przytnie zdjęcie do kwadratu
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>Akcje
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('czlonek_show', {id: czlonek.id}) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-user me-2"></i>Zobacz profil
+                        </a>
+                        <a href="{{ path('czlonek_edit', {id: czlonek.id}) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-edit me-2"></i>Edytuj dane
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Podgląd wybranego zdjęcia
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.querySelector('input[type="file"]');
+            if (fileInput) {
+                fileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            // Usuń poprzedni podgląd jeśli istnieje
+                            const existingPreview = document.getElementById('image-preview');
+                            if (existingPreview) {
+                                existingPreview.remove();
+                            }
+
+                            // Utwórz podgląd
+                            const preview = document.createElement('div');
+                            preview.id = 'image-preview';
+                            preview.className = 'mt-3 text-center';
+                            preview.innerHTML = `
+                                <p><strong>Podgląd wybranego zdjęcia:</strong></p>
+                                <img src="${e.target.result}" 
+                                     class="img-thumbnail" 
+                                     style="max-width: 200px; max-height: 200px;" 
+                                     alt="Podgląd">
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        Nazwa: ${file.name} | Rozmiar: ${(file.size / 1024 / 1024).toFixed(2)} MB
+                                    </small>
+                                </div>
+                            `;
+                            
+                            fileInput.parentNode.appendChild(preview);
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}

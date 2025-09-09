@@ -1,0 +1,1224 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Faktura {{ faktura.numerFaktury }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Enhanced Header -->
+            <div class="page-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="header-content">
+                            <div class="header-icon">
+                                <div class="icon-wrapper">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </div>
+                            </div>
+                            <div class="header-text">
+                                <h1 class="page-title mb-1">Faktura {{ faktura.numerFaktury }}</h1>
+                                <p class="page-subtitle mb-0">
+                                    Szczegóły faktury • {{ faktura.statusLabel }}
+                                    {% if faktura.isPilna %}
+                                        <span class="priority-indicator">
+                                            <i class="fas fa-exclamation-triangle ms-2"></i>PILNA
+                                        </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="header-actions">
+                            {% if canEdit %}
+                                <a href="{{ path('faktura_edit', {id: faktura.id}) }}" class="btn btn-outline-light btn-lg header-btn me-2">
+                                    <i class="fas fa-edit me-2"></i>
+                                    <span>Edytuj</span>
+                                </a>
+                                <a href="{{ path('faktura_copy', {id: faktura.id}) }}" class="btn btn-outline-light btn-lg header-btn me-2">
+                                    <i class="fas fa-copy me-2"></i>
+                                    <span>Kopiuj</span>
+                                </a>
+                            {% endif %}
+                            <a href="{{ path('faktura_index') }}" class="btn btn-outline-light btn-lg header-btn">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                <span>Powrót</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Info Bar -->
+                <div class="quick-stats-bar mt-3">
+                    <div class="row">
+                        <div class="col">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="quick-info">
+                                    <div class="info-items">
+                                        <div class="info-item">
+                                            <div class="info-icon">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <div class="info-label">Kwota</div>
+                                                <div class="info-value">{{ faktura.kwota }} PLN</div>
+                                            </div>
+                                        </div>
+                                        <div class="info-separator"></div>
+                                        <div class="info-item">
+                                            <div class="info-icon">
+                                                <i class="fas fa-calendar-alt"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <div class="info-label">Termin płatności</div>
+                                                <div class="info-value">{{ faktura.dataPlatnosci|date('d.m.Y') }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="info-separator"></div>
+                                        <div class="info-item">
+                                            <div class="info-icon">
+                                                <i class="fas fa-tag"></i>
+                                            </div>
+                                            <div class="info-content">
+                                                <div class="info-label">Kategoria</div>
+                                                <div class="info-value">{{ faktura.kategoriaLabel }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="header-breadcrumb">
+                                    <nav aria-label="breadcrumb">
+                                        <ol class="breadcrumb mb-0">
+                                            <li class="breadcrumb-item">
+                                                <a href="{{ path('dashboard') }}">
+                                                    <i class="fas fa-home me-1"></i>Dashboard
+                                                </a>
+                                            </li>
+                                            <li class="breadcrumb-item">
+                                                <a href="{{ path('faktura_index') }}">Faktury</a>
+                                            </li>
+                                            <li class="breadcrumb-item active">{{ faktura.numerFaktury }}</li>
+                                        </ol>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Enhanced Details Card -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center">
+                                    <div class="card-icon me-3">
+                                        <div class="mini-icon-wrapper">
+                                            <i class="fas fa-file-invoice"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h5 class="card-title mb-1">Szczegóły faktury</h5>
+                                        <small class="text-white-50">Wszystkie informacje o fakturze</small>
+                                    </div>
+                                </div>
+                                <div class="status-badges">
+                                    {% set statusClass = 'secondary' %}
+                                    {% set statusIcon = 'fas fa-circle' %}
+                                    {% if faktura.isWprowadzone %}
+                                        {% set statusClass = 'warning' %}
+                                        {% set statusIcon = 'fas fa-hourglass-half' %}
+                                    {% elseif faktura.isZaakceptowane %}
+                                        {% set statusClass = 'success' %}
+                                        {% set statusIcon = 'fas fa-check-circle' %}
+                                    {% elseif faktura.isOdrzucone %}
+                                        {% set statusClass = 'danger' %}
+                                        {% set statusIcon = 'fas fa-times-circle' %}
+                                    {% elseif faktura.isZrealizowane %}
+                                        {% set statusClass = 'info' %}
+                                        {% set statusIcon = 'fas fa-money-check-alt' %}
+                                    {% endif %}
+                                    <span class="badge bg-{{ statusClass }} badge-enhanced fs-6">
+                                        <i class="{{ statusIcon }} me-1"></i>{{ faktura.statusLabel }}
+                                    </span>
+                                    {% if faktura.isPilna %}
+                                        <span class="badge bg-danger badge-enhanced fs-6 ms-2 badge-pulse">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Pilna
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Enhanced Details Layout -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="details-section">
+                                        <h6 class="section-title">
+                                            <i class="fas fa-file-invoice-dollar me-2 text-primary"></i>
+                                            Dane faktury
+                                        </h6>
+                                        <div class="details-grid">
+                                            <div class="detail-item">
+                                                <div class="detail-label">Numer faktury</div>
+                                                <div class="detail-value detail-invoice-number">{{ faktura.numerFaktury }}</div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Kwota do zapłaty</div>
+                                                <div class="detail-value detail-amount">{{ faktura.kwota }} PLN</div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Numer konta odbiorcy</div>
+                                                <div class="detail-value detail-account">{{ faktura.numerKonta }}</div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Termin płatności</div>
+                                                <div class="detail-value detail-date">
+                                                    <i class="fas fa-calendar-alt me-2"></i>{{ faktura.dataPlatnosci|date('d.m.Y') }}
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Kategoria wydatku</div>
+                                                <div class="detail-value">
+                                                    <span class="badge bg-primary badge-enhanced">
+                                                        <i class="fas fa-tag me-1"></i>{{ faktura.kategoriaLabel }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Priorytet</div>
+                                                <div class="detail-value">
+                                                    {% if faktura.isPilna %}
+                                                        <span class="badge bg-danger badge-enhanced">
+                                                            <i class="fas fa-fire me-1"></i>Pilna
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary badge-enhanced">
+                                                            <i class="fas fa-clock me-1"></i>Normalna
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="details-section">
+                                        <h6 class="section-title">
+                                            <i class="fas fa-info-circle me-2 text-info"></i>
+                                            Informacje systemowe
+                                        </h6>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Data utworzenia</div>
+                                                <div class="detail-value">
+                                                    <i class="fas fa-clock me-2"></i>{{ faktura.dataUtworzenia|date('d.m.Y H:i') }}
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Utworzona przez</div>
+                                                <div class="detail-value">
+                                                    <i class="fas fa-user me-2"></i>{{ faktura.skarbnik.imie }} {{ faktura.skarbnik.nazwisko }}
+                                                </div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Okręg</div>
+                                                <div class="detail-value">
+                                                    <i class="fas fa-map-marker-alt me-2"></i>{{ faktura.okreg.nazwa }}
+                                                </div>
+                                            </div>
+                                            {% if faktura.dataAkceptacji %}
+                                            <div class="detail-item">
+                                                <div class="detail-label">Data akceptacji</div>
+                                                <div class="detail-value detail-success">
+                                                    <i class="fas fa-check-circle me-2"></i>{{ faktura.dataAkceptacji|date('d.m.Y H:i') }}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            {% if faktura.skarbnikPartiiAkceptujacy %}
+                                            <div class="detail-item">
+                                                <div class="detail-label">Akceptował</div>
+                                                <div class="detail-value">
+                                                    <i class="fas fa-user-check me-2"></i>{{ faktura.skarbnikPartiiAkceptujacy.imie }} {{ faktura.skarbnikPartiiAkceptujacy.nazwisko }}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            {% if faktura.dataRealizacji %}
+                                            <div class="detail-item">
+                                                <div class="detail-label">Data realizacji</div>
+                                                <div class="detail-value detail-info">
+                                                    <i class="fas fa-money-check-alt me-2"></i>{{ faktura.dataRealizacji|date('d.m.Y H:i') }}
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Description Section -->
+                            <div class="description-section mt-4">
+                                <div class="section-header mb-3">
+                                    <div class="section-icon">
+                                        <i class="fas fa-align-left"></i>
+                                    </div>
+                                    <h6 class="section-title mb-0">Cel płatności</h6>
+                                </div>
+                                <div class="description-content">
+                                    {{ faktura.celPlatnosci|nl2br }}
+                                </div>
+                            </div>
+
+                            {% if faktura.nazwaDostaway or faktura.adresDostaway %}
+                            <!-- Supplier Information -->
+                            <div class="supplier-section mt-4">
+                                <div class="section-header mb-3">
+                                    <div class="section-icon">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <h6 class="section-title mb-0">Informacje o dostawcy</h6>
+                                </div>
+                                <div class="supplier-content">
+                                    {% if faktura.nazwaDostaway %}
+                                        <div class="supplier-name">
+                                            <i class="fas fa-building me-2"></i>
+                                            <strong>{{ faktura.nazwaDostaway }}</strong>
+                                        </div>
+                                    {% endif %}
+                                    {% if faktura.adresDostaway %}
+                                        <div class="supplier-address">
+                                            <i class="fas fa-map-marker-alt me-2"></i>
+                                            {{ faktura.adresDostaway }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if faktura.uzasadnienieOdrzucenia %}
+                            <!-- Rejection Reason -->
+                            <div class="rejection-section mt-4">
+                                <div class="alert alert-danger border-0 shadow-sm">
+                                    <div class="d-flex">
+                                        <div class="alert-icon me-3">
+                                            <div class="icon-wrapper bg-danger">
+                                                <i class="fas fa-times-circle text-white"></i>
+                                            </div>
+                                        </div>
+                                        <div class="alert-content">
+                                            <h6 class="alert-heading mb-2">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                Faktura została odrzucona
+                                            </h6>
+                                            <div class="rejection-reason">
+                                                {{ faktura.uzasadnienieOdrzucenia|nl2br }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-4">
+                    {% if canManageStatus %}
+                    <!-- Enhanced Status Management Card -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);">
+                            <div class="d-flex align-items-center">
+                                <div class="card-icon me-3">
+                                    <div class="mini-icon-wrapper">
+                                        <i class="fas fa-cogs"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="card-title mb-1">Zarządzanie statusem</h6>
+                                    <small class="text-white-50">Akcje dostępne dla skarbnika partii</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            {% if faktura.isWprowadzone %}
+                                <div class="action-buttons">
+                                    <form method="post" action="{{ path('faktura_accept', {id: faktura.id}) }}" class="mb-3" data-turbo="false">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('accept' ~ faktura.id) }}">
+                                        <button type="submit" class="btn btn-success btn-lg w-100 action-btn" 
+                                                onclick="return confirm('Czy na pewno chcesz zaakceptować tę fakturę?')">
+                                            <div class="btn-content">
+                                                <i class="fas fa-check-circle btn-icon"></i>
+                                                <div class="btn-text">
+                                                    <div class="btn-title">Zaakceptuj</div>
+                                                    <div class="btn-subtitle">Przekaż do realizacji</div>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </form>
+                                    
+                                    <a href="{{ path('faktura_reject', {id: faktura.id}) }}" class="btn btn-danger btn-lg w-100 action-btn">
+                                        <div class="btn-content">
+                                            <i class="fas fa-times-circle btn-icon"></i>
+                                            <div class="btn-text">
+                                                <div class="btn-title">Odrzuć</div>
+                                                <div class="btn-subtitle">Z uzasadnieniem</div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            {% elseif faktura.isZaakceptowane %}
+                                <form method="post" action="{{ path('faktura_complete', {id: faktura.id}) }}" data-turbo="false">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('complete' ~ faktura.id) }}">
+                                    <button type="submit" class="btn btn-info btn-lg w-100 action-btn" 
+                                            onclick="return confirm('Czy na pewno chcesz oznaczyć tę fakturę jako zrealizowaną?')">
+                                        <div class="btn-content">
+                                            <i class="fas fa-money-check-alt btn-icon"></i>
+                                            <div class="btn-text">
+                                                <div class="btn-title">Oznacz jako zrealizowane</div>
+                                                <div class="btn-subtitle">Płatność wykonana</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <div class="text-center py-3">
+                                    <div class="no-actions-icon">
+                                        <i class="fas fa-check-double text-success"></i>
+                                    </div>
+                                    <p class="text-muted mb-0 mt-2">Brak dostępnych akcji</p>
+                                    <small class="text-muted">Faktura w stanie końcowym</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Enhanced Information Card -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light border-0">
+                            <div class="d-flex align-items-center">
+                                <div class="card-icon me-3">
+                                    <div class="mini-icon-wrapper bg-info">
+                                        <i class="fas fa-info-circle text-white"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="card-title mb-1">Informacje o fakturze</h6>
+                                    <small class="text-muted">Stan i dodatkowe informacje</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Status Information -->
+                            {% if faktura.isWprowadzone %}
+                                <div class="status-card status-warning mb-3">
+                                    <div class="status-icon">
+                                        <i class="fas fa-hourglass-half"></i>
+                                    </div>
+                                    <div class="status-content">
+                                        <h6 class="status-title">Oczekuje na akceptację</h6>
+                                        <p class="status-description">Faktura czeka na akceptację przez skarbnika partii.</p>
+                                    </div>
+                                </div>
+                            {% elseif faktura.isZaakceptowane %}
+                                <div class="status-card status-success mb-3">
+                                    <div class="status-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="status-content">
+                                        <h6 class="status-title">Zaakceptowano do realizacji</h6>
+                                        <p class="status-description">Faktura może zostać zrealizowana przez skarbnika partii.</p>
+                                    </div>
+                                </div>
+                            {% elseif faktura.isOdrzucone %}
+                                <div class="status-card status-danger mb-3">
+                                    <div class="status-icon">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                    <div class="status-content">
+                                        <h6 class="status-title">Faktura odrzucona</h6>
+                                        <p class="status-description">Zobacz uzasadnienie powyżej i utwórz nową fakturę.</p>
+                                    </div>
+                                </div>
+                            {% elseif faktura.isZrealizowane %}
+                                <div class="status-card status-info mb-3">
+                                    <div class="status-icon">
+                                        <i class="fas fa-money-check-alt"></i>
+                                    </div>
+                                    <div class="status-content">
+                                        <h6 class="status-title">Faktura zrealizowana</h6>
+                                        <p class="status-description">Płatność została wykonana {{ faktura.dataRealizacji|date('d.m.Y') }}.</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if faktura.isPilna %}
+                                <div class="priority-card mb-3">
+                                    <div class="priority-icon">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div class="priority-content">
+                                        <h6 class="priority-title">Faktura pilna</h6>
+                                        <p class="priority-description">Ta faktura została oznaczona jako pilna i będzie priorytetowo traktowana.</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if canEdit %}
+                                <div class="edit-info-card mb-3">
+                                    <div class="edit-icon">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                    <div class="edit-content">
+                                        <h6 class="edit-title">Możesz edytować</h6>
+                                        <p class="edit-description">Fakturę można edytować tylko do momentu zaakceptowania.</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if faktura.skarbnik == app.user and (faktura.isWprowadzone or faktura.isOdrzucone) %}
+                                <div class="danger-zone mt-4 pt-3 border-top">
+                                    <h6 class="text-danger mb-3">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>Strefa niebezpieczna
+                                    </h6>
+                                    <form method="post" action="{{ path('faktura_delete', {id: faktura.id}) }}" 
+                                          onsubmit="return confirm('Czy na pewno chcesz usunąć tę fakturę? Ta operacja jest nieodwracalna.')" data-turbo="false">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ faktura.id) }}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm w-100 delete-btn">
+                                            <i class="fas fa-trash me-2"></i>Usuń fakturę
+                                        </button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Enhanced Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+        background-size: 200% 200%;
+        animation: gradientShift 8s ease infinite;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.1),
+                    0 5px 15px rgba(0, 0, 0, 0.07);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        pointer-events: none;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-icon {
+        margin-right: 1.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .icon-wrapper i {
+        font-size: 24px;
+        color: white;
+    }
+
+    .header-text {
+        color: white;
+    }
+
+    .page-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 400;
+    }
+
+    .priority-indicator {
+        color: #ff6b6b;
+        font-weight: 600;
+        text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        animation: priorityPulse 2s infinite;
+    }
+
+    .header-actions {
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-btn {
+        background: rgba(255, 255, 255, 0.15) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-btn:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        color: white !important;
+    }
+
+    /* Quick Info Bar */
+    .quick-stats-bar {
+        position: relative;
+        z-index: 1;
+    }
+
+    .quick-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .info-items {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+    }
+
+    .info-icon i {
+        color: white;
+        font-size: 18px;
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .info-value {
+        font-size: 0.9rem;
+        color: white;
+        font-weight: 600;
+    }
+
+    .info-separator {
+        width: 1px;
+        height: 30px;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 0 0.5rem;
+    }
+
+    .header-breadcrumb {
+        color: white;
+    }
+
+    .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .breadcrumb-item a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color: white;
+    }
+
+    .breadcrumb-item.active {
+        color: white;
+        font-weight: 600;
+    }
+
+    /* Enhanced Details Card */
+    .mini-icon-wrapper {
+        width: 30px;
+        height: 30px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mini-icon-wrapper i {
+        font-size: 14px;
+        color: white;
+    }
+
+    .badge-enhanced {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .badge-pulse {
+        animation: badgePulse 2s infinite;
+    }
+
+    /* Details Layout */
+    .details-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .details-section:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border-color: #dee2e6;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .details-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .detail-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+    }
+
+    .detail-value {
+        font-size: 1rem;
+        color: #2d3748;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+    }
+
+    .detail-invoice-number {
+        font-family: 'Courier New', monospace;
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    .detail-amount {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #28a745;
+    }
+
+    .detail-account {
+        font-family: 'Courier New', monospace;
+        background: #e9ecef;
+        padding: 0.5rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+
+    .detail-success {
+        color: #28a745;
+        font-weight: 600;
+    }
+
+    .detail-info {
+        color: #17a2b8;
+        font-weight: 600;
+    }
+
+    /* Enhanced Section Headers */
+    .section-header {
+        display: flex;
+        align-items: center;
+        padding: 1rem 0;
+    }
+
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3);
+    }
+
+    .section-icon i {
+        color: white;
+        font-size: 18px;
+    }
+
+    /* Description and Supplier Content */
+    .description-content,
+    .supplier-content {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    .supplier-name,
+    .supplier-address {
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .supplier-name {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    .supplier-address {
+        color: #6c757d;
+    }
+
+    /* Enhanced Alert */
+    .alert-icon {
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .alert-icon .icon-wrapper {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .alert-content {
+        flex: 1;
+    }
+
+    .rejection-reason {
+        background: rgba(220, 53, 69, 0.1);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+        padding: 1rem;
+        border-radius: 15px;
+        border: none;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: block;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-content {
+        display: flex;
+        align-items: center;
+    }
+
+    .btn-icon {
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .btn-text {
+        text-align: left;
+    }
+
+    .btn-title {
+        font-weight: 600;
+        font-size: 1rem;
+        line-height: 1.2;
+    }
+
+    .btn-subtitle {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        margin-top: 0.25rem;
+    }
+
+    .no-actions-icon {
+        font-size: 3rem;
+        opacity: 0.6;
+    }
+
+    /* Status Cards */
+    .status-card {
+        display: flex;
+        align-items: flex-start;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .status-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0.05;
+        pointer-events: none;
+    }
+
+    .status-warning {
+        background: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+    }
+
+    .status-warning::before {
+        background: #f39c12;
+    }
+
+    .status-success {
+        background: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .status-success::before {
+        background: #28a745;
+    }
+
+    .status-danger {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .status-danger::before {
+        background: #dc3545;
+    }
+
+    .status-info {
+        background: #d1ecf1;
+        border-color: #bee5eb;
+        color: #0c5460;
+    }
+
+    .status-info::before {
+        background: #17a2b8;
+    }
+
+    .status-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .status-warning .status-icon {
+        background: #ffeaa7;
+        color: #d68910;
+    }
+
+    .status-success .status-icon {
+        background: #c3e6cb;
+        color: #28a745;
+    }
+
+    .status-danger .status-icon {
+        background: #f5c6cb;
+        color: #dc3545;
+    }
+
+    .status-info .status-icon {
+        background: #bee5eb;
+        color: #17a2b8;
+    }
+
+    .status-content {
+        flex: 1;
+        position: relative;
+        z-index: 1;
+    }
+
+    .status-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .status-description {
+        font-size: 0.9rem;
+        margin: 0;
+        opacity: 0.8;
+    }
+
+    .priority-card {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: flex-start;
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        animation: priorityGlow 2s infinite alternate;
+    }
+
+    .priority-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .priority-content {
+        flex: 1;
+    }
+
+    .priority-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .priority-description {
+        font-size: 0.9rem;
+        margin: 0;
+        opacity: 0.9;
+    }
+
+    .edit-info-card {
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: flex-start;
+        box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3);
+    }
+
+    .edit-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+
+    .edit-content {
+        flex: 1;
+    }
+
+    .edit-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .edit-description {
+        font-size: 0.9rem;
+        margin: 0;
+        opacity: 0.9;
+    }
+
+    .danger-zone {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+    }
+
+    .delete-btn {
+        transition: all 0.3s ease;
+    }
+
+    .delete-btn:hover {
+        background: #dc3545;
+        border-color: #dc3545;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+
+    /* Animations */
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    @keyframes priorityPulse {
+        0%, 100% { text-shadow: 0 0 10px rgba(255, 107, 107, 0.5); }
+        50% { text-shadow: 0 0 20px rgba(255, 107, 107, 0.8); }
+    }
+
+    @keyframes badgePulse {
+        0%, 100% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+        50% { box-shadow: 0 6px 25px rgba(220, 53, 69, 0.4); }
+    }
+
+    @keyframes priorityGlow {
+        0% { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3); }
+        100% { box-shadow: 0 6px 25px rgba(255, 107, 107, 0.5); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .header-icon {
+            margin-right: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+        }
+        
+        .info-items {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .info-item {
+            width: 100%;
+        }
+        
+        .header-breadcrumb {
+            margin-top: 1rem;
+        }
+        
+        .details-grid {
+            gap: 0.75rem;
+        }
+        
+        .action-btn .btn-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .btn-icon {
+            margin-right: 0;
+            margin-bottom: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}

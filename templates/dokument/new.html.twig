@@ -1,0 +1,455 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nowy dokument - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Nowy dokument{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Enhanced Document Creation Header */
+        .document-creation-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            margin-bottom: 3rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .document-creation-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Document Types Container */
+        .document-types-container {
+            margin-bottom: 3rem;
+        }
+        
+        /* Category Sections */
+        .category-section {
+            margin-bottom: 3rem;
+        }
+        
+        .category-header {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .category-title {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .category-icon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.25rem;
+        }
+        
+        /* Enhanced Document Type Cards */
+        .document-type-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .document-type-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        
+        .document-type-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 32px var(--shadow-medium);
+            border-color: #667eea;
+        }
+        
+        .document-type-card:hover::before {
+            width: 100%;
+            opacity: 0.05;
+        }
+        
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .document-type-card:hover .card-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+        }
+        
+        .card-content {
+            flex: 1;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-title {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        
+        .card-action {
+            margin-top: auto;
+        }
+        
+        /* Enhanced Buttons */
+        .btn-enhanced {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .btn-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-enhanced:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: #667eea;
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-primary-gradient:hover {
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+        
+        /* Enhanced Navigation */
+        .document-navigation {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .breadcrumb-enhanced {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+        
+        .breadcrumb-item a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .breadcrumb-item a:hover {
+            text-decoration: underline;
+        }
+        
+        .breadcrumb-item.active {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .btn-outline-primary {
+            border-color: #667eea;
+            color: #667eea;
+        }
+        
+        .btn-outline-primary:hover {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.02));
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+        }
+        
+        .empty-state-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: #667eea;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .empty-state h4 {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .empty-state p {
+            color: var(--text-secondary);
+            margin-bottom: 0;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .document-creation-header {
+                padding: 2rem 1rem;
+            }
+            
+            .document-navigation {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .nav-buttons {
+                justify-content: center;
+            }
+            
+            .document-type-card {
+                margin-bottom: 2rem;
+            }
+        }
+        
+        /* Card hover animations */
+        @media (min-width: 769px) {
+            .document-type-card:nth-child(3n+1):hover {
+                transform: translateY(-8px) rotate(1deg);
+            }
+            
+            .document-type-card:nth-child(3n+2):hover {
+                transform: translateY(-8px) rotate(-1deg);
+            }
+            
+            .document-type-card:nth-child(3n+3):hover {
+                transform: translateY(-8px) rotate(0.5deg);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Document Creation Header -->
+    <div class="document-creation-header">
+        <div class="text-center">
+            <div class="header-icon mx-auto">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <h1 class="mb-2">Nowy dokument</h1>
+            <p class="mb-0 opacity-90 fs-5">
+                Wybierz typ dokumentu, który chcesz utworzyć
+            </p>
+        </div>
+    </div>
+
+    {% if availableTypes|length > 0 %}
+        <!-- Group documents by category -->
+        {% set categories = {} %}
+        {% for type_key, type_data in availableTypes %}
+            {% set category = type_data.category %}
+            {% if categories[category] is not defined %}
+                {% set categories = categories|merge({(category): []}) %}
+            {% endif %}
+            {% set categories = categories|merge({(category): categories[category]|merge([{key: type_key, data: type_data}])}) %}
+        {% endfor %}
+        
+        <!-- Enhanced Document Types Grid -->
+        <div class="document-types-container">
+            {% for category, types in categories %}
+                <div class="category-section">
+                    <div class="category-header">
+                        <div class="category-title">
+                            <div class="category-icon">
+                                {% if category == 'Dokumenty członkowskie' %}
+                                    <i class="fas fa-users"></i>
+                                {% elseif category == 'Powołania partyjne' %}
+                                    <i class="fas fa-user-tie"></i>
+                                {% elseif category == 'Powołania okręgowe' %}
+                                    <i class="fas fa-map-marker-alt"></i>
+                                {% elseif category == 'Odwołania partyjne' %}
+                                    <i class="fas fa-user-times"></i>
+                                {% elseif category == 'Odwołania okręgowe' %}
+                                    <i class="fas fa-user-minus"></i>
+                                {% elseif category == 'Rezygnacje' %}
+                                    <i class="fas fa-sign-out-alt"></i>
+                                {% else %}
+                                    <i class="fas fa-file-alt"></i>
+                                {% endif %}
+                            </div>
+                            {{ category }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        {% for type in types %}
+                            <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="document-type-card">
+                                    <div class="card-icon">
+                                        {% if type.data.category == 'Dokumenty członkowskie' %}
+                                            <i class="fas fa-user-plus"></i>
+                                        {% elseif type.data.category == 'Powołania partyjne' or type.data.category == 'Powołania okręgowe' %}
+                                            <i class="fas fa-user-check"></i>
+                                        {% elseif type.data.category == 'Odwołania partyjne' or type.data.category == 'Odwołania okręgowe' %}
+                                            <i class="fas fa-user-times"></i>
+                                        {% elseif type.data.category == 'Rezygnacje' %}
+                                            <i class="fas fa-door-open"></i>
+                                        {% else %}
+                                            <i class="fas fa-file-signature"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-content">
+                                        <h5 class="card-title">{{ type.data.title }}</h5>
+                                        <p class="card-description">{{ type.data.description }}</p>
+                                    </div>
+                                    <div class="card-action">
+                                        <a href="{{ path('dokument_create', {type: type.key}) }}" 
+                                           class="btn btn-enhanced btn-primary-gradient">
+                                            <i class="fas fa-plus me-2"></i>Utwórz dokument
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="fas fa-file-times"></i>
+            </div>
+            <h4>Brak dostępnych dokumentów</h4>
+            <p>
+                Nie masz uprawnień do tworzenia żadnych dokumentów.<br>
+                Skontaktuj się z administratorem w celu nadania odpowiednich uprawnień.
+            </p>
+        </div>
+    {% endif %}
+
+    <!-- Enhanced Navigation -->
+    <div class="document-navigation">
+        <div class="nav-buttons">
+            <a href="{{ path('dokument_index') }}" class="btn btn-enhanced btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Powrót do listy
+            </a>
+        </div>
+        <div class="breadcrumb-enhanced">
+            <span class="breadcrumb-item">
+                <a href="{{ path('dokument_index') }}">Dokumenty</a>
+            </span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-item active">Nowy dokument</span>
+        </div>
+    </div>
+{% endblock %}

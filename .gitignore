@@ -1,4 +1,3 @@
-
 ###> symfony/framework-bundle ###
 /.env.local
 /.env.local.php
@@ -13,8 +12,63 @@
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
+# IDE and OS files
+/.idea/
+/.vscode/
+.DS_Store
+Thumbs.db
 
-###> symfony/asset-mapper ###
-/public/assets/
-/assets/vendor/
-###< symfony/asset-mapper ###
+# Uploads and user content
+/public/uploads/
+
+# Deployment files
+/deploy/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Database dumps
+*.sql
+*.gz
+
+###> PHPStan ###
+/phpstan.neon.dist
+/phpstan-baseline.neon
+###< PHPStan ###
+
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+###< friendsofphp/php-cs-fixer ###
+
+# Environment files for different stages
+.env.local
+.env.production
+.env.dev
+.env.test.local
+
+
+# Application backups and artifacts
+backup_*
+dokumenty/
+ksztalt/
+zadanie
+generate_sample_data.php
+
+# Import and utility scripts
+import*.php
+fix_*.php
+update_*.php
+remove_*.php
+*.csv
+test_*.json
+
+# Docker overrides
+docker-compose.override.yml
+
+# Performance optimization files
+PERFORMANCE_OPTIMIZATIONS.md
+FRONTEND_ANALYSIS_REPORT.md

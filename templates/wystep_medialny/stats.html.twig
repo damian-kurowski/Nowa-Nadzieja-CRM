@@ -1,0 +1,469 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statystyki wystąpień medialnych - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Statystyki wystąpień medialnych{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .stats-header {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .enhanced-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .enhanced-stat-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .enhanced-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--card-gradient);
+        }
+        
+        .enhanced-stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 8px 32px var(--shadow-medium);
+        }
+        
+        .enhanced-stat-card.total::before { background: linear-gradient(135deg, #17a2b8, #138496); }
+        .enhanced-stat-card.month::before { background: linear-gradient(135deg, #28a745, #1e7e34); }
+        .enhanced-stat-card.upcoming::before { background: linear-gradient(135deg, #ffc107, #e0a800); }
+        .enhanced-stat-card.media::before { background: linear-gradient(135deg, #6f42c1, #5a32a3); }
+        
+        .stat-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem auto;
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .stat-icon.total { background: linear-gradient(135deg, #17a2b8, #138496); }
+        .stat-icon.month { background: linear-gradient(135deg, #28a745, #1e7e34); }
+        .stat-icon.upcoming { background: linear-gradient(135deg, #ffc107, #e0a800); }
+        .stat-icon.media { background: linear-gradient(135deg, #6f42c1, #5a32a3); }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .info-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--shadow-medium);
+        }
+        
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .info-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+        
+        .media-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            transition: background 0.3s ease;
+        }
+        
+        .media-item:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .media-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .upcoming-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid #ffc107;
+            transition: all 0.3s ease;
+        }
+        
+        .upcoming-item:hover {
+            transform: translateX(4px);
+            background: var(--bg-tertiary);
+        }
+        
+        .upcoming-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .enhanced-table {
+            background: transparent;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .enhanced-table thead th {
+            background: var(--bg-secondary);
+            border-bottom: 2px solid var(--border-color);
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .enhanced-table tbody tr {
+            background: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        
+        .enhanced-table tbody tr:hover {
+            background: var(--bg-secondary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--shadow-light);
+        }
+        
+        .enhanced-table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .action-buttons {
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            text-align: center;
+        }
+
+        .action-buttons .btn {
+            margin: 0 0.5rem;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+
+        .speakers-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+        }
+
+        .speaker-badge {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Stats Header -->
+    <div class="stats-header">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="header-icon me-3">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <div class="text-center">
+                        <h1 class="mb-0">Statystyki wystąpień medialnych</h1>
+                        <p class="mb-0 opacity-90 fs-5">Analiza aktywności medialnej</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Stats Cards -->
+    <div class="enhanced-stats-grid">
+        <div class="enhanced-stat-card total">
+            <div class="stat-icon total">
+                <i class="fas fa-microphone"></i>
+            </div>
+            <div class="stat-number">{{ stats.total_count ?? 0 }}</div>
+            <div class="stat-label">Łącznie wystąpień</div>
+        </div>
+        
+        <div class="enhanced-stat-card month">
+            <div class="stat-icon month">
+                <i class="fas fa-calendar"></i>
+            </div>
+            <div class="stat-number">{{ stats.this_month ?? 0 }}</div>
+            <div class="stat-label">W tym miesiącu</div>
+        </div>
+        
+        <div class="enhanced-stat-card upcoming">
+            <div class="stat-icon upcoming">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-number">{{ stats.upcoming is defined ? stats.upcoming|length : 0 }}</div>
+            <div class="stat-label">Planowanych</div>
+        </div>
+        
+        <div class="enhanced-stat-card media">
+            <div class="stat-icon media">
+                <i class="fas fa-broadcast-tower"></i>
+            </div>
+            <div class="stat-number">{{ stats.by_medium is defined ? stats.by_medium|length : 0 }}</div>
+            <div class="stat-label">Różnych mediów</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Media Breakdown -->
+        <div class="col-lg-6">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-broadcast-tower"></i>
+                    </div>
+                    <h5 class="mb-0">Wystąpienia według mediów</h5>
+                </div>
+                {% if stats.by_medium|length > 0 %}
+                    {% for medium in stats.by_medium %}
+                    <div class="media-item">
+                        <div>
+                            <strong>{{ medium.medium ?: 'Nie podano' }}</strong>
+                        </div>
+                        <div>
+                            <span class="badge bg-primary">{{ medium.count }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <div class="mb-3">
+                            <div class="d-inline-block p-3 rounded-circle bg-light">
+                                <i class="fas fa-chart-bar fa-2x text-muted"></i>
+                            </div>
+                        </div>
+                        <p class="mb-0">Brak danych do wyświetlenia</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Upcoming Appearances -->
+        <div class="col-lg-6">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-calendar-plus"></i>
+                    </div>
+                    <h5 class="mb-0">Nadchodzące wystąpienia</h5>
+                </div>
+                {% if stats.upcoming|length > 0 %}
+                    {% for wystep in stats.upcoming|slice(0, 5) %}
+                    <div class="upcoming-item">
+                        <div>
+                            <strong>{{ wystep.nazwaMediaRedakcji ?: 'Nie podano' }}</strong>
+                            {% if wystep.nazwaProgramu %}
+                                <br><small class="text-muted">{{ wystep.nazwaProgramu }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">
+                                {{ wystep.dataIGodzina|date('d.m.Y H:i') }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if stats.upcoming|length > 5 %}
+                    <div class="text-center mt-3 p-3 bg-light rounded">
+                        <small class="text-muted fw-bold">... i {{ stats.upcoming|length - 5 }} więcej</small>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <div class="mb-3">
+                            <div class="d-inline-block p-3 rounded-circle bg-light">
+                                <i class="fas fa-calendar fa-2x text-muted"></i>
+                            </div>
+                        </div>
+                        <p class="mb-0">Brak zaplanowanych wystąpień</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Appearances -->
+    {% if stats.recent|length > 0 %}
+    <div class="row">
+        <div class="col-12">
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h5 class="mb-0">Ostatnie wystąpienia</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="enhanced-table table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Medium</th>
+                                <th>Program</th>
+                                <th>Mówcy</th>
+                                <th>Link</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for wystep in stats.recent %}
+                            <tr>
+                                <td>
+                                    <strong>{{ wystep.dataIGodzina|date('d.m.Y H:i') }}</strong>
+                                </td>
+                                <td>
+                                    <strong>{{ wystep.nazwaMediaRedakcji ?: 'Nie podano' }}</strong>
+                                </td>
+                                <td>
+                                    {% if wystep.nazwaProgramu %}
+                                        <span class="fw-bold">{{ wystep.nazwaProgramu }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Nie określono</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if wystep.mowcy|length > 0 %}
+                                        <div class="speakers-list">
+                                            {% for mowca in wystep.mowcy %}
+                                                <span class="speaker-badge">{{ mowca.fullName }}</span>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">Nie określono</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if wystep.linkDoNagrania %}
+                                        <a href="{{ wystep.linkDoNagrania }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                            <i class="fas fa-external-link-alt me-1"></i>
+                                            <span class="d-none d-lg-inline">Nagranie</span>
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">Brak nagrania</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Enhanced Action Buttons -->
+    <div class="action-buttons mt-4">
+        <div class="row">
+            <div class="col-12">
+                <a href="{{ path('wystep_medialny_index') }}" class="btn btn-secondary me-3">
+                    <i class="fas fa-list me-2"></i>Wszystkie wystąpienia
+                </a>
+                <a href="{{ path('wystep_medialny_new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Dodaj nowe wystąpienie
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

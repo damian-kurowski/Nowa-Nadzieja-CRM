@@ -1,0 +1,105 @@
+{# Unified Former Member Card Component #}
+<div class="unified-card animate-in" data-former-member-id="{{ formerMember.id }}">
+    {# Status Badge #}
+    <div class="unified-card-status">
+        <span class="unified-status-badge byly">Były członek</span>
+    </div>
+
+    {# Card Header #}
+    <div class="unified-card-header">
+        <div class="unified-card-avatar">
+            {% if formerMember.zdjecie %}
+                <img src="{{ asset('uploads/photos/' ~ formerMember.zdjecie) }}" alt="{{ formerMember.fullName }}">
+            {% else %}
+                <span class="unified-card-avatar-initials">
+                    {{ formerMember.imie|first|upper }}{{ formerMember.nazwisko|first|upper }}
+                </span>
+            {% endif %}
+        </div>
+        <div class="unified-card-info">
+            <h6 class="unified-card-name">{{ formerMember.fullName }}</h6>
+            <div class="unified-card-meta">
+                {% if formerMember.email %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ formerMember.email }}</span>
+                    </div>
+                {% endif %}
+                {% if formerMember.telefon %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ formerMember.telefon }}</span>
+                    </div>
+                {% endif %}
+                {% if formerMember.pesel %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-id-card"></i>
+                        <span>{{ formerMember.pesel }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Card Body #}
+    <div class="unified-card-body">
+        <div class="unified-card-details">
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Okręg</span>
+                <span class="unified-detail-value">
+                    {% if formerMember.okreg %}
+                        {{ formerMember.okreg.nazwa }}
+                    {% else %}
+                        <em>Brak przypisania</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Oddział</span>
+                <span class="unified-detail-value">
+                    {% if formerMember.oddzial %}
+                        {{ formerMember.oddzial.nazwa }}
+                    {% else %}
+                        <em>Brak przypisania</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Członek od-do</span>
+                <span class="unified-detail-value">
+                    {% if formerMember.dataPrzyjecia and formerMember.dataZakonczeniaCzlonkostwa %}
+                        {{ formerMember.dataPrzyjecia|date('d.m.Y') }} - {{ formerMember.dataZakonczeniaCzlonkostwa|date('d.m.Y') }}
+                    {% else %}
+                        <em>Brak dat</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Powód zakończenia</span>
+                <span class="unified-detail-value">
+                    {% if formerMember.powodZakonczeniaCzlonkostwa %}
+                        {% if formerMember.powodZakonczeniaCzlonkostwa|length > 40 %}
+                            {{ formerMember.powodZakonczeniaCzlonkostwa|slice(0, 40) }}...
+                        {% else %}
+                            {{ formerMember.powodZakonczeniaCzlonkostwa }}
+                        {% endif %}
+                    {% else %}
+                        <em>Brak informacji</em>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {# Card Footer #}
+    <div class="unified-card-footer">
+        <a href="{{ path('bylo_czlonek_show', {id: formerMember.id}) }}" class="unified-action-btn primary">
+            <i class="fas fa-eye"></i>
+            <span>Zobacz</span>
+        </a>
+        <button class="unified-action-btn secondary" onclick="exportFormerMember({{ formerMember.id }})" title="Export danych">
+            <i class="fas fa-download"></i>
+            <span>Export</span>
+        </button>
+    </div>
+</div>

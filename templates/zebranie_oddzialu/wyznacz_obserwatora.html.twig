@@ -1,0 +1,245 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Wyznacz Obserwatora Zebrania - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Wyznacz Obserwatora Zebrania{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .form-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h5 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .member-select-card {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .member-select-card:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .member-select-card.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .member-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+
+        .btn-enhanced {
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-gradient {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-box h6 {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="form-header">
+        <h1 class="mb-2">
+            <i class="fas fa-user-tie me-2"></i>
+            Wyznacz Obserwatora Zebrania
+        </h1>
+        <p class="mb-0 opacity-90">
+            Wyznacz obserwatora dla zebrania członków oddziału
+        </p>
+    </div>
+
+    <div class="info-box">
+        <h6><i class="fas fa-info-circle me-2"></i>Informacja</h6>
+        <p class="mb-0">
+            Jako Sekretarz Okręgu możesz wyznaczyć obserwatora zebrania członków oddziału. 
+            Obserwator musi być osobą z tego samego okręgu. Po wyznaczeniu obserwatora automatycznie 
+            rozpocznie się proces zebrania.
+        </p>
+    </div>
+
+    <form method="post" class="form-card">
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-building me-2"></i>
+                Wybierz oddział
+            </h5>
+            <div class="mb-3">
+                <label for="oddzial" class="form-label">Oddział</label>
+                <select class="form-select" id="oddzial" name="oddzial" required>
+                    <option value="">-- Wybierz oddział --</option>
+                    {% for oddzial in oddzialy %}
+                        <option value="{{ oddzial.id }}">
+                            {{ oddzial.nazwa }}
+                            {% if oddzial.czlonkowie|length > 0 %}
+                                ({{ oddzial.czlonkowie|length }} członków)
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h5>
+                <i class="fas fa-user-check me-2"></i>
+                Wybierz obserwatora
+            </h5>
+            <p class="text-muted mb-3">
+                Obserwatorem może być dowolna osoba z okręgu {{ app.user.okreg.nazwa }}
+            </p>
+
+            <div class="mb-3">
+                <input type="text" class="form-control mb-3" id="searchObserwator" 
+                       placeholder="Wyszukaj po imieniu lub nazwisku...">
+            </div>
+
+            <div id="obserwatorList" style="max-height: 400px; overflow-y: auto;">
+                {% for osoba in potencjalni_obserwatorzy %}
+                    <div class="member-select-card" data-id="{{ osoba.id }}" 
+                         data-name="{{ osoba.fullName|lower }}">
+                        <div class="d-flex align-items-center">
+                            <div class="member-avatar">
+                                {{ osoba.imie|first|upper }}{{ osoba.nazwisko|first|upper }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ osoba.fullName }}</h6>
+                                <small class="text-muted">
+                                    {% if osoba.oddzial %}
+                                        Oddział: {{ osoba.oddzial.nazwa }}
+                                    {% else %}
+                                        Bez przypisanego oddziału
+                                    {% endif %}
+                                    {% if 'ROLE_PREZES_OKREGU' in osoba.roles %}
+                                        <span class="badge bg-primary ms-2">Prezes Okręgu</span>
+                                    {% elseif 'ROLE_SEKRETARZ_OKREGU' in osoba.roles %}
+                                        <span class="badge bg-info ms-2">Sekretarz Okręgu</span>
+                                    {% elseif 'ROLE_SKARBNIK_OKREGU' in osoba.roles %}
+                                        <span class="badge bg-warning ms-2">Skarbnik Okręgu</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div>
+                                <input type="radio" name="obserwator" value="{{ osoba.id }}" 
+                                       class="form-check-input" required>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a href="{{ path('zebranie_oddzialu_index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Anuluj
+            </a>
+            <button type="submit" class="btn btn-enhanced btn-primary-gradient">
+                <i class="fas fa-check me-2"></i>
+                Wyznacz obserwatora i rozpocznij zebranie
+            </button>
+        </div>
+    </form>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Obsługa wyboru obserwatora
+        document.querySelectorAll('.member-select-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Usuń zaznaczenie z innych
+                document.querySelectorAll('.member-select-card').forEach(c => {
+                    c.classList.remove('selected');
+                });
+                
+                // Zaznacz tę kartę
+                this.classList.add('selected');
+                
+                // Zaznacz radio button
+                const radio = this.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                }
+            });
+        });
+
+        // Wyszukiwarka obserwatorów
+        document.getElementById('searchObserwator').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            
+            document.querySelectorAll('.member-select-card').forEach(card => {
+                const name = card.dataset.name;
+                if (name.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+{% endblock %}

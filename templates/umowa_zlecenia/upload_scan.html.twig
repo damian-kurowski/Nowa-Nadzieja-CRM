@@ -1,0 +1,467 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Prześlij skan podpisanej umowy {{ umowa.numerUmowy }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Enhanced Header -->
+            <div class="page-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="header-content">
+                            <div class="header-icon">
+                                <div class="icon-wrapper">
+                                    <i class="fas fa-file-upload"></i>
+                                </div>
+                            </div>
+                            <div class="header-text">
+                                <h1 class="page-title mb-1">Prześlij skan podpisanej umowy</h1>
+                                <p class="page-subtitle mb-0">{{ umowa.numerUmowy }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="header-actions">
+                            <a href="{{ path('umowa_show', {'id': umowa.id}) }}" class="btn btn-outline-light btn-lg header-btn">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                <span>Powrót do umowy</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Breadcrumb -->
+                <div class="quick-stats-bar mt-3">
+                    <div class="row">
+                        <div class="col">
+                            <div class="header-breadcrumb">
+                                <nav aria-label="breadcrumb">
+                                    <ol class="breadcrumb mb-0">
+                                        <li class="breadcrumb-item">
+                                            <a href="{{ path('dashboard') }}">
+                                                <i class="fas fa-home me-1"></i>Dashboard
+                                            </a>
+                                        </li>
+                                        <li class="breadcrumb-item">
+                                            <a href="{{ path('umowa_index') }}">Moje umowy</a>
+                                        </li>
+                                        <li class="breadcrumb-item">
+                                            <a href="{{ path('umowa_show', {'id': umowa.id}) }}">{{ umowa.numerUmowy }}</a>
+                                        </li>
+                                        <li class="breadcrumb-item active">Prześlij skan</li>
+                                    </ol>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <!-- Upload Form Card -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);">
+                            <div class="d-flex align-items-center">
+                                <div class="form-icon me-3">
+                                    <div class="mini-icon-wrapper">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="card-title mb-1">Przesyłanie skanu</h5>
+                                    <small class="text-white-50">Prześlij skan podpisanej umowy zlecenia</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Instructions -->
+                            <div class="alert alert-info mb-4">
+                                <div class="d-flex">
+                                    <div class="alert-icon me-3">
+                                        <i class="fas fa-info-circle text-info fs-4"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="alert-heading">Instrukcja:</h6>
+                                        <ol class="mb-0">
+                                            <li>Pobierz PDF umowy używając przycisku "Pobierz PDF" na stronie umowy</li>
+                                            <li>Wydrukuj umowę</li>
+                                            <li>Podpisz umowę w miejscach oznaczonych dla Zleceniobiorcy</li>
+                                            <li>Zeskanuj lub sfotografuj podpisaną umowę</li>
+                                            <li>Prześlij skan używając formularza poniżej</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Upload Form -->
+                            <form method="post" action="{{ path('umowa_upload_scan', {'id': umowa.id}) }}" enctype="multipart/form-data" class="upload-form" id="uploadForm">
+                                <input type="hidden" name="_token" value="{{ csrf_token('upload' ~ umowa.id) }}">
+                                <div class="upload-section mb-4">
+                                    <div class="upload-area" id="uploadArea">
+                                        <div class="upload-content">
+                                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                            <h5>Przeciągnij i upuść plik tutaj</h5>
+                                            <p class="text-muted">lub kliknij aby wybrać plik</p>
+                                            <input type="file" name="skan" id="skanFile" accept=".pdf,.jpg,.jpeg,.png" required class="file-input">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="file-info mt-3" id="fileInfo" style="display: none;">
+                                        <div class="selected-file">
+                                            <i class="fas fa-file-alt me-2"></i>
+                                            <span id="fileName"></span>
+                                            <button type="button" class="btn-remove" id="removeFile">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="upload-notes mb-4">
+                                    <h6 class="text-muted mb-2">Wymagania dotyczące pliku:</h6>
+                                    <ul class="list-unstyled text-sm text-muted">
+                                        <li><i class="fas fa-check text-success me-2"></i>Obsługiwane formaty: PDF, JPG, JPEG, PNG</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Maksymalny rozmiar: 2 MB (limit serwera)</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Plik musi być czytelny</li>
+                                        <li><i class="fas fa-check text-success me-2"></i>Podpis musi być widoczny</li>
+                                    </ul>
+                                </div>
+
+                                <div class="form-actions">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <a href="{{ path('umowa_show', {'id': umowa.id}) }}" class="btn btn-outline-secondary btn-lg">
+                                            <i class="fas fa-times me-2"></i>Anuluj
+                                        </a>
+                                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                                            <i class="fas fa-upload me-2"></i>
+                                            <span id="submitBtnText">Prześlij skan</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Contract Info Card -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-file-contract me-2"></i>Informacje o umowie
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <strong>Numer umowy:</strong><br>
+                                        {{ umowa.numerUmowy }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <strong>Status:</strong><br>
+                                        <span class="badge bg-{{ umowa.statusBadgeClass }}">{{ umowa.statusLabel }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <strong>Zakres:</strong><br>
+                                        {{ umowa.zakresLabel }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="info-item">
+                                        <strong>Wynagrodzenie:</strong><br>
+                                        {{ umowa.formattedWynagrodzenie }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('skanFile');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const removeFile = document.getElementById('removeFile');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitBtnText = document.getElementById('submitBtnText');
+    const uploadForm = document.getElementById('uploadForm');
+
+    // Click to select file
+    uploadArea.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Drag and drop handlers
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            handleFileSelect();
+        }
+    });
+
+    // File selection handler
+    fileInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect() {
+        const file = fileInput.files[0];
+        if (file) {
+            // Check file size (2MB limit - PHP upload_max_filesize)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Plik jest zbyt duży. Maksymalny rozmiar to 2 MB (limit serwera).');
+                fileInput.value = '';
+                return;
+            }
+
+            // Check file type
+            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Nieprawidłowy typ pliku. Dozwolone formaty: PDF, JPG, JPEG, PNG.');
+                fileInput.value = '';
+                return;
+            }
+
+            fileName.textContent = file.name;
+            fileInfo.style.display = 'block';
+            uploadArea.classList.add('file-selected');
+            submitBtn.classList.remove('btn-secondary');
+            submitBtn.classList.add('btn-success');
+            submitBtnText.textContent = 'Prześlij skan';
+        }
+    }
+
+    // Remove file handler
+    removeFile.addEventListener('click', () => {
+        fileInput.value = '';
+        fileInfo.style.display = 'none';
+        uploadArea.classList.remove('file-selected');
+        submitBtn.classList.add('btn-secondary');
+        submitBtn.classList.remove('btn-success');
+        submitBtnText.textContent = 'Wybierz plik';
+    });
+    
+    // Form submission
+    uploadForm.addEventListener('submit', function(e) {
+        if (!fileInput.files || fileInput.files.length === 0) {
+            e.preventDefault();
+            alert('Proszę wybrać plik przed wysłaniem formularza');
+            return false;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtnText.textContent = 'Przesyłanie...';
+        // Formularz wysyła się normalnie
+    });
+});
+</script>
+
+<style>
+    /* Enhanced styling matching other forms */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+        background-size: 200% 200%;
+        animation: gradientShift 8s ease infinite;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.1);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        pointer-events: none;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-icon {
+        margin-right: 1.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    .icon-wrapper {
+        width: 60px; height: 60px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .icon-wrapper i { font-size: 24px; color: white; }
+    .header-text { color: white; }
+    .page-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 400;
+    }
+    .header-actions { position: relative; z-index: 1; }
+    .header-btn {
+        background: rgba(255, 255, 255, 0.15) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    .header-btn:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        color: white !important;
+    }
+
+    /* Upload area styling */
+    .upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 15px;
+        padding: 3rem 2rem;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .upload-area:hover, .upload-area.dragover {
+        border-color: #74b9ff;
+        background: #f0f8ff;
+        transform: translateY(-2px);
+    }
+
+    .upload-area.file-selected {
+        border-color: #28a745;
+        background: #f0fff4;
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .upload-area:hover .upload-icon,
+    .upload-area.dragover .upload-icon {
+        color: #74b9ff;
+        transform: scale(1.1);
+    }
+
+    .file-input {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .selected-file {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: #e8f5e8;
+        border: 1px solid #28a745;
+        border-radius: 10px;
+        position: relative;
+    }
+
+    .btn-remove {
+        background: none;
+        border: none;
+        color: #dc3545;
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        padding: 0.25rem;
+    }
+
+    .btn-remove:hover {
+        color: #c82333;
+    }
+
+    .mini-icon-wrapper {
+        width: 30px; height: 30px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .mini-icon-wrapper i { font-size: 14px; color: white; }
+
+    .info-item {
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+    }
+
+    /* Breadcrumb */
+    .header-breadcrumb { color: white; }
+    .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px; padding: 0.75rem 1rem;
+        backdrop-filter: blur(10px);
+    }
+    .breadcrumb-item a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none; transition: color 0.2s ease;
+    }
+    .breadcrumb-item a:hover { color: white; }
+    .breadcrumb-item.active { color: white; font-weight: 600; }
+
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+</style>
+{% endblock %}

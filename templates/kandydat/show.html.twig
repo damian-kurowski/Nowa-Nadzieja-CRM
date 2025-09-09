@@ -1,0 +1,1190 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ kandydat.fullName }} - Kandydat - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Profil kandydata na członka{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --brand-secondary: #3b82f6;
+            --bg-tertiary: #e5e7eb;
+            --text-secondary: #6b7280;
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+            --btn-hover-shadow: rgba(59, 130, 246, 0.3);
+            --focus-ring: rgba(59, 130, 246, 0.1);
+        }
+        
+        [data-theme="dark"] {
+            --brand-secondary: #64a8ff;
+            --bg-tertiary: #2a2a2a;
+            --text-secondary: #9ca3af;
+            --shadow-medium: rgba(0, 0, 0, 0.5);
+            --btn-hover-shadow: rgba(100, 168, 255, 0.3);
+        }
+        
+        /* Enhanced Profile Header */
+        .profile-header {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        .profile-avatar-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid rgba(255,255,255,0.3);
+            margin-bottom: 1rem;
+        }
+        
+        .profile-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-avatar-placeholder-large {
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            font-weight: bold;
+        }
+        
+        .profile-name {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .profile-subtitle {
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+        
+        .profile-stats {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.8;
+        }
+        
+        /* Enhanced Cards */
+        .card-enhanced {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .card-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--shadow-medium);
+        }
+        
+        .card-header-enhanced {
+            background: linear-gradient(90deg, var(--bg-secondary), var(--bg-tertiary));
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .card-header-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .card-header-icon.primary { background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary)); }
+        .card-header-icon.success { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .card-header-icon.warning { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+        .card-header-icon.info { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .card-header-icon.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        
+        .card-title {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .card-body-enhanced {
+            padding: 2rem;
+        }
+        
+        /* Enhanced Progress Card */
+        .progress-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .progress-overall {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.05), rgba(252, 176, 64, 0.05));
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .progress-bar-large {
+            height: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .progress-fill-large {
+            height: 100%;
+            background: linear-gradient(90deg, #ffc107, #fd7e14);
+            border-radius: 6px;
+            transition: width 0.8s ease;
+        }
+        
+        .progress-steps {
+            padding: 0;
+        }
+        
+        .step-item {
+            display: flex;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .step-item:last-child {
+            border-bottom: none;
+        }
+        
+        .step-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        .step-icon.completed {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+        }
+        
+        .step-icon.pending {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+        
+        .step-content {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 0.25rem 0;
+        }
+        
+        .step-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin: 0;
+        }
+        
+        .step-date {
+            color: #22c55e;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+        
+        .step-actions {
+            margin-left: 1rem;
+        }
+        
+        /* Enhanced Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1.25rem;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .info-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .info-value.large {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-icon i {
+            color: var(--brand-primary);
+        }
+        
+        /* Enhanced Actions */
+        .actions-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .btn-enhanced {
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--btn-hover-shadow);
+        }
+        
+        .btn-enhanced.btn-primary {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            color: white;
+            border-color: var(--brand-primary);
+        }
+        
+        .btn-enhanced.btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border-color: #ef4444;
+        }
+        
+        .btn-enhanced.btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        /* Enhanced Tabs */
+        .nav-tabs-enhanced {
+            border: none;
+            margin-bottom: 2rem;
+        }
+        
+        .nav-tabs-enhanced .nav-link {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px 10px 0 0;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+        }
+        
+        .nav-tabs-enhanced .nav-link:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+        
+        .nav-tabs-enhanced .nav-link.active {
+            background: var(--brand-primary);
+            color: white;
+            border-color: var(--brand-primary);
+        }
+        
+        .tab-content-enhanced {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        /* Enhanced Opinions Section */
+        .opinions-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            overflow: hidden;
+        }
+        
+        .opinion-item {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .opinion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .opinion-item:hover {
+            background: var(--bg-secondary);
+        }
+        
+        .opinion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        
+        .opinion-author {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .author-info h6 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .author-role {
+            font-size: 0.8rem;
+            color: white;
+            background: var(--brand-primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+        }
+        
+        .opinion-date {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .opinion-content {
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        /* CV Download Button */
+        .cv-download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .cv-download-btn:hover {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* Text Area Display */
+        .text-display {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .profile-header {
+                padding: 1.5rem;
+                text-align: center;
+            }
+            
+            .profile-name {
+                font-size: 1.5rem;
+            }
+            
+            .profile-stats {
+                justify-content: center;
+                gap: 1rem;
+            }
+            
+            .card-body-enhanced {
+                padding: 1.5rem;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-container {
+                text-align: center;
+            }
+            
+            .btn-enhanced {
+                width: 100%;
+                margin-bottom: 0.75rem;
+                justify-content: center;
+            }
+        }
+        
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.4s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Profile Header -->
+    <div class="profile-header fade-in">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="profile-avatar-large">
+                        {% if kandydat.zdjecie %}
+                            <img src="{{ asset('uploads/photos/' ~ kandydat.zdjecie) }}" alt="{{ kandydat.fullName }}">
+                        {% else %}
+                            <div class="profile-avatar-placeholder-large">
+                                {{ kandydat.imie|first }}{{ kandydat.nazwisko|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h1 class="profile-name">{{ kandydat.fullName }}</h1>
+                        {% if kandydat.drugieImie %}
+                            <p class="profile-subtitle">{{ kandydat.drugieImie }}</p>
+                        {% endif %}
+                        <div class="profile-stats">
+                            <div class="stat-item">
+                                <span class="stat-value">{{ kandydat.postepKandydata }}%</span>
+                                <span class="stat-label">Postęp</span>
+                            </div>
+                            {% if kandydat.dataZlozeniaDeklaracji %}
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ kandydat.dataZlozeniaDeklaracji|date('Y') }}</span>
+                                    <span class="stat-label">Rok kandydatury</span>
+                                </div>
+                            {% endif %}
+                            <div class="stat-item">
+                                <span class="stat-value">{{ kandydat.status|title }}</span>
+                                <span class="stat-label">Status</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ path('kandydat_index') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Powrót do listy
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Actions -->
+    <div class="actions-container slide-up">
+        <div class="d-flex gap-2 flex-wrap justify-content-center justify-lg-end">
+            {% if kandydat.status == 'aktywny' %}
+                <a href="{{ path('kandydat_reject', {id: kandydat.id}) }}" 
+                   class="btn btn-danger btn-enhanced"
+                   onclick="return confirm('Czy na pewno chcesz odrzucić tę kandydaturę?')">
+                    <i class="fas fa-times"></i>
+                    <span>Odrzuć kandydaturę</span>
+                </a>
+            {% endif %}
+            <a href="{{ path('kandydat_edit', {id: kandydat.id}) }}" class="btn btn-primary btn-enhanced">
+                <i class="fas fa-edit"></i>
+                <span>Edytuj profil</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <!-- Enhanced Progress Card -->
+            <div class="progress-card slide-up">
+                <div class="progress-overall">
+                    <h6 class="mb-3">
+                        <i class="fas fa-tasks me-2"></i>
+                        Postęp rekrutacji
+                    </h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Ogólny postęp</span>
+                        <strong>{{ kandydat.postepKandydata }}%</strong>
+                    </div>
+                    <div class="progress-bar-large">
+                        <div class="progress-fill-large" style="width: {{ kandydat.postepKandydata }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="progress-steps">
+                    {% set szczegoly = kandydat.szczegoryPostepuKandydata %}
+                    {% for klucz, etap in szczegoly %}
+                        <div class="step-item">
+                            <div class="step-icon {{ etap.wykonane ? 'completed' : 'pending' }}">
+                                <i class="fas fa-{{ etap.wykonane ? 'check' : 'circle' }}"></i>
+                            </div>
+                            <div class="step-content">
+                                <h6 class="step-title">{{ etap.nazwa }}</h6>
+                                {% if etap.wykonane and etap.data %}
+                                    <div class="step-date">
+                                        <i class="fas fa-calendar-check me-1"></i>
+                                        Ukończono: {{ etap.data|date('d.m.Y H:i') }}
+                                        {% if etap.odznaczyl %}
+                                            <br>
+                                            <i class="fas fa-user me-1"></i>
+                                            {{ etap.odznaczyl.fullName }}
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% if is_granted('ROLE_FUNKCYJNY') and not etap.wykonane %}
+                                <div class="step-actions">
+                                    <a href="{{ path('postep_kandydata_show', {id: kandydat.id}) }}" 
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Przejdź do zarządzania postępem">
+                                        <i class="fas fa-cog"></i>
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Enhanced Organization Info -->
+            <div class="card-enhanced slide-up">
+                <div class="card-header-enhanced">
+                    <div class="card-header-icon info">
+                        <i class="fas fa-sitemap"></i>
+                    </div>
+                    <h6 class="card-title">Struktura organizacyjna</h6>
+                </div>
+                <div class="card-body-enhanced">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Region</div>
+                            <div class="info-value">
+                                {% if kandydat.region %}
+                                    <span class="badge bg-secondary">{{ kandydat.region.nazwa }}</span>
+                                {% else %}
+                                    <span class="text-muted">Brak przypisania</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Okręg</div>
+                            <div class="info-value">
+                                {% if kandydat.okreg %}
+                                    <span class="badge bg-primary">{{ kandydat.okreg.nazwa }}</span>
+                                {% else %}
+                                    <span class="text-muted">Brak przypisania</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Oddział</div>
+                            <div class="info-value">
+                                {% if kandydat.oddzial %}
+                                    <span class="badge bg-info">{{ kandydat.oddzial.nazwa }}</span>
+                                {% else %}
+                                    <span class="text-muted">Brak przypisania</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-8">
+            <!-- Enhanced Tabs -->
+            <ul class="nav nav-tabs nav-tabs-enhanced" id="candidateTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab">
+                        <i class="fas fa-user me-2"></i>Dane osobowe
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="professional-tab" data-bs-toggle="tab" data-bs-target="#professional" type="button" role="tab">
+                        <i class="fas fa-briefcase me-2"></i>Informacje zawodowe
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab">
+                        <i class="fas fa-file-alt me-2"></i>Dokumenty i CV
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="candidacy-tab" data-bs-toggle="tab" data-bs-target="#candidacy" type="button" role="tab">
+                        <i class="fas fa-calendar me-2"></i>Kandydatura
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="additional-tab" data-bs-toggle="tab" data-bs-target="#additional" type="button" role="tab">
+                        <i class="fas fa-info-circle me-2"></i>Informacje dodatkowe
+                    </button>
+                </li>
+                {% if is_granted('ROLE_FUNKCYJNY') and app.user.id != kandydat.id %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="opinions-tab" data-bs-toggle="tab" data-bs-target="#opinions" type="button" role="tab">
+                            <i class="fas fa-comment-alt me-2"></i>Opinie
+                        </button>
+                    </li>
+                {% endif %}
+            </ul>
+            
+            <div class="tab-content tab-content-enhanced" id="candidateTabsContent">
+                <!-- Personal Data Tab -->
+                <div class="tab-pane fade show active" id="personal" role="tabpanel">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-envelope"></i>
+                                <span class="info-label">Email</span>
+                            </div>
+                            <div class="info-value large">{{ kandydat.email }}</div>
+                        </div>
+                        {% if kandydat.telefon %}
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-phone"></i>
+                                    <span class="info-label">Telefon</span>
+                                </div>
+                                <div class="info-value large">{{ kandydat.telefon }}</div>
+                            </div>
+                        {% endif %}
+                        {% if kandydat.pesel %}
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-id-card"></i>
+                                    <span class="info-label">PESEL</span>
+                                </div>
+                                <div class="info-value">{{ kandydat.pesel }}</div>
+                            </div>
+                        {% endif %}
+                        {% if kandydat.dataUrodzenia %}
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-birthday-cake"></i>
+                                    <span class="info-label">Data urodzenia</span>
+                                </div>
+                                <div class="info-value">{{ kandydat.dataUrodzenia|date('d.m.Y') }}
+                                    <small class="text-muted">({{ kandydat.wiek }} lat)</small>
+                                </div>
+                            </div>
+                        {% endif %}
+                        {% if kandydat.plec %}
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-{{ kandydat.plec == 'mężczyzna' ? 'mars' : (kandydat.plec == 'kobieta' ? 'venus' : 'genderless') }}"></i>
+                                    <span class="info-label">Płeć</span>
+                                </div>
+                                <div class="info-value">{{ kandydat.plec|title }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if kandydat.adresZamieszkania %}
+                        <div class="mt-4">
+                            <h6 class="mb-3">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                Adres zamieszkania
+                            </h6>
+                            <div class="text-display">{{ kandydat.adresZamieszkania }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Professional Information Tab -->
+                <div class="tab-pane fade" id="professional" role="tabpanel">
+                    <div class="row g-4">
+                        {% if kandydat.zatrudnienieSpolki %}
+                            <div class="col-12">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-building"></i>
+                                        <span class="info-label">Zatrudnienie w spółkach</span>
+                                    </div>
+                                    <div class="text-display">{{ kandydat.zatrudnienieSpolki }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if kandydat.zatrudnienieSpolkiMiejskie %}
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-city"></i>
+                                        <span class="info-label">Zatrudnienie w spółkach miejskich</span>
+                                    </div>
+                                    <div class="text-display">{{ kandydat.zatrudnienieSpolkiMiejskie }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if kandydat.zatrudnienieSpolkiSkarbuPanstwa %}
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-landmark"></i>
+                                        <span class="info-label">Zatrudnienie w spółkach Skarbu Państwa</span>
+                                    </div>
+                                    <div class="text-display">{{ kandydat.zatrudnienieSpolkiSkarbuPanstwa }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if kandydat.zatrudnienieSpolkiKomunalne %}
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-building-user"></i>
+                                        <span class="info-label">Zatrudnienie w spółkach komunalnych</span>
+                                    </div>
+                                    <div class="text-display">{{ kandydat.zatrudnienieSpolkiKomunalne }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if kandydat.historiaWyborow %}
+                            <div class="col-12">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-vote-yea"></i>
+                                        <span class="info-label">Historia startów w wyborach</span>
+                                    </div>
+                                    <div class="text-display">{{ kandydat.historiaWyborow }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not kandydat.zatrudnienieSpolki and not kandydat.zatrudnienieSpolkiMiejskie and not kandydat.zatrudnienieSpolkiSkarbuPanstwa and not kandydat.zatrudnienieSpolkiKomunalne and not kandydat.historiaWyborow %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Brak informacji zawodowych</h5>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Documents and CV Tab -->
+                <div class="tab-pane fade" id="documents" role="tabpanel">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                    <span class="info-label">CV</span>
+                                </div>
+                                {% if kandydat.cv %}
+                                    <div class="d-flex align-items-center gap-3">
+                                        <a href="{{ asset('uploads/cv/' ~ kandydat.cv) }}" 
+                                           target="_blank" 
+                                           class="cv-download-btn">
+                                            <i class="fas fa-download"></i>
+                                            Pobierz CV
+                                        </a>
+                                        <span class="text-muted small">{{ kandydat.cv }}</span>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Brak CV w systemie
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-camera"></i>
+                                    <span class="info-label">Zdjęcie profilowe</span>
+                                </div>
+                                {% if kandydat.zdjecie %}
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img src="{{ asset('uploads/photos/' ~ kandydat.zdjecie) }}" 
+                                             alt="Zdjęcie {{ kandydat.fullName }}"
+                                             style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                        <span class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            Wgrane
+                                        </span>
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        Brak zdjęcia profilowego
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Candidacy Tab -->
+                <div class="tab-pane fade" id="candidacy" role="tabpanel">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-calendar-plus"></i>
+                                <span class="info-label">Data rejestracji</span>
+                            </div>
+                            <div class="info-value large">{{ kandydat.dataRejestracji|date('d.m.Y H:i') }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-file-signature"></i>
+                                <span class="info-label">Data złożenia deklaracji</span>
+                            </div>
+                            <div class="info-value">
+                                {{ kandydat.dataZlozeniaDeklaracji ? kandydat.dataZlozeniaDeklaracji|date('d.m.Y') : 'Nie złożono' }}
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-icon">
+                                <i class="fas fa-{{ kandydat.status == 'aktywny' ? 'check-circle' : (kandydat.status == 'odrzucony' ? 'times-circle' : 'clock') }}"></i>
+                                <span class="info-label">Status kandydatury</span>
+                            </div>
+                            <div class="info-value">
+                                {% if kandydat.status == 'aktywny' %}
+                                    <span class="badge bg-success px-3 py-2">
+                                        <i class="fas fa-circle me-1"></i>Aktywna
+                                    </span>
+                                {% elseif kandydat.status == 'odrzucony' %}
+                                    <span class="badge bg-danger px-3 py-2">
+                                        <i class="fas fa-circle me-1"></i>Odrzucona
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning px-3 py-2">
+                                        <i class="fas fa-circle me-1"></i>{{ kandydat.status|title }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if kandydat.numerWPartii %}
+                            <div class="info-item">
+                                <div class="info-icon">
+                                    <i class="fas fa-hashtag"></i>
+                                    <span class="info-label">Numer w partii</span>
+                                </div>
+                                <div class="info-value">{{ kandydat.numerWPartii }}</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Additional Info Tab -->
+                <div class="tab-pane fade" id="additional" role="tabpanel">
+                    <div class="row g-4">
+                        {% if kandydat.informacjeOmnie %}
+                            <div class="col-12">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-heart"></i>
+                                        <span class="info-label">Informacje o sobie</span>
+                                    </div>
+                                    <div class="text-display">{{ kandydat.informacjeOmnie }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if kandydat.socialMedia %}
+                            <div class="col-12">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-share-alt"></i>
+                                        <span class="info-label">Media społecznościowe</span>
+                                    </div>
+                                    <div class="text-display">{{ kandydat.socialMedia }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if kandydat.dodatkoweInformacje %}
+                            <div class="col-12">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-sticky-note"></i>
+                                        <span class="info-label">Dodatkowe informacje</span>
+                                    </div>
+                                    <div class="text-display">{{ kandydat.dodatkoweInformacje }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        {% if kandydat.notatkaWewnetrzna %}
+                            <div class="col-12">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-user-secret"></i>
+                                        <span class="info-label">Notatka wewnętrzna (tylko dla funkcyjnych)</span>
+                                    </div>
+                                    <div class="text-display">{{ kandydat.notatkaWewnetrzna }}</div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if not kandydat.informacjeOmnie and not kandydat.socialMedia and not kandydat.dodatkoweInformacje and not kandydat.notatkaWewnetrzna %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Brak dodatkowych informacji</h5>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Opinions Tab -->
+                {% if is_granted('ROLE_FUNKCYJNY') and app.user.id != kandydat.id %}
+                    <div class="tab-pane fade" id="opinions" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h6 class="mb-0">
+                                <i class="fas fa-comment-alt me-2"></i>
+                                Opinie o kandydacie
+                            </h6>
+                            <div>
+                                <a href="{{ path('opinia_czlonka_new', {'id': kandydat.id}) }}" class="btn btn-primary btn-enhanced">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Dodaj opinię</span>
+                                </a>
+                                {% if opinie is defined and opinie|length > 0 %}
+                                    <a href="{{ path('opinia_czlonka_list', {'id': kandydat.id}) }}" class="btn btn-secondary btn-enhanced">
+                                        <i class="fas fa-list"></i>
+                                        <span>Zobacz wszystkie ({{ opinie|length }})</span>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if opinie is defined and opinie|length > 0 %}
+                            <div class="opinions-container">
+                                {% for opinia in opinie|slice(0, 3) %}
+                                    <div class="opinion-item">
+                                        <div class="opinion-header">
+                                            <div class="opinion-author">
+                                                <div class="author-avatar">
+                                                    {{ opinia.autor.imie|first }}{{ opinia.autor.nazwisko|first }}
+                                                </div>
+                                                <div class="author-info">
+                                                    <h6>{{ opinia.autor.fullName }}</h6>
+                                                    <span class="author-role">{{ opinia.funkcjaAutora }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="opinion-date">
+                                                <i class="fas fa-calendar me-1"></i>
+                                                {{ opinia.dataUtworzenia|date('d.m.Y') }}
+                                            </div>
+                                        </div>
+                                        <div class="opinion-content">
+                                            {{ opinia.opinia|length > 200 ? opinia.opinia|slice(0, 200) ~ '...' : opinia.opinia }}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            {% if opinie|length > 3 %}
+                                <div class="text-center mt-3">
+                                    <a href="{{ path('opinia_czlonka_list', {'id': kandydat.id}) }}" class="btn btn-outline-primary btn-enhanced">
+                                        <i class="fas fa-chevron-down"></i>
+                                        <span>Zobacz pozostałe {{ opinie|length - 3 }} 
+                                        {% if opinie|length - 3 == 1 %}opinię{% elseif opinie|length - 3 < 5 %}opinie{% else %}opinii{% endif %}</span>
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">Brak opinii o tym kandydacie</h5>
+                                <p class="text-muted mb-4">Jako osoba funkcyjna możesz dodać pierwszą opinię</p>
+                                <a href="{{ path('opinia_czlonka_new', {'id': kandydat.id}) }}" class="btn btn-primary btn-enhanced">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Dodaj pierwszą opinię</span>
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate progress bar on load
+            setTimeout(() => {
+                const progressBar = document.querySelector('.progress-fill-large');
+                if (progressBar) {
+                    progressBar.style.width = '{{ kandydat.postepKandydata }}%';
+                }
+            }, 500);
+            
+            // Tab switching with animation
+            const tabLinks = document.querySelectorAll('[data-bs-toggle="tab"]');
+            tabLinks.forEach(link => {
+                link.addEventListener('shown.bs.tab', function(e) {
+                    const targetPane = document.querySelector(e.target.getAttribute('data-bs-target'));
+                    if (targetPane) {
+                        targetPane.classList.add('fade-in');
+                        setTimeout(() => {
+                            targetPane.classList.remove('fade-in');
+                        }, 500);
+                    }
+                });
+            });
+        });
+        
+        
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const iconMap = {
+                'success': 'check-circle',
+                'error': 'exclamation-triangle',
+                'warning': 'exclamation-triangle',
+                'info': 'info-circle'
+            };
+            
+            toast.className = `alert alert-${type === 'error' ? 'danger' : type} position-fixed fade-in`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);';
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${iconMap[type]} me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close ms-auto" onclick="this.closest('.alert').remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 5000);
+        }
+    </script>
+{% endblock %}

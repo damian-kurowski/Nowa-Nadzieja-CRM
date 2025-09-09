@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>{{ dokument.numerDokumentu }}</title>
+    <style>
+        @page {
+            margin: 20px;
+            size: A4;
+        }
+        
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #000;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .document-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #000;
+        }
+        
+        .party-logo {
+            width: 150px;
+            height: auto;
+            margin-bottom: 15px;
+            max-height: 80px;
+            object-fit: contain;
+        }
+        
+        .document-date {
+            font-size: 10pt;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .document-content {
+            flex: 1;
+            margin: 20px 0;
+            text-align: justify;
+            font-size: 11pt;
+            line-height: 1.6;
+        }
+        
+        .document-title {
+            font-size: 14pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+        
+        .document-body {
+            margin: 15px 0;
+        }
+        
+        .candidate-info {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+        }
+        
+        
+        .document-number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 9pt;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <!-- Document Number in top right -->
+    <div class="document-number">{{ dokument.numerDokumentu }}</div>
+    
+    <!-- Header with Logo -->
+    <div class="document-header">
+        <img src="data:image/png;base64,{{ logo_base64 }}" alt="Logo Nowa Nadzieja" class="party-logo">
+        <div class="document-date">{{ dokument.dataUtworzenia|date('d.m.Y') }}</div>
+    </div>
+
+    <!-- Document Content -->
+    <div class="document-content">
+        <div class="document-title">{{ dokument.tytul }}</div>
+        
+        <div class="document-body">
+            {{ document_content_with_signatures|default(dokument.formattedContent)|raw }}
+        </div>
+
+        {% if dokument.kandydat %}
+        <div class="candidate-info">
+            <strong>Dotyczy kandydata:</strong> {{ dokument.kandydat.fullName }}<br>
+            {% if dokument.kandydat.email %}<strong>Email:</strong> {{ dokument.kandydat.email }}<br>{% endif %}
+            {% if dokument.kandydat.telefon %}<strong>Telefon:</strong> {{ dokument.kandydat.telefon }}<br>{% endif %}
+            {% if dokument.dataWejsciaWZycie %}<strong>Data wejścia w życie:</strong> {{ dokument.dataWejsciaWZycie|date('d.m.Y') }}{% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+</body>
+</html>

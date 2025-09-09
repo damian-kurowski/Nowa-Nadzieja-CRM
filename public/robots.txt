@@ -1,0 +1,39 @@
+# Robots.txt - Nowa Nadzieja CRM
+# This is a private CRM system - no public content should be indexed
+
+User-agent: *
+Disallow: /
+
+# Specifically disallow sensitive areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /login
+Disallow: /security/
+Disallow: /uploads/
+Disallow: /var/
+Disallow: /config/
+Disallow: /src/
+Disallow: /_profiler/
+Disallow: /_wdt/
+
+# Common scraping targets to block
+Disallow: /sitemap.xml
+Disallow: /sitemap/
+Disallow: /feed/
+Disallow: /rss/
+Disallow: /search/
+Disallow: /export/
+Disallow: /download/
+
+# Block access to technical files
+Disallow: /.env
+Disallow: /composer.json
+Disallow: /package.json
+Disallow: /symfony.lock
+Disallow: /.git/
+
+# No sitemap for private CRM
+# Sitemap: (none)
+
+# Crawl-delay for any legitimate bots (in seconds)
+Crawl-delay: 86400

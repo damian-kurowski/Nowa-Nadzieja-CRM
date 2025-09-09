@@ -1,0 +1,937 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dodaj opinię o {{ czlonek.fullName }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Dodaj opinię o członku{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --brand-secondary: #3b82f6;
+            --bg-tertiary: #e5e7eb;
+            --text-secondary: #6b7280;
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+            --btn-hover-shadow: rgba(59, 130, 246, 0.3);
+            --focus-ring: rgba(59, 130, 246, 0.1);
+        }
+        
+        [data-theme="dark"] {
+            --brand-secondary: #64a8ff;
+            --bg-tertiary: #2a2a2a;
+            --text-secondary: #9ca3af;
+            --shadow-medium: rgba(0, 0, 0, 0.5);
+            --btn-hover-shadow: rgba(100, 168, 255, 0.3);
+        }
+        
+        .opinion-header {
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .opinion-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        .member-profile-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .member-profile-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--shadow-medium);
+        }
+        
+        .member-profile-header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05));
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .member-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .member-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .member-avatar-placeholder-large {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        
+        .member-info-detailed {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        
+        .member-name-large {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+        }
+        
+        .member-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+        }
+        
+        .member-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .member-detail i {
+            color: var(--brand-primary);
+            width: 16px;
+        }
+        
+        .member-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .member-stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--brand-primary);
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .opinion-form-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .form-header {
+            background: linear-gradient(90deg, var(--bg-secondary), var(--bg-tertiary));
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .form-header h5 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-primary);
+        }
+        
+        .form-header-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .form-body {
+            padding: 2rem;
+        }
+        
+        .enhanced-textarea {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .textarea-container {
+            position: relative;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+        }
+        
+        .textarea-container:focus-within {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .textarea-container.is-valid {
+            border-color: #22c55e;
+        }
+        
+        .textarea-container.is-invalid {
+            border-color: #ef4444;
+        }
+        
+        .form-textarea {
+            width: 100%;
+            min-height: 200px;
+            border: none;
+            padding: 1rem;
+            resize: vertical;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        
+        .form-textarea:focus {
+            outline: none;
+        }
+        
+        .textarea-toolbar {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+        
+        .character-counter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .char-count {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .char-count.warning {
+            color: #f59e0b;
+        }
+        
+        .char-count.danger {
+            color: #ef4444;
+        }
+        
+        .progress-bar-container {
+            width: 100px;
+            height: 4px;
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--brand-primary), var(--brand-secondary));
+            width: 0%;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-bar.warning {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+        
+        .progress-bar.danger {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        
+        .validation-feedback {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .validation-feedback.invalid {
+            color: #ef4444;
+        }
+        
+        .validation-feedback.valid {
+            color: #22c55e;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .btn-enhanced {
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--btn-hover-shadow);
+        }
+        
+        .btn-enhanced.btn-primary {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            color: white;
+            border-color: var(--brand-primary);
+        }
+        
+        .btn-enhanced.btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        .info-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .info-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .info-card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .info-card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+        }
+        
+        .info-card-icon.rules { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .info-card-icon.visibility { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .info-card-icon.practices { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        
+        .info-card-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .info-card-body {
+            padding: 1.25rem;
+        }
+        
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .info-list li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .info-list li::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--brand-primary);
+            margin-top: 0.75rem;
+            flex-shrink: 0;
+        }
+        
+        .writing-tips {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .writing-tips-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tips-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .tip-item i {
+            color: var(--brand-primary);
+            margin-top: 0.2rem;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .opinion-header {
+                padding: 1.5rem;
+            }
+            
+            .member-profile-header {
+                padding: 1rem;
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .member-avatar-large {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .member-name-large {
+                font-size: 1.25rem;
+            }
+            
+            .member-details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-body {
+                padding: 1.5rem;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .btn-enhanced {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .info-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tips-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Dark Mode Adjustments */
+        [data-theme="dark"] .member-profile-card {
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .opinion-form-container {
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .info-card {
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .textarea-container {
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .writing-tips {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(168, 85, 247, 0.1));
+            border-color: rgba(79, 70, 229, 0.3);
+        }
+        
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.4s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Opinion Header -->
+    <div class="opinion-header fade-in">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-comment-dots me-3"></i>
+                    Dodaj opinię o członku
+                </h2>
+                <p class="mb-0 opacity-75">Opinia będzie widoczna tylko dla osób funkcyjnych i pomoże w ocenie członka</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ path('czlonek_show', {'id': czlonek.id}) }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Powrót do profilu
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-xl-8">
+            <!-- Enhanced Member Profile Card -->
+            <div class="member-profile-card slide-up">
+                <div class="member-profile-header">
+                    <div class="member-avatar-large">
+                        {% if czlonek.zdjecie %}
+                            <img src="{{ asset('uploads/photos/' ~ czlonek.zdjecie) }}" alt="{{ czlonek.fullName }}">
+                        {% else %}
+                            <div class="member-avatar-placeholder-large">
+                                {{ czlonek.imie|first }}{{ czlonek.nazwisko|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="member-info-detailed">
+                        <h4 class="member-name-large">{{ czlonek.fullName }}</h4>
+                        <div class="member-details-grid">
+                            <div class="member-detail">
+                                <i class="fas fa-envelope"></i>
+                                <span>{{ czlonek.email }}</span>
+                            </div>
+                            {% if czlonek.telefon %}
+                                <div class="member-detail">
+                                    <i class="fas fa-phone"></i>
+                                    <span>{{ czlonek.telefon }}</span>
+                                </div>
+                            {% endif %}
+                            {% if czlonek.okreg %}
+                                <div class="member-detail">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>{{ czlonek.okreg.nazwa }}{% if czlonek.oddzial %} - {{ czlonek.oddzial.nazwa }}{% endif %}</span>
+                                </div>
+                            {% endif %}
+                            <div class="member-detail">
+                                <i class="fas fa-id-badge"></i>
+                                <span>{{ czlonek.typUzytkownika|title }}{% if czlonek.numerWpartii %} - Nr {{ czlonek.numerWpartii }}{% endif %}</span>
+                            </div>
+                        </div>
+                        <div class="member-stats">
+                            <div class="member-stat">
+                                <span class="stat-value">{{ czlonek.dataRejestracji|date('Y') }}</span>
+                                <span class="stat-label">Rok rejestracji</span>
+                            </div>
+                            {% if czlonek.dataPrzyjeciaDoPartii %}
+                                <div class="member-stat">
+                                    <span class="stat-value">{{ czlonek.dataPrzyjeciaDoPartii|date('Y') }}</span>
+                                    <span class="stat-label">Członek od</span>
+                                </div>
+                            {% endif %}
+                            <div class="member-stat">
+                                <span class="stat-value">{{ czlonek.status|title }}</span>
+                                <span class="stat-label">Status</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Writing Tips -->
+            <div class="writing-tips slide-up">
+                <div class="writing-tips-header">
+                    <div class="tips-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h6 class="mb-0">Wskazówki dotyczące pisania opinii</h6>
+                </div>
+                <div class="tips-grid">
+                    <div class="tip-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Skup się na faktach i konkretnych sytuacjach</span>
+                    </div>
+                    <div class="tip-item">
+                        <i class="fas fa-balance-scale"></i>
+                        <span>Bądź obiektywny i konstruktywny</span>
+                    </div>
+                    <div class="tip-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Uwzględnij aktualną sytuację i kontekst</span>
+                    </div>
+                    <div class="tip-item">
+                        <i class="fas fa-users"></i>
+                        <span>Pamiętaj o wpływie na organizację</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Opinion Form -->
+            <div class="opinion-form-container slide-up">
+                <div class="form-header">
+                    <h5>
+                        <div class="form-header-icon">
+                            <i class="fas fa-pen-alt"></i>
+                        </div>
+                        <div>
+                            Napisz opinię
+                            <small class="d-block text-muted mt-1" style="font-weight: normal; font-size: 0.85rem;">
+                                Ta opinia będzie trwale zapisana i widoczna dla osób funkcyjnych
+                            </small>
+                        </div>
+                    </h5>
+                </div>
+                
+                <div class="form-body">
+                    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true, 'id': 'opinionForm'}}) }}
+                    
+                    <div class="enhanced-textarea">
+                        {{ form_label(form.opinia, null, {'label_attr': {'class': 'form-label fw-bold mb-3'}}) }}
+                        <div class="textarea-container" id="textareaContainer">
+                            {{ form_widget(form.opinia, {'attr': {'class': 'form-textarea', 'placeholder': 'Napisz swoją opinię o tym członku partii...\n\nPrzykłady tematów:\n• Zaangażowanie w działalność partii\n• Kompetencje i umiejętności\n• Współpraca z innymi członkami\n• Inicjatywy i pomysły\n• Punktualność i odpowiedzialność'}}) }}
+                            <div class="textarea-toolbar">
+                                <div class="character-counter">
+                                    <span class="char-count" id="charCount">0</span>
+                                    <span class="text-muted">/ 2000 znaków</span>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" id="progressBar"></div>
+                                    </div>
+                                </div>
+                                <div class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Min. 10 znaków
+                                </div>
+                            </div>
+                        </div>
+                        <div class="validation-feedback" id="validationFeedback"></div>
+                        {{ form_errors(form.opinia) }}
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ path('czlonek_show', {'id': czlonek.id}) }}" class="btn btn-secondary btn-enhanced">
+                            <i class="fas fa-times"></i>
+                            <span>Anuluj</span>
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-enhanced" id="submitBtn" disabled>
+                            <i class="fas fa-save"></i>
+                            <span>Dodaj opinię</span>
+                        </button>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+
+            <!-- Information Cards -->
+            <div class="info-cards-grid">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon rules">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <h6 class="info-card-title">Zasady systemu</h6>
+                    </div>
+                    <div class="info-card-body">
+                        <ul class="info-list">
+                            <li>Opinie mogą dodawać tylko osoby funkcyjne</li>
+                            <li>Można dodać wiele opinii o tym samym członku</li>
+                            <li>Nie można dodać opinii o sobie</li>
+                            <li>Opinie są trwałe - nie można ich edytować</li>
+                            <li>Wszystkie opinie mają znacznik czasowy</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon visibility">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h6 class="info-card-title">Widoczność opinii</h6>
+                    </div>
+                    <div class="info-card-body">
+                        <ul class="info-list">
+                            <li>Opinie widzą tylko osoby funkcyjne</li>
+                            <li>Członkowie nie widzą opinii o sobie</li>
+                            <li>Autor opinii jest zawsze widoczny</li>
+                            <li>Data dodania jest automatycznie zapisywana</li>
+                            <li>Historia opinii jest zachowana chronologicznie</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon practices">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h6 class="info-card-title">Dobre praktyki</h6>
+                    </div>
+                    <div class="info-card-body">
+                        <ul class="info-list">
+                            <li>Pisz opinie obiektywnie i profesjonalnie</li>
+                            <li>Skup się na faktach, nie emocjach</li>
+                            <li>Uwzględnij wpływ na organizację</li>
+                            <li>Aktualizuj opinie gdy sytuacja się zmieni</li>
+                            <li>Używaj konstruktywnego języka</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const textarea = document.querySelector('#opinionForm textarea');
+            const charCount = document.getElementById('charCount');
+            const progressBar = document.getElementById('progressBar');
+            const textareaContainer = document.getElementById('textareaContainer');
+            const validationFeedback = document.getElementById('validationFeedback');
+            const submitBtn = document.getElementById('submitBtn');
+            const form = document.getElementById('opinionForm');
+            
+            const minLength = 10;
+            const maxLength = 2000;
+            
+            // Auto-focus on textarea
+            textarea.focus();
+            
+            // Character counter and validation
+            function updateCharacterCount() {
+                const length = textarea.value.length;
+                const percentage = (length / maxLength) * 100;
+                
+                charCount.textContent = length;
+                progressBar.style.width = percentage + '%';
+                
+                // Update colors based on length
+                charCount.className = 'char-count';
+                progressBar.className = 'progress-bar';
+                
+                if (length >= maxLength) {
+                    charCount.classList.add('danger');
+                    progressBar.classList.add('danger');
+                } else if (length > maxLength * 0.9) {
+                    charCount.classList.add('warning');
+                    progressBar.classList.add('warning');
+                }
+                
+                // Validation
+                textareaContainer.classList.remove('is-valid', 'is-invalid');
+                validationFeedback.classList.remove('valid', 'invalid');
+                
+                if (length === 0) {
+                    validationFeedback.textContent = '';
+                    submitBtn.disabled = true;
+                } else if (length < minLength) {
+                    textareaContainer.classList.add('is-invalid');
+                    validationFeedback.classList.add('invalid');
+                    validationFeedback.textContent = `Opinia musi mieć co najmniej ${minLength} znaków (obecnie: ${length})`;
+                    submitBtn.disabled = true;
+                } else if (length > maxLength) {
+                    textareaContainer.classList.add('is-invalid');
+                    validationFeedback.classList.add('invalid');
+                    validationFeedback.textContent = `Opinia nie może być dłuższa niż ${maxLength} znaków (obecnie: ${length})`;
+                    submitBtn.disabled = true;
+                } else {
+                    textareaContainer.classList.add('is-valid');
+                    validationFeedback.classList.add('valid');
+                    validationFeedback.textContent = 'Długość opinii jest prawidłowa';
+                    submitBtn.disabled = false;
+                }
+            }
+            
+            // Event listeners
+            textarea.addEventListener('input', updateCharacterCount);
+            textarea.addEventListener('paste', function() {
+                setTimeout(updateCharacterCount, 10);
+            });
+            
+            // Form submission
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (textarea.value.length < minLength || textarea.value.length > maxLength) {
+                    showToast('Sprawdź długość opinii przed wysłaniem', 'warning');
+                    return;
+                }
+                
+                // Show loading state
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Zapisywanie...';
+                submitBtn.disabled = true;
+                
+                // Simulate processing time (remove in production)
+                setTimeout(() => {
+                    this.submit();
+                }, 500);
+            });
+            
+            // Auto-resize textarea
+            function autoResize() {
+                textarea.style.height = 'auto';
+                textarea.style.height = Math.max(200, textarea.scrollHeight) + 'px';
+            }
+            
+            textarea.addEventListener('input', autoResize);
+            
+            // Writing assistance
+            const suggestions = [
+                'Członek wykazuje się...',
+                'W mojej ocenie...',
+                'Podczas współpracy zauważyłem/am...',
+                'Szczególnie doceniam...',
+                'Uważam, że...',
+                'Rekomenduję...'
+            ];
+            
+            // Add writing suggestions (optional feature)
+            let suggestionTimeout;
+            textarea.addEventListener('focus', function() {
+                if (this.value.length === 0) {
+                    suggestionTimeout = setTimeout(() => {
+                        if (this.value.length === 0) {
+                            showToast('Wskazówka: Zacznij od opisu konkretnej sytuacji lub działania', 'info');
+                        }
+                    }, 3000);
+                }
+            });
+            
+            textarea.addEventListener('input', function() {
+                clearTimeout(suggestionTimeout);
+            });
+            
+            // Initialize
+            updateCharacterCount();
+            autoResize();
+        });
+        
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} position-fixed fade-in`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);';
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close ms-auto" onclick="this.closest('.alert').remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 5000);
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + Enter to submit
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                const submitBtn = document.getElementById('submitBtn');
+                if (!submitBtn.disabled) {
+                    document.getElementById('opinionForm').dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+    </script>
+{% endblock %}

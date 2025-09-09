@@ -1,0 +1,865 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edytuj {{ czlonek.fullName }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Edytuj członka{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .edit-header {
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .edit-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        .form-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .form-section:hover {
+            box-shadow: 0 4px 16px var(--shadow-medium);
+        }
+        
+        .form-section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .form-section-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .form-section-icon.personal { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .form-section-icon.contact { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); }
+        .form-section-icon.organization { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .form-section-icon.membership { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .form-section-icon.employment { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+        .form-section-icon.additional { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .form-section-icon.files { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+        .form-section-icon.internal { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+        
+        .form-group-enhanced {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px var(--focus-ring);
+            outline: none;
+        }
+        
+        .form-control:hover, .form-select:hover {
+            border-color: var(--brand-accent);
+        }
+        
+        .form-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+        
+        .required-indicator {
+            color: #ef4444;
+            margin-left: 0.25rem;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary);
+            cursor: pointer;
+        }
+        
+        .file-upload-area:hover {
+            border-color: var(--brand-primary);
+            background: var(--bg-tertiary);
+        }
+        
+        .file-upload-area.dragover {
+            border-color: var(--brand-primary);
+            background: var(--brand-accent);
+            color: white;
+        }
+        
+        .file-preview {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+        }
+        
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .step.active {
+            background: var(--brand-primary);
+            color: white;
+        }
+        
+        .step.completed {
+            background: #22c55e;
+            color: white;
+        }
+        
+        .step-connector {
+            height: 2px;
+            flex: 1;
+            background: var(--border-color);
+        }
+        
+        .step-connector.completed {
+            background: #22c55e;
+        }
+        
+        .floating-save {
+            position: sticky;
+            bottom: 2rem;
+            z-index: 1000;
+            display: flex;
+            justify-content: end;
+            gap: 1rem;
+        }
+        
+        .btn-enhanced {
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 1rem;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--btn-hover-shadow);
+        }
+        
+        .validation-error {
+            display: none;
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+        
+        .form-control.is-invalid {
+            border-color: #ef4444;
+        }
+        
+        .form-control.is-valid {
+            border-color: #22c55e;
+        }
+        
+        .tab-navigation {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        
+        .tab-btn.active {
+            color: var(--brand-primary);
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--brand-primary);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .edit-header {
+                padding: 1.5rem;
+            }
+            
+            .form-section {
+                padding: 1.5rem;
+            }
+            
+            .floating-save {
+                flex-direction: column;
+                position: static;
+                margin-top: 2rem;
+            }
+            
+            .tab-navigation {
+                flex-wrap: nowrap;
+                overflow-x: scroll;
+            }
+        }
+        
+        /* Dark Mode Adjustments */
+        [data-theme="dark"] .form-section {
+            background: var(--bg-secondary);
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .file-upload-area {
+            background: var(--bg-tertiary);
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .file-preview {
+            background: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .progress-indicator {
+            background: var(--bg-tertiary);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Edit Header -->
+    <div class="edit-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h2 class="mb-1">
+                    <i class="fas fa-user-edit me-3"></i>
+                    Edycja: {{ czlonek.fullName }}
+                </h2>
+                <p class="mb-0 opacity-75">Aktualizacja danych członka organizacji</p>
+            </div>
+            <div class="col-auto">
+                <a href="{{ path('czlonek_show', {id: czlonek.id}) }}" class="btn btn-light btn-enhanced">
+                    <i class="fas fa-arrow-left me-2"></i>Powrót do profilu
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+        <div class="step active" id="step1">1</div>
+        <div class="step-connector"></div>
+        <div class="step" id="step2">2</div>
+        <div class="step-connector"></div>
+        <div class="step" id="step3">3</div>
+        <div class="step-connector"></div>
+        <div class="step" id="step4">4</div>
+        <div class="ms-3">
+            <strong>Krok <span id="currentStep">1</span> z 4:</strong>
+            <span id="stepDescription">Dane osobowe</span>
+        </div>
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+        <button class="tab-btn active" onclick="switchTab('osobowe', 1)">
+            <i class="fas fa-user"></i>Dane osobowe
+        </button>
+        <button class="tab-btn" onclick="switchTab('kontakt', 2)">
+            <i class="fas fa-address-book"></i>Kontakt i organizacja
+        </button>
+        <button class="tab-btn" onclick="switchTab('zatrudnienie', 3)">
+            <i class="fas fa-building"></i>Zatrudnienie i media
+        </button>
+        <button class="tab-btn" onclick="switchTab('dodatkowe', 4)">
+            <i class="fas fa-plus-circle"></i>Informacje dodatkowe
+        </button>
+    </div>
+    
+    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': false, 'id': 'editForm'}}) }}
+    
+    <!-- Tab 1: Dane osobowe -->
+    <div id="osobowe" class="tab-content active">
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon personal">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1">Podstawowe dane osobowe</h5>
+                    <small class="text-muted">Imię, nazwisko, dane identyfikacyjne</small>
+                </div>
+            </div>
+            
+            <div class="alert alert-info mb-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Informacja:</strong> Dane osobowe (imię, nazwisko, PESEL, data urodzenia, płeć) nie podlegają edycji. 
+                W przypadku konieczności zmiany tych danych, skontaktuj się z administratorem systemu.
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.imie, 'Imię') }}
+                        <span class="required-indicator">*</span>
+                        {{ form_widget(form.imie, {'attr': {'class': 'form-control', 'placeholder': 'Wprowadź imię'}}) }}
+                        {{ form_errors(form.imie) }}
+                        <div class="validation-error">Imię jest wymagane</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.nazwisko, 'Nazwisko') }}
+                        <span class="required-indicator">*</span>
+                        {{ form_widget(form.nazwisko, {'attr': {'class': 'form-control', 'placeholder': 'Wprowadź nazwisko'}}) }}
+                        {{ form_errors(form.nazwisko) }}
+                        <div class="validation-error">Nazwisko jest wymagane</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.drugieImie, 'Drugie imię') }}
+                        {{ form_widget(form.drugieImie, {'attr': {'class': 'form-control', 'placeholder': 'Drugie imię (opcjonalne)'}}) }}
+                        {{ form_errors(form.drugieImie) }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.email, 'Adres email') }}
+                        <span class="required-indicator">*</span>
+                        {{ form_widget(form.email, {'attr': {'class': 'form-control', 'placeholder': 'adres@email.com'}}) }}
+                        {{ form_errors(form.email) }}
+                        <div class="validation-error">Podaj prawidłowy adres email</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.pesel, 'Numer PESEL') }}
+                        {{ form_widget(form.pesel, {'attr': {'class': 'form-control', 'placeholder': '00000000000', 'maxlength': '11'}}) }}
+                        {{ form_errors(form.pesel) }}
+                        <div class="form-text">11 cyfr bez spacji</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.dataUrodzenia, 'Data urodzenia') }}
+                        {{ form_widget(form.dataUrodzenia, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.dataUrodzenia) }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.plec, 'Płeć') }}
+                        {{ form_widget(form.plec, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.plec) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab 2: Kontakt i organizacja -->
+    <div id="kontakt" class="tab-content">
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon contact">
+                    <i class="fas fa-address-book"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1">Dane kontaktowe</h5>
+                    <small class="text-muted">Telefon, adres zamieszkania</small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.telefon, 'Numer telefonu') }}
+                        {{ form_widget(form.telefon, {'attr': {'class': 'form-control', 'placeholder': 'np. 48123456789'}}) }}
+                        {{ form_errors(form.telefon) }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.status, 'Status członka') }}
+                        <span class="required-indicator">*</span>
+                        {{ form_widget(form.status, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.status) }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group-enhanced">
+                {{ form_label(form.adresZamieszkania, 'Adres zamieszkania') }}
+                {{ form_widget(form.adresZamieszkania, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Ulica, numer\nKod pocztowy Miasto\nWojewództwo'}}) }}
+                {{ form_errors(form.adresZamieszkania) }}
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon organization">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1">Przynależność organizacyjna</h5>
+                    <small class="text-muted">Okręg i oddział</small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.okreg, 'Okręg') }}
+                        <span class="required-indicator">*</span>
+                        {{ form_widget(form.okreg, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.okreg) }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.oddzial, 'Oddział') }}
+                        {{ form_widget(form.oddzial, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.oddzial) }}
+                        <div class="form-text">Oddział może być przypisany później</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab 3: Zatrudnienie i media -->
+    <div id="zatrudnienie" class="tab-content">
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon employment">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1">Zatrudnienie w spółkach</h5>
+                    <small class="text-muted">Informacje o zatrudnieniu</small>
+                </div>
+            </div>
+            
+            <div class="form-group-enhanced">
+                {{ form_label(form.zatrudnienieSpolki, 'Zatrudnienie w spółkach') }}
+                {{ form_widget(form.zatrudnienieSpolki, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Opisz zatrudnienie w spółkach miejskich, Skarbu Państwa lub komunalnych...'}}) }}
+                {{ form_errors(form.zatrudnienieSpolki) }}
+                <div class="form-text">Podaj szczegółowe informacje o zatrudnieniu w spółkach publicznych</div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon contact">
+                    <i class="fas fa-share-alt"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1">Media społecznościowe</h5>
+                    <small class="text-muted">Profile w mediach społecznościowych</small>
+                </div>
+            </div>
+            
+            <div class="form-group-enhanced">
+                {{ form_label(form.socialMedia, 'Media społecznościowe') }}
+                {{ form_widget(form.socialMedia, {'attr': {'class': 'form-control', 'rows': 3, 'placeholder': 'Facebook: https://facebook.com/profil\nTwitter: https://twitter.com/profil\nLinkedIn: https://linkedin.com/in/profil'}}) }}
+                {{ form_errors(form.socialMedia) }}
+                <div class="form-text">{{ form.socialMedia.vars.help }}</div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon additional">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1">Informacje o sobie</h5>
+                    <small class="text-muted">Opis osobisty</small>
+                </div>
+            </div>
+            
+            <div class="form-group-enhanced">
+                {{ form_label(form.informacjeOmnie, 'O mnie') }}
+                {{ form_widget(form.informacjeOmnie, {'attr': {'class': 'form-control', 'rows': 5, 'placeholder': 'Napisz coś o sobie, swoich zainteresowaniach, doświadczeniu...'}}) }}
+                {{ form_errors(form.informacjeOmnie) }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab 4: Informacje dodatkowe -->
+    <div id="dodatkowe" class="tab-content">
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon files">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1">Pliki i dokumenty</h5>
+                    <small class="text-muted">Zdjęcie profilowe i CV</small>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.zdjecie, 'Zdjęcie profilowe') }}
+                        <div class="file-upload-area" onclick="document.getElementById('{{ form.zdjecie.vars.id }}').click()">
+                            <i class="fas fa-camera fa-2x mb-2" style="color: var(--brand-primary);"></i>
+                            <p class="mb-1"><strong>Kliknij aby wybrać zdjęcie</strong></p>
+                            <p class="text-muted mb-0">JPEG, PNG • Maks. 2MB</p>
+                            {{ form_widget(form.zdjecie, {'attr': {'style': 'display: none;'}}) }}
+                        </div>
+                        {{ form_errors(form.zdjecie) }}
+                        {% if czlonek.zdjecie %}
+                            <div class="file-preview">
+                                <i class="fas fa-image text-success"></i>
+                                <div>
+                                    <strong>Aktualne zdjęcie:</strong>
+                                    <span class="text-muted">{{ czlonek.zdjecie }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group-enhanced">
+                        {{ form_label(form.cv, 'Curriculum Vitae') }}
+                        <div class="file-upload-area" onclick="document.getElementById('{{ form.cv.vars.id }}').click()">
+                            <i class="fas fa-file-alt fa-2x mb-2" style="color: var(--brand-primary);"></i>
+                            <p class="mb-1"><strong>Kliknij aby wybrać CV</strong></p>
+                            <p class="text-muted mb-0">PDF, DOC, DOCX • Maks. 5MB</p>
+                            {{ form_widget(form.cv, {'attr': {'style': 'display: none;'}}) }}
+                        </div>
+                        {{ form_errors(form.cv) }}
+                        {% if czlonek.cv %}
+                            <div class="file-preview">
+                                <i class="fas fa-file-pdf text-danger"></i>
+                                <div>
+                                    <strong>Aktualne CV:</strong>
+                                    <span class="text-muted">{{ czlonek.cv }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <div class="form-section-header">
+                <div class="form-section-icon additional">
+                    <i class="fas fa-sticky-note"></i>
+                </div>
+                <div>
+                    <h5 class="mb-1">Informacje dodatkowe</h5>
+                    <small class="text-muted">Notatki i uwagi</small>
+                </div>
+            </div>
+            
+            <div class="form-group-enhanced">
+                {{ form_label(form.dodatkoweInformacje, 'Dodatkowe informacje') }}
+                {{ form_widget(form.dodatkoweInformacje, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Wszelkie dodatkowe informacje, uwagi, komentarze...'}}) }}
+                {{ form_errors(form.dodatkoweInformacje) }}
+            </div>
+        </div>
+        
+        {% if is_granted('ROLE_FUNKCYJNY') %}
+            <div class="form-section border-warning">
+                <div class="form-section-header">
+                    <div class="form-section-icon internal">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Notatka wewnętrzna</h5>
+                        <small class="text-muted text-warning">Widoczna tylko dla osób funkcyjnych</small>
+                    </div>
+                </div>
+                
+                <div class="form-group-enhanced">
+                    {{ form_label(form.notatkaWewnetrzna, 'Notatka wewnętrzna') }}
+                    {{ form_widget(form.notatkaWewnetrzna, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Notatki wewnętrzne organizacji...'}}) }}
+                    {{ form_errors(form.notatkaWewnetrzna) }}
+                    <div class="form-text text-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Ta informacja jest poufna i widoczna tylko dla osób funkcyjnych
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Floating Save Buttons -->
+    <div class="floating-save">
+        <a href="{{ path('czlonek_show', {id: czlonek.id}) }}" class="btn btn-secondary btn-enhanced">
+            <i class="fas fa-times me-2"></i>Anuluj
+        </a>
+        <button type="button" class="btn btn-outline-primary btn-enhanced" onclick="validateForm()">
+            <i class="fas fa-check me-2"></i>Sprawdź formularz
+        </button>
+        <button type="submit" class="btn btn-primary btn-enhanced">
+            <i class="fas fa-save me-2"></i>Zapisz zmiany
+        </button>
+    </div>
+    
+    {{ form_end(form) }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        let currentTabIndex = 1;
+        const totalTabs = 4;
+        
+        const stepDescriptions = {
+            1: 'Dane osobowe',
+            2: 'Kontakt i organizacja', 
+            3: 'Zatrudnienie i media',
+            4: 'Informacje dodatkowe'
+        };
+        
+        function switchTab(tabName, stepNumber) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Mark button as active
+            event.target.closest('.tab-btn').classList.add('active');
+            
+            // Update progress
+            updateProgress(stepNumber);
+            currentTabIndex = stepNumber;
+        }
+        
+        function updateProgress(step) {
+            // Reset all steps
+            for (let i = 1; i <= totalTabs; i++) {
+                const stepEl = document.getElementById(`step${i}`);
+                stepEl.classList.remove('active', 'completed');
+                
+                if (i < step) {
+                    stepEl.classList.add('completed');
+                } else if (i === step) {
+                    stepEl.classList.add('active');
+                }
+            }
+            
+            // Update step connectors
+            document.querySelectorAll('.step-connector').forEach((connector, index) => {
+                connector.classList.toggle('completed', index + 1 < step);
+            });
+            
+            // Update text
+            document.getElementById('currentStep').textContent = step;
+            document.getElementById('stepDescription').textContent = stepDescriptions[step];
+        }
+        
+        function validateForm() {
+            let isValid = true;
+            const requiredFields = ['{{ form.imie.vars.id }}', '{{ form.nazwisko.vars.id }}', '{{ form.email.vars.id }}'];
+            
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                const value = field.value.trim();
+                
+                if (!value) {
+                    field.classList.add('is-invalid');
+                    field.classList.remove('is-valid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                    field.classList.add('is-valid');
+                }
+            });
+            
+            // Email validation
+            const emailField = document.getElementById('{{ form.email.vars.id }}');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (emailField.value && !emailRegex.test(emailField.value)) {
+                emailField.classList.add('is-invalid');
+                emailField.classList.remove('is-valid');
+                isValid = false;
+            }
+            
+            // PESEL validation
+            const peselField = document.getElementById('{{ form.pesel.vars.id }}');
+            if (peselField.value && peselField.value.length !== 11) {
+                peselField.classList.add('is-invalid');
+                peselField.classList.remove('is-valid');
+            } else if (peselField.value) {
+                peselField.classList.remove('is-invalid');
+                peselField.classList.add('is-valid');
+            }
+            
+            if (isValid) {
+                alert('Formularz jest prawidłowo wypełniony!');
+            } else {
+                alert('Proszę poprawić błędy w formularzu.');
+            }
+        }
+        
+        // File upload handling
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInputs = document.querySelectorAll('input[type="file"]');
+            
+            fileInputs.forEach(input => {
+                input.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    const uploadArea = e.target.closest('.form-group-enhanced').querySelector('.file-upload-area');
+                    
+                    if (file) {
+                        uploadArea.style.borderColor = 'var(--brand-primary)';
+                        uploadArea.style.backgroundColor = 'var(--bg-tertiary)';
+                        
+                        const fileName = uploadArea.querySelector('p');
+                        if (fileName) {
+                            fileName.innerHTML = `<strong>Wybrano: ${file.name}</strong>`;
+                        }
+                    }
+                });
+            });
+        });
+        
+        // Real-time validation
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('editForm');
+            const inputs = form.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    if (this.hasAttribute('required') && !this.value.trim()) {
+                        this.classList.add('is-invalid');
+                        this.classList.remove('is-valid');
+                    } else if (this.value.trim()) {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    }
+                });
+                
+                input.addEventListener('input', function() {
+                    if (this.classList.contains('is-invalid') && this.value.trim()) {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

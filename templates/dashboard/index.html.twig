@@ -1,0 +1,866 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .dashboard-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .welcome-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1rem;
+        }
+        
+        .enhanced-stat-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 12px var(--shadow-light);
+        }
+        
+        .enhanced-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .enhanced-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--gradient-primary);
+        }
+        
+        .enhanced-stat-card.members::before { background: linear-gradient(180deg, #3b82f6, #1d4ed8); }
+        .enhanced-stat-card.candidates::before { background: linear-gradient(180deg, #f59e0b, #d97706); }
+        .enhanced-stat-card.supporters::before { background: linear-gradient(180deg, #10b981, #059669); }
+        .enhanced-stat-card.donors::before { background: linear-gradient(180deg, #06b6d4, #0891b2); }
+        .enhanced-stat-card.media::before { background: linear-gradient(180deg, #ef4444, #dc2626); }
+        .enhanced-stat-card.conferences::before { background: linear-gradient(180deg, #8b5cf6, #7c3aed); }
+        .enhanced-stat-card.documents::before { background: linear-gradient(180deg, #f97316, #ea580c); }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: white;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .stat-icon.members { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .stat-icon.candidates { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .stat-icon.supporters { background: linear-gradient(135deg, #10b981, #059669); }
+        .stat-icon.donors { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+        .stat-icon.media { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .stat-icon.conferences { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .stat-icon.documents { background: linear-gradient(135deg, #f97316, #ea580c); }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            line-height: 1;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-change {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .stat-change.positive {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        
+        .stat-change.negative {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+        
+        .stat-change.neutral {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }
+        
+        .activity-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .activity-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .activity-header {
+            background: linear-gradient(135deg, rgba(111, 66, 193, 0.1), rgba(90, 50, 163, 0.05));
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .activity-header h5 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .activity-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .activity-item:hover {
+            background: var(--bg-secondary);
+            transform: translateX(4px);
+        }
+        
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 100%;
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .activity-item:hover::before {
+            background: #6f42c1;
+        }
+        
+        .quick-actions-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .quick-actions-header {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+        }
+        
+        .quick-actions-header h5 {
+            color: #10b981;
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+        
+        .btn-enhanced {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .btn-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .btn-enhanced:hover::before {
+            left: 100%;
+        }
+        
+        .btn-media {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            border-color: #06b6d4;
+            color: white;
+        }
+        
+        .btn-media:hover {
+            border-color: #0891b2;
+            box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
+            color: white;
+        }
+        
+        .btn-conference {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            border-color: #8b5cf6;
+            color: white;
+        }
+        
+        .btn-conference:hover {
+            border-color: #7c3aed;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+            color: white;
+        }
+        
+        .welcome-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        
+        .user-avatar-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            border: 3px solid rgba(255,255,255,0.3);
+        }
+        
+        .current-time {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            font-weight: 600;
+        }
+        
+        .stats-overview {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .overview-item {
+            text-align: center;
+            padding: 0.5rem;
+        }
+        
+        .overview-number {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+        
+        .overview-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="welcome-section">
+            <div class="user-info">
+                {% if user.zdjecie %}
+                    <img src="{{ asset('uploads/photos/' ~ user.zdjecie) }}" 
+                         class="user-avatar" alt="Zdjęcie {{ user.fullName }}">
+                {% else %}
+                    <div class="user-avatar-placeholder">
+                        <i class="fas fa-user"></i>
+                    </div>
+                {% endif %}
+                <div>
+                    <h1 class="mb-1">Witaj, {{ user.imie }}!</h1>
+                    <p class="mb-0 opacity-90">
+                        {% if is_granted('ROLE_KANDYDAT_PARTII') %}
+                            CRM Nowa Nadzieja
+                        {% elseif is_granted('ROLE_BYLY_CZLONEK') %}
+                            CRM Nowa Nadzieja • Były członek
+                        {% elseif is_granted('ROLE_CZLONEK_PARTII') %}
+                            {% if user.okreg and user.oddzial %}
+                                Okręg {{ user.okreg.nazwa }} • Oddział {{ user.oddzial.nazwa }}
+                            {% elseif user.okreg %}
+                                Okręg {{ user.okreg.nazwa }}
+                            {% elseif user.oddzial %}
+                                Oddział {{ user.oddzial.nazwa }}
+                            {% else %}
+                                CRM Nowa Nadzieja
+                            {% endif %}
+                        {% else %}
+                            {% if user.okreg %}
+                                Okręg {{ user.okreg.nazwa }}
+                            {% elseif user.oddzial %}
+                                Oddział {{ user.oddzial.nazwa }}
+                            {% else %}
+                                CRM Nowa Nadzieja
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="current-time" id="currentTime">
+                <i class="fas fa-clock me-1"></i>
+                <span id="timeDisplay"></span>
+            </div>
+        </div>
+        
+        <!-- Stats Overview in Header - only for functional roles -->
+        {% if is_granted('ROLE_FUNKCYJNY') %}
+        <div class="stats-overview">
+            <div class="row">
+                <div class="col-3">
+                    <div class="overview-item">
+                        <div class="overview-number">{{ stats.total_members.current + stats.candidates.current + stats.supporters.current + stats.donors.current + stats.youth_members.current }}</div>
+                        <div class="overview-label">Łącznie osób</div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="overview-item">
+                        <div class="overview-number">{{ stats.total_members.current }}</div>
+                        <div class="overview-label">Członkowie</div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="overview-item">
+                        <div class="overview-number">{{ stats.candidates.current }}</div>
+                        <div class="overview-label">Kandydaci</div>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="overview-item">
+                        <div class="overview-number">{{ stats.supporters.current }}</div>
+                        <div class="overview-label">Sympatycy</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Payment Status Widget -->
+    {% if payment_status %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+                <div class="card-body p-0">
+                    <div class="alert alert-{{ payment_status.color }} m-0 d-flex align-items-center" 
+                         style="border-radius: 16px; border: none; padding: 1.5rem;">
+                        <div class="me-3">
+                            <div class="d-flex align-items-center justify-content-center" 
+                                 style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; backdrop-filter: blur(10px);">
+                                <i class="fas fa-coins fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h4 class="mb-1">{{ payment_status.message|raw }}</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small class="opacity-90">
+                                        <strong>Łącznie wpłacono:</strong> {{ payment_status.totalPaid }} PLN<br>
+                                        <strong>Miesięczna składka:</strong> {{ payment_status.monthlyFee }} PLN
+                                    </small>
+                                </div>
+                                {% if payment_status.paidUntil %}
+                                <div class="col-md-6">
+                                    <small class="opacity-90">
+                                        <strong>Opłacone do:</strong> {{ payment_status.paidUntil|date('m.Y') }}
+                                    </small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="ms-auto">
+                            <a href="{{ path('app_payment_index') }}" 
+                               class="btn btn-light btn-sm">
+                                <i class="fas fa-eye me-1"></i>
+                                Zobacz szczegóły
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Enhanced Statistics Cards -->
+    {% if is_granted('ROLE_FUNKCYJNY') %}
+    <div class="row">
+        <div class="col-6 col-md-3 mb-4">
+            <div class="enhanced-stat-card members">
+                <div class="stat-icon members">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number">{{ stats.total_members.current }}</div>
+                <div class="stat-label">Członkowie</div>
+                <div class="stat-change {{ stats.total_members.change.direction }}">
+                    {% if stats.total_members.change.direction == 'positive' %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% elseif stats.total_members.change.direction == 'negative' %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                    {% endif %}
+                    {{ stats.total_members.change.formatted }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 mb-4">
+            <div class="enhanced-stat-card candidates">
+                <div class="stat-icon candidates">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+                <div class="stat-number">{{ stats.candidates.current }}</div>
+                <div class="stat-label">Kandydaci</div>
+                <div class="stat-change {{ stats.candidates.change.direction }}">
+                    {% if stats.candidates.change.direction == 'positive' %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% elseif stats.candidates.change.direction == 'negative' %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                    {% endif %}
+                    {{ stats.candidates.change.formatted }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 mb-4">
+            <div class="enhanced-stat-card supporters">
+                <div class="stat-icon supporters">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="stat-number">{{ stats.supporters.current }}</div>
+                <div class="stat-label">Sympatycy</div>
+                <div class="stat-change {{ stats.supporters.change.direction }}">
+                    {% if stats.supporters.change.direction == 'positive' %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% elseif stats.supporters.change.direction == 'negative' %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                    {% endif %}
+                    {{ stats.supporters.change.formatted }}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 mb-4">
+            <div class="enhanced-stat-card donors">
+                <div class="stat-icon donors">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <div class="stat-number">{{ stats.donors.current }}</div>
+                <div class="stat-label">Darczyńcy</div>
+                <div class="stat-change {{ stats.donors.change.direction }}">
+                    {% if stats.donors.change.direction == 'positive' %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% elseif stats.donors.change.direction == 'negative' %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                    {% endif %}
+                    {{ stats.donors.change.formatted }}
+                </div>
+            </div>
+        </div>
+
+
+    {% endif %}
+    
+    <!-- Media and Press Conference Cards -->
+    {% if is_granted('ROLE_RZECZNIK_PRASOWY') or is_granted('ROLE_ADMIN') or is_granted('ROLE_PREZES_PARTII') or is_granted('ROLE_WICEPREZES_PARTII') or is_granted('ROLE_SEKRETARZ_PARTII') or is_granted('ROLE_SKARBNIK_PARTII') or is_granted('ROLE_ZARZAD_KRAJOWY') or is_granted('ROLE_ZARZAD_OKREGU') or is_granted('ROLE_ZARZAD_ODDZIALU') %}
+    <div class="row">
+        <div class="col-6 col-md-6 mb-4">
+            <div class="enhanced-stat-card media">
+                <div class="stat-icon media">
+                    <i class="fas fa-microphone"></i>
+                </div>
+                <div class="stat-number">{{ stats.media_appearances.current }}</div>
+                <div class="stat-label">{% if is_granted('ROLE_RZECZNIK_PRASOWY') %}Wszystkie wystąpienia{% else %}Wystąpienia medialne{% endif %}</div>
+                <div class="stat-change {{ stats.media_appearances.change.direction }}">
+                    {% if stats.media_appearances.change.direction == 'positive' %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% elseif stats.media_appearances.change.direction == 'negative' %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                    {% endif %}
+                    {{ stats.media_appearances.change.formatted }}
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-6 mb-4">
+            <div class="enhanced-stat-card conferences">
+                <div class="stat-icon conferences">
+                    <i class="fas fa-microphone-alt"></i>
+                </div>
+                <div class="stat-number">{{ stats.press_conferences.current }}</div>
+                <div class="stat-label">{% if is_granted('ROLE_RZECZNIK_PRASOWY') %}Wszystkie konferencje{% else %}Konferencje prasowe{% endif %}</div>
+                <div class="stat-change {{ stats.press_conferences.change.direction }}">
+                    {% if stats.press_conferences.change.direction == 'positive' %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% elseif stats.press_conferences.change.direction == 'negative' %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                    {% endif %}
+                    {{ stats.press_conferences.change.formatted }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% elseif is_granted('ROLE_CZLONEK_PARTII') %}
+    <div class="row">
+        <div class="col-6 col-md-6 mb-4">
+            <div class="enhanced-stat-card media">
+                <div class="stat-icon media">
+                    <i class="fas fa-microphone"></i>
+                </div>
+                <div class="stat-number">{{ stats.media_appearances.current }}</div>
+                <div class="stat-label">Moje wystąpienia</div>
+                <div class="stat-change {{ stats.media_appearances.change.direction }}">
+                    {% if stats.media_appearances.change.direction == 'positive' %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% elseif stats.media_appearances.change.direction == 'negative' %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                    {% endif %}
+                    {{ stats.media_appearances.change.formatted }}
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-6 mb-4">
+            <div class="enhanced-stat-card conferences">
+                <div class="stat-icon conferences">
+                    <i class="fas fa-microphone-alt"></i>
+                </div>
+                <div class="stat-number">{{ stats.press_conferences.current }}</div>
+                <div class="stat-label">Moje konferencje</div>
+                <div class="stat-change {{ stats.press_conferences.change.direction }}">
+                    {% if stats.press_conferences.change.direction == 'positive' %}
+                        <i class="fas fa-arrow-up"></i>
+                    {% elseif stats.press_conferences.change.direction == 'negative' %}
+                        <i class="fas fa-arrow-down"></i>
+                    {% else %}
+                        <i class="fas fa-minus"></i>
+                    {% endif %}
+                    {{ stats.press_conferences.change.formatted }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Activity Section -->
+    <div class="row">
+        <!-- Enhanced Recent Activity -->
+        <div class="col-12 {% if is_granted('ROLE_FUNKCYJNY') %}col-lg-8{% endif %} mb-4">
+            <div class="activity-card">
+                <div class="activity-header">
+                    <h5><i class="fas fa-clock me-2"></i>Ostatnie działania</h5>
+                </div>
+                
+                {% if recent_activities|length > 0 %}
+                    {% for activity in recent_activities %}
+                        <div class="activity-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ activity.user.fullName }}</strong> {{ activity.description }}
+                                <small class="text-muted d-block">
+                                    {% if activity.user.okreg %}
+                                        <i class="fas fa-map-marker-alt me-1"></i>Okręg: {{ activity.user.okreg.nazwa }}
+                                    {% elseif activity.user.oddzial %}
+                                        <i class="fas fa-map-marker-alt me-1"></i>Oddział: {{ activity.user.oddzial.nazwa }}
+                                    {% else %}
+                                        <i class="fas fa-globe me-1"></i>Partia
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">{{ activity.formattedTimeAgo }}</small>
+                                <div>
+                                    <span class="badge {{ activity.badgeClass }}">{{ activity.badgeText }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="activity-item text-center py-4">
+                        <div class="text-muted">
+                            <i class="fas fa-clock fa-2x mb-3"></i>
+                            <h6>Brak ostatnich działań</h6>
+                            <p class="mb-0">W twoim zakresie nie ma jeszcze żadnych aktywności.</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Enhanced Quick Actions - Only for functional roles -->
+        {% if is_granted('ROLE_FUNKCYJNY') %}
+        <div class="col-12 col-lg-4">
+            <div class="quick-actions-card">
+                <div class="quick-actions-header">
+                    <h5><i class="fas fa-bolt me-2"></i>Szybkie akcje</h5>
+                </div>
+                <div class="p-3">
+                    <div class="d-grid gap-3">
+                        {% if is_granted('ROLE_RZECZNIK_PRASOWY') or is_granted('ROLE_ADMIN') or is_granted('ROLE_PREZES_PARTII') or is_granted('ROLE_WICEPREZES_PARTII') or is_granted('ROLE_SEKRETARZ_PARTII') or is_granted('ROLE_SKARBNIK_PARTII') or is_granted('ROLE_CZLONEK_PARTII') %}
+                            <a href="{{ path('wystep_medialny_new') }}" class="btn btn-enhanced btn-media">
+                                <i class="fas fa-microphone me-2"></i>Zgłoś wystąpienie
+                            </a>
+                            <a href="{{ path('konferencja_prasowa_new') }}" class="btn btn-enhanced btn-conference">
+                                <i class="fas fa-microphone-alt me-2"></i>Dodaj konferencję
+                            </a>
+                        {% endif %}
+                        <a href="{{ path('profil_index') }}" class="btn btn-enhanced btn-outline-primary">
+                            <i class="fas fa-user me-2"></i>Mój profil
+                        </a>
+                        {% if is_granted('ROLE_ADMIN') %}
+                        <a href="{{ path('czlonek_index') }}" class="btn btn-enhanced btn-outline-success">
+                            <i class="fas fa-users me-2"></i>Członkowie
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Additional Info Section -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="text-muted mb-3">
+                            <i class="fas fa-info-circle me-2"></i>Informacje systemowe
+                        </h6>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="small">
+                                    <strong class="d-block">Ostatnie logowanie</strong>
+                                    <span class="text-muted">{{ user.formattedLastLogin }}</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="small">
+                                    <strong class="d-block">Status systemu</strong>
+                                    <span class="text-success">
+                                        <i class="fas fa-check-circle"></i> {{ system_status.status|title }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Real-time clock
+        function updateClock() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            const timeDisplay = document.getElementById('timeDisplay');
+            if (timeDisplay) {
+                timeDisplay.textContent = now.toLocaleDateString('pl-PL', options);
+            }
+        }
+        
+        // Enhanced button interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update clock every minute
+            updateClock();
+            setInterval(updateClock, 60000);
+            // Add ripple effect to enhanced buttons
+            document.querySelectorAll('.btn-enhanced').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const ripple = document.createElement('span');
+                    const rect = this.getBoundingClientRect();
+                    const size = Math.max(rect.width, rect.height);
+                    const x = e.clientX - rect.left - size / 2;
+                    const y = e.clientY - rect.top - size / 2;
+                    
+                    ripple.style.width = ripple.style.height = size + 'px';
+                    ripple.style.left = x + 'px';
+                    ripple.style.top = y + 'px';
+                    ripple.style.position = 'absolute';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.background = 'rgba(255,255,255,0.3)';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s linear';
+                    ripple.style.pointerEvents = 'none';
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+            
+            // Animate stat cards on load
+            const statCards = document.querySelectorAll('.enhanced-stat-card');
+            statCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.5s ease';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 100);
+            });
+        });
+        
+        // Add CSS for ripple animation
+        if (!document.getElementById('dashboard-custom-styles')) {
+            const dashboardStyle = document.createElement('style');
+            dashboardStyle.id = 'dashboard-custom-styles';
+            dashboardStyle.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(4);
+                        opacity: 0;
+                    }
+                }
+                
+                .bg-purple {
+                    background-color: #8b5cf6 !important;
+                }
+                
+                .btn-outline-primary {
+                    border-color: #6f42c1;
+                    color: #6f42c1;
+                }
+                
+                .btn-outline-primary:hover {
+                    background-color: #6f42c1;
+                    border-color: #6f42c1;
+                    color: white;
+                }
+                
+                .btn-outline-success {
+                    border-color: #10b981;
+                    color: #10b981;
+                }
+                
+                .btn-outline-success:hover {
+                    background-color: #10b981;
+                    border-color: #10b981;
+                    color: white;
+                }
+                
+                .btn-outline-warning {
+                    border-color: #f97316;
+                    color: #f97316;
+                }
+                
+                .btn-outline-warning:hover {
+                    background-color: #f97316;
+                    border-color: #f97316;
+                    color: white;
+                }
+            `;
+            document.head.appendChild(dashboardStyle);
+        }
+    </script>
+{% endblock %}

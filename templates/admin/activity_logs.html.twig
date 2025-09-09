@@ -1,0 +1,535 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Logi Aktywności - Panel Administratora{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">
+            <i class="fas fa-list-alt me-2 text-warning"></i>
+            Logi Aktywności
+            {% if filters|length > 0 %}
+                <small class="badge bg-info ms-2">{{ filters|length }} filtrów</small>
+            {% endif %}
+        </h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-outline-secondary" onclick="toggleFilters()" id="filterToggleBtn">
+                    <i class="fas fa-filter"></i> Filtry
+                </button>
+                <button type="button" class="btn btn-outline-info" onclick="exportActivities()">
+                    <i class="fas fa-download"></i> Export CSV
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="refreshStats()">
+                    <i class="fas fa-sync-alt"></i> Odśwież
+                </button>
+                <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#cleanLogsModal">
+                    <i class="fas fa-broom"></i> Oczyść stare logi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Filters Panel -->
+    <div class="card mb-4" id="filtersPanel" style="{% if filters|length == 0 %}display: none;{% endif %}">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-search me-2"></i>
+                Zaawansowane filtry
+                {% if filters|length > 0 %}
+                    <a href="{{ path('admin_activity_logs') }}" class="btn btn-sm btn-outline-secondary ms-2">
+                        <i class="fas fa-times"></i> Wyczyść wszystkie
+                    </a>
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ path('admin_activity_logs') }}" id="filtersForm">
+                <div class="row g-3">
+                    <!-- Search Box -->
+                    <div class="col-md-4">
+                        <label class="form-label">Wyszukiwanie</label>
+                        <input type="text" class="form-control" name="search" value="{{ filters.search ?? '' }}" 
+                               placeholder="Szukaj w opisie, użytkowniku, emailu...">
+                    </div>
+                    
+                    <!-- Activity Type -->
+                    <div class="col-md-4">
+                        <label class="form-label">Typ aktywności</label>
+                        <select class="form-select" name="activity_type">
+                            <option value="">Wszystkie typy</option>
+                            {% for type in filterOptions.activity_types ?? [] %}
+                                <option value="{{ type }}" {% if (filters.activity_type ?? '') == type %}selected{% endif %}>
+                                    {{ type }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- User -->
+                    <div class="col-md-4">
+                        <label class="form-label">Użytkownik</label>
+                        <select class="form-select" name="user_id">
+                            <option value="">Wszyscy użytkownicy</option>
+                            {% for user in filterOptions.users ?? [] %}
+                                <option value="{{ user.id }}" {% if (filters.user_id ?? '') == user.id %}selected{% endif %}>
+                                    {{ user.imie }} {{ user.nazwisko }} ({{ user.email }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Date From -->
+                    <div class="col-md-3">
+                        <label class="form-label">Data od</label>
+                        <input type="date" class="form-control" name="date_from" value="{{ filters.date_from ?? '' }}">
+                    </div>
+                    
+                    <!-- Date To -->
+                    <div class="col-md-3">
+                        <label class="form-label">Data do</label>
+                        <input type="date" class="form-control" name="date_to" value="{{ filters.date_to ?? '' }}">
+                    </div>
+                    
+                    <!-- Severity -->
+                    <div class="col-md-3">
+                        <label class="form-label">Priorytet</label>
+                        <select class="form-select" name="severity">
+                            <option value="">Wszystkie priorytety</option>
+                            {% for severity in filterOptions.severities ?? [] %}
+                                <option value="{{ severity }}" {% if (filters.severity ?? '') == severity %}selected{% endif %}>
+                                    {{ severity }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Region -->
+                    <div class="col-md-3">
+                        <label class="form-label">Region</label>
+                        <select class="form-select" name="region">
+                            <option value="">Wszystkie regiony</option>
+                            {% for region in filterOptions.regions ?? [] %}
+                                <option value="{{ region }}" {% if (filters.region ?? '') == region %}selected{% endif %}>
+                                    {{ region }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Oddział -->
+                    <div class="col-md-4">
+                        <label class="form-label">Oddział</label>
+                        <select class="form-select" name="oddzial">
+                            <option value="">Wszystkie oddziały</option>
+                            {% for oddzial in filterOptions.oddzialy ?? [] %}
+                                <option value="{{ oddzial }}" {% if (filters.oddzial ?? '') == oddzial %}selected{% endif %}>
+                                    {{ oddzial }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Target Type -->
+                    <div class="col-md-4">
+                        <label class="form-label">Typ obiektu</label>
+                        <select class="form-select" name="target_type">
+                            <option value="">Wszystkie typy</option>
+                            {% for targetType in filterOptions.target_types ?? [] %}
+                                <option value="{{ targetType }}" {% if (filters.target_type ?? '') == targetType %}selected{% endif %}>
+                                    {{ targetType }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- IP Address -->
+                    <div class="col-md-4">
+                        <label class="form-label">Adres IP</label>
+                        <input type="text" class="form-control" name="ip_address" value="{{ filters.ip_address ?? '' }}" 
+                               placeholder="np. 192.168.1.1">
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search"></i> Zastosuj filtry
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary me-2" onclick="clearFilters()">
+                            <i class="fas fa-eraser"></i> Wyczyść
+                        </button>
+                        <button type="button" class="btn btn-outline-info" onclick="saveFiltersAsPreset()">
+                            <i class="fas fa-bookmark"></i> Zapisz jako preset
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Działania dzisiaj</h6>
+                            <h4 id="todayActivities">{{ stats|length > 0 ? stats[0].count : 0 }}</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Wszystkie logi</h6>
+                            <h4 id="totalActivities">{{ activities.totalItemCount }}</h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-database fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Błędy (24h)</h6>
+                            <h4 id="errorCount">
+                                {% set errorTotal = 0 %}
+                                {% for error in errorStats %}
+                                    {% set errorTotal = errorTotal + error.count %}
+                                {% endfor %}
+                                {{ errorTotal }}
+                            </h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Status systemu</h6>
+                            <h4>
+                                {% if errorStats|length == 0 %}
+                                    <i class="fas fa-check"></i> OK
+                                {% else %}
+                                    <i class="fas fa-exclamation"></i> Uwagi
+                                {% endif %}
+                            </h4>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-server fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Logs Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-history me-2"></i>
+                Ostatnie działania
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Czas</th>
+                            <th>Użytkownik</th>
+                            <th>Działanie</th>
+                            <th>Opis</th>
+                            <th>Region</th>
+                            <th>Priorytet</th>
+                            <th>Szczegóły</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for activity in activities %}
+                        <tr>
+                            <td>
+                                <small class="text-muted">{{ activity.createdAt|date('d.m.Y H:i') }}</small>
+                                <br>
+                                <small class="text-muted">{{ activity.timeAgo }}</small>
+                            </td>
+                            <td>
+                                {% if activity.user %}
+                                    <strong>{{ activity.user.fullName }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ activity.user.email }}</small>
+                                {% else %}
+                                    <em class="text-muted">System</em>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ activity.color }}">
+                                    <i class="{{ activity.icon }} me-1"></i>
+                                    {{ activity.activityType }}
+                                </span>
+                            </td>
+                            <td>{{ activity.description }}</td>
+                            <td>
+                                {% if activity.region %}
+                                    <span class="badge bg-secondary">{{ activity.region }}</span>
+                                {% endif %}
+                                {% if activity.oddzial %}
+                                    <br>
+                                    <small class="text-muted">{{ activity.oddzial }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if activity.severity == 'error' %}danger{% elseif activity.severity == 'warning' %}warning{% elseif activity.severity == 'success' %}success{% else %}secondary{% endif %}">
+                                    {{ activity.severity }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if activity.metadata %}
+                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#details{{ activity.id }}">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if activity.metadata %}
+                        <tr class="collapse" id="details{{ activity.id }}">
+                            <td colspan="7">
+                                <div class="bg-light p-2 rounded">
+                                    <strong>Metadata:</strong>
+                                    <pre class="mb-0 mt-1"><code>{{ activity.metadata|json_encode(constant('JSON_PRETTY_PRINT')) }}</code></pre>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="fas fa-inbox fa-2x mb-3"></i>
+                                <br>
+                                Brak działań do wyświetlenia
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer">
+            {{ knp_pagination_render(activities) }}
+        </div>
+    </div>
+</div>
+
+<!-- Clean Logs Modal -->
+<div class="modal fade" id="cleanLogsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-broom me-2"></i>
+                    Oczyszczanie starych logów
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cleanLogsForm">
+                    <div class="mb-3">
+                        <label for="daysToKeep" class="form-label">Zachowaj logi z ostatnich dni:</label>
+                        <input type="number" class="form-control" id="daysToKeep" name="days" value="365" min="30">
+                        <small class="form-text text-muted">Minimum 30 dni ze względów zgodności z przepisami.</small>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Uwaga:</strong> Ta operacja jest nieodwracalna. Stare logi zostaną trwale usunięte.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                <button type="button" class="btn btn-warning" onclick="cleanLogs()">
+                    <i class="fas fa-broom me-1"></i>
+                    Oczyść logi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleFilters() {
+    const panel = document.getElementById('filtersPanel');
+    const btn = document.getElementById('filterToggleBtn');
+    
+    if (panel.style.display === 'none' || !panel.style.display) {
+        panel.style.display = 'block';
+        btn.innerHTML = '<i class="fas fa-filter"></i> Ukryj filtry';
+    } else {
+        panel.style.display = 'none';
+        btn.innerHTML = '<i class="fas fa-filter"></i> Filtry';
+    }
+}
+
+function clearFilters() {
+    const form = document.getElementById('filtersForm');
+    const inputs = form.querySelectorAll('input, select');
+    
+    inputs.forEach(input => {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+            input.checked = false;
+        } else {
+            input.value = '';
+        }
+    });
+    
+    // Submit the cleared form
+    form.submit();
+}
+
+function exportActivities() {
+    const params = new URLSearchParams(window.location.search);
+    const exportUrl = '{{ path('admin_activity_export') }}?' + params.toString();
+    
+    // Show loading indicator
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eksportowanie...';
+    btn.disabled = true;
+    
+    // Create hidden iframe for download
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = exportUrl;
+    document.body.appendChild(iframe);
+    
+    // Reset button after 2 seconds
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        document.body.removeChild(iframe);
+    }, 2000);
+}
+
+function refreshStats() {
+    fetch('{{ path('admin_activity_stats_api') }}')
+        .then(response => response.json())
+        .then(data => {
+            // Update statistics cards
+            location.reload(); // Simple refresh for now
+        })
+        .catch(error => {
+            alert('Błąd podczas odświeżania statystyk');
+        });
+}
+
+function cleanLogs() {
+    const days = document.getElementById('daysToKeep').value;
+    
+    if (!confirm(`Czy na pewno chcesz usunąć logi starsze niż ${days} dni? Ta operacja jest nieodwracalna.`)) {
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('days', days);
+    
+    fetch('{{ path('admin_activity_clean') }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Błąd: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Wystąpił błąd podczas czyszczenia logów');
+    })
+    .finally(() => {
+        document.querySelector('[data-bs-dismiss="modal"]').click();
+    });
+}
+
+function saveFiltersAsPreset() {
+    const form = document.getElementById('filtersForm');
+    const formData = new FormData(form);
+    const filters = {};
+    
+    for (let [key, value] of formData.entries()) {
+        if (value) filters[key] = value;
+    }
+    
+    const presetName = prompt('Podaj nazwę dla tego zestawu filtrów:');
+    if (presetName) {
+        localStorage.setItem('activityLogPreset_' + presetName, JSON.stringify(filters));
+        alert('Preset "' + presetName + '" został zapisany!');
+    }
+}
+
+// Auto-submit form on select changes (optional - for better UX)
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('filtersForm');
+    const selects = form.querySelectorAll('select');
+    const dates = form.querySelectorAll('input[type="date"]');
+    
+    // Auto-submit on select change (with delay for user experience)
+    let submitTimeout;
+    selects.forEach(select => {
+        select.addEventListener('change', () => {
+            clearTimeout(submitTimeout);
+            submitTimeout = setTimeout(() => {
+                form.submit();
+            }, 500);
+        });
+    });
+    
+    // Auto-submit on date change
+    dates.forEach(date => {
+        date.addEventListener('change', () => {
+            clearTimeout(submitTimeout);
+            submitTimeout = setTimeout(() => {
+                form.submit();
+            }, 500);
+        });
+    });
+    
+    // Load saved presets (show in console for now)
+    const presets = {};
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('activityLogPreset_')) {
+            const presetName = key.replace('activityLogPreset_', '');
+            presets[presetName] = JSON.parse(localStorage.getItem(key));
+        }
+    }
+});
+</script>
+
+{% endblock %}

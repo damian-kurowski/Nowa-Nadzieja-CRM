@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Regiony{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Zarządzanie Regionami</h1>
+                <a href="{{ path('app_region_new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nowy Region
+                </a>
+            </div>
+
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            <div class="card">
+                <div class="card-body">
+                    {% if regions is empty %}
+                        <p class="text-center text-muted">Brak regionów w systemie.</p>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nazwa</th>
+                                        <th>Województwo</th>
+                                        <th>Liczba Okręgów</th>
+                                        <th>Liczba Prezesów</th>
+                                        <th>Akcje</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for region in regions %}
+                                        <tr>
+                                            <td>{{ region.id }}</td>
+                                            <td>{{ region.nazwa }}</td>
+                                            <td>{{ region.wojewodztwo }}</td>
+                                            <td>{{ region.okregi|length }}</td>
+                                            <td>{{ region.prezesi|length }}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="{{ path('app_region_show', {'id': region.id}) }}" 
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i> Podgląd
+                                                    </a>
+                                                    <a href="{{ path('app_region_edit', {'id': region.id}) }}" 
+                                                       class="btn btn-sm btn-outline-secondary">
+                                                        <i class="fas fa-edit"></i> Edytuj
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

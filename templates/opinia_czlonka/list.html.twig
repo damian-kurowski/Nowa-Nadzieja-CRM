@@ -1,0 +1,1021 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Opinie o {{ czlonek.fullName }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Opinie o członku{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --brand-secondary: #3b82f6;
+            --bg-tertiary: #e5e7eb;
+            --text-secondary: #6b7280;
+            --shadow-medium: rgba(0, 0, 0, 0.15);
+            --btn-hover-shadow: rgba(59, 130, 246, 0.3);
+            --focus-ring: rgba(59, 130, 246, 0.1);
+        }
+        
+        [data-theme="dark"] {
+            --brand-secondary: #64a8ff;
+            --bg-tertiary: #2a2a2a;
+            --text-secondary: #9ca3af;
+            --shadow-medium: rgba(0, 0, 0, 0.5);
+            --btn-hover-shadow: rgba(100, 168, 255, 0.3);
+        }
+
+        .opinions-header {
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .opinions-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        .member-summary-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .member-summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--shadow-medium);
+        }
+        
+        .member-summary-header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05));
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .member-avatar-summary {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .member-avatar-summary img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .member-avatar-summary-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .member-info-summary {
+            flex-grow: 1;
+            min-width: 0;
+        }
+        
+        .member-name-summary {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+        }
+        
+        .member-details-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .member-detail-summary {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .member-detail-summary i {
+            color: var(--brand-primary);
+            width: 16px;
+        }
+        
+        .opinions-stats {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .stat-badge {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        
+        .view-controls {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .view-toggle {
+            display: flex;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .view-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .view-btn.active {
+            background: var(--brand-primary);
+            color: white;
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-select {
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+        
+        .filter-select:focus {
+            border-color: var(--brand-primary);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+        
+        /* Timeline View */
+        .timeline-container {
+            position: relative;
+            padding-left: 2rem;
+        }
+        
+        .timeline-line {
+            position: absolute;
+            left: 1rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--brand-primary), var(--brand-secondary));
+            border-radius: 1px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 8px 25px var(--shadow-medium);
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: -2.25rem;
+            top: 1.5rem;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            border: 3px solid var(--bg-primary);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            z-index: 10;
+        }
+        
+        .timeline-item:nth-child(even) .timeline-marker {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+        
+        .timeline-item:nth-child(3n) .timeline-marker {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+        
+        .opinion-header-enhanced {
+            background: linear-gradient(90deg, var(--bg-secondary), var(--bg-tertiary));
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .opinion-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .author-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .author-info h6 {
+            margin: 0;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .author-role {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .opinion-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .meta-item i {
+            color: var(--brand-primary);
+        }
+        
+        .opinion-content {
+            padding: 2rem;
+        }
+        
+        .opinion-text {
+            line-height: 1.7;
+            color: var(--text-primary);
+            margin: 0;
+            font-size: 1rem;
+        }
+        
+        .opinion-footer {
+            padding: 1rem 2rem;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+        
+        .opinion-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .opinion-tag {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--brand-primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        /* Card View */
+        .opinions-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .opinion-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .opinion-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px var(--shadow-medium);
+        }
+        
+        .empty-state {
+            background: var(--bg-primary);
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.5;
+        }
+        
+        .empty-state h5 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+        }
+        
+        .btn-enhanced {
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--btn-hover-shadow);
+        }
+        
+        .btn-enhanced.btn-primary {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            color: white;
+            border-color: var(--brand-primary);
+        }
+        
+        .btn-enhanced.btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        .floating-add-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5rem;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .floating-add-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .opinions-header {
+                padding: 1.5rem;
+            }
+            
+            .member-summary-header {
+                padding: 1rem;
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+            
+            .member-avatar-summary {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .member-details-summary {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: center;
+            }
+            
+            .opinions-stats {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            
+            .timeline-container {
+                padding-left: 1rem;
+            }
+            
+            .timeline-marker {
+                left: -1.25rem;
+            }
+            
+            .timeline-item:hover {
+                transform: translateY(-2px);
+            }
+            
+            .opinion-content {
+                padding: 1.5rem;
+            }
+            
+            .opinion-footer {
+                padding: 1rem 1.5rem;
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .btn-enhanced {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .floating-add-btn {
+                bottom: 5rem;
+                right: 1rem;
+                width: 56px;
+                height: 56px;
+                font-size: 1.25rem;
+            }
+        }
+        
+        /* Dark Mode Adjustments */
+        [data-theme="dark"] .member-summary-card {
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .view-controls {
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .timeline-item {
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .opinion-card {
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .empty-state {
+            border-color: var(--bg-tertiary);
+        }
+        
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.4s ease forwards;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Opinions Header -->
+    <div class="opinions-header fade-in">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-comments me-3"></i>
+                    Opinie o członku
+                </h2>
+                <p class="mb-0 opacity-75">Historia wszystkich opinii dodanych przez osoby funkcyjne</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ path('czlonek_show', {'id': czlonek.id}) }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Powrót do profilu
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <!-- Enhanced Member Summary -->
+            <div class="member-summary-card slide-up">
+                <div class="member-summary-header">
+                    <div class="member-avatar-summary">
+                        {% if czlonek.zdjecie %}
+                            <img src="{{ asset('uploads/photos/' ~ czlonek.zdjecie) }}" alt="{{ czlonek.fullName }}">
+                        {% else %}
+                            <div class="member-avatar-summary-placeholder">
+                                {{ czlonek.imie|first }}{{ czlonek.nazwisko|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="member-info-summary">
+                        <h5 class="member-name-summary">{{ czlonek.fullName }}</h5>
+                        <div class="member-details-summary">
+                            <div class="member-detail-summary">
+                                <i class="fas fa-envelope"></i>
+                                <span>{{ czlonek.email }}</span>
+                            </div>
+                            {% if czlonek.okreg %}
+                                <div class="member-detail-summary">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>{{ czlonek.okreg.nazwa }}{% if czlonek.oddzial %} - {{ czlonek.oddzial.nazwa }}{% endif %}</span>
+                                </div>
+                            {% endif %}
+                            <div class="member-detail-summary">
+                                <i class="fas fa-id-badge"></i>
+                                <span>{{ czlonek.typUzytkownika|title }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="opinions-stats">
+                        <div class="stat-badge">
+                            <i class="fas fa-comment-alt"></i>
+                            <span>{{ opinie|length }} {% if opinie|length == 1 %}opinia{% elseif opinie|length < 5 %}opinie{% else %}opinii{% endif %}</span>
+                        </div>
+                        {% if opinie|length > 0 %}
+                            {% set uniqueAuthors = [] %}
+                            {% for opinia in opinie %}
+                                {% if opinia.autor and opinia.autor.id not in uniqueAuthors %}
+                                    {% set uniqueAuthors = uniqueAuthors|merge([opinia.autor.id]) %}
+                                {% endif %}
+                            {% endfor %}
+                            <div class="stat-badge" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                                <i class="fas fa-users"></i>
+                                <span>{{ uniqueAuthors|length }} {% if uniqueAuthors|length == 1 %}autor{% else %}autorów{% endif %}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if opinie|length > 0 %}
+                <!-- View Controls -->
+                <div class="view-controls slide-up">
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="timeline" onclick="switchView('timeline')">
+                            <i class="fas fa-clock"></i>
+                            <span>Chronologia</span>
+                        </button>
+                        <button class="view-btn" data-view="cards" onclick="switchView('cards')">
+                            <i class="fas fa-th-large"></i>
+                            <span>Karty</span>
+                        </button>
+                    </div>
+                    <div class="filter-controls">
+                        <select class="filter-select" id="authorFilter" onchange="filterOpinions()">
+                            <option value="">Wszyscy autorzy</option>
+                            {% set authors = [] %}
+                            {% for opinia in opinie %}
+                                {% if opinia.autor and opinia.autor.fullName not in authors %}
+                                    {% set authors = authors|merge([opinia.autor.fullName]) %}
+                                    <option value="{{ opinia.autor.id }}">{{ opinia.autor.fullName }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <select class="filter-select" id="dateFilter" onchange="filterOpinions()">
+                            <option value="">Wszystkie daty</option>
+                            <option value="7">Ostatnie 7 dni</option>
+                            <option value="30">Ostatnie 30 dni</option>
+                            <option value="90">Ostatnie 3 miesiące</option>
+                            <option value="365">Ostatni rok</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Timeline View -->
+                <div id="timelineView" class="timeline-container slide-up">
+                    <div class="timeline-line"></div>
+                    {% for opinia in opinie %}
+                        <div class="timeline-item opinion-item" 
+                             data-author-id="{{ opinia.autor ? opinia.autor.id : 0 }}" 
+                             data-date="{{ opinia.dataUtworzenia|date('Y-m-d') }}">
+                            <div class="timeline-marker"></div>
+                            
+                            <div class="opinion-header-enhanced">
+                                <div class="opinion-author">
+                                    <div class="author-avatar">
+                                        {% if opinia.autor %}
+                                            {{ opinia.autor.imie|first }}{{ opinia.autor.nazwisko|first }}
+                                        {% else %}
+                                            ?
+                                        {% endif %}
+                                    </div>
+                                    <div class="author-info">
+                                        <h6>
+                                            {% if opinia.autor and opinia.autor.fullName %}
+                                                {{ opinia.autor.fullName }}
+                                            {% else %}
+                                                Nieznany autor
+                                            {% endif %}
+                                        </h6>
+                                        <div class="author-role">{{ opinia.funkcjaAutora|default('Nieznana funkcja') }}</div>
+                                    </div>
+                                </div>
+                                <div class="opinion-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <span>{{ opinia.dataUtworzenia|date('d.m.Y') }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-clock"></i>
+                                        <span>{{ opinia.dataUtworzenia|date('H:i') }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-align-left"></i>
+                                        <span>{{ opinia.opinia|length }} znaków</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="opinion-content">
+                                <p class="opinion-text">{{ opinia.opinia|nl2br }}</p>
+                            </div>
+                            
+                            <div class="opinion-footer">
+                                <div class="opinion-tags">
+                                    <span class="opinion-tag">
+                                        <i class="fas fa-lock me-1"></i>Trwała
+                                    </span>
+                                    {% set daysDiff = date().diff(opinia.dataUtworzenia).days %}
+                                    {% if daysDiff < 7 %}
+                                        <span class="opinion-tag" style="background: rgba(34, 197, 94, 0.1); color: #16a34a;">
+                                            <i class="fas fa-sparkles me-1"></i>Nowa
+                                        </span>
+                                    {% endif %}
+                                    {% if loop.first %}
+                                        <span class="opinion-tag" style="background: rgba(251, 191, 36, 0.1); color: #d97706;">
+                                            <i class="fas fa-star me-1"></i>Najnowsza
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    Dodano {{ daysDiff }} {% if daysDiff == 1 %}dzień{% elseif daysDiff < 5 %}dni{% else %}dni{% endif %} temu
+                                </small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Card View -->
+                <div id="cardView" class="opinions-grid slide-up" style="display: none;">
+                    {% for opinia in opinie %}
+                        <div class="opinion-card opinion-item" 
+                             data-author-id="{{ opinia.autor ? opinia.autor.id : 0 }}" 
+                             data-date="{{ opinia.dataUtworzenia|date('Y-m-d') }}">
+                            <div class="opinion-header-enhanced">
+                                <div class="opinion-author">
+                                    <div class="author-avatar">
+                                        {% if opinia.autor %}
+                                            {{ opinia.autor.imie|first }}{{ opinia.autor.nazwisko|first }}
+                                        {% else %}
+                                            ?
+                                        {% endif %}
+                                    </div>
+                                    <div class="author-info">
+                                        <h6>
+                                            {% if opinia.autor and opinia.autor.fullName %}
+                                                {{ opinia.autor.fullName }}
+                                            {% else %}
+                                                Nieznany autor
+                                            {% endif %}
+                                        </h6>
+                                        <div class="author-role">{{ opinia.funkcjaAutora|default('Nieznana funkcja') }}</div>
+                                    </div>
+                                </div>
+                                <div class="opinion-meta">
+                                    <div class="meta-item">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <span>{{ opinia.dataUtworzenia|date('d.m.Y H:i') }}</span>
+                                    </div>
+                                    <div class="meta-item">
+                                        <i class="fas fa-align-left"></i>
+                                        <span>{{ opinia.opinia|length }} znaków</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="opinion-content">
+                                <p class="opinion-text">{{ opinia.opinia|nl2br }}</p>
+                            </div>
+                            
+                            <div class="opinion-footer">
+                                <div class="opinion-tags">
+                                    <span class="opinion-tag">
+                                        <i class="fas fa-lock me-1"></i>Trwała
+                                    </span>
+                                    {% set daysDiff = date().diff(opinia.dataUtworzenia).days %}
+                                    {% if daysDiff < 7 %}
+                                        <span class="opinion-tag" style="background: rgba(34, 197, 94, 0.1); color: #16a34a;">
+                                            <i class="fas fa-sparkles me-1"></i>Nowa
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <small class="text-muted">
+                                    Dodano {{ daysDiff }} {% if daysDiff == 1 %}dzień{% elseif daysDiff < 5 %}dni{% else %}dni{% endif %} temu
+                                </small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <!-- Enhanced Empty State -->
+                <div class="empty-state slide-up">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-comment-slash"></i>
+                    </div>
+                    <h5>Brak opinii o tym członku</h5>
+                    <p>Ten członek nie ma jeszcze żadnych opinii od osób funkcyjnych.<br>
+                    Opinie pomagają w ocenie zaangażowania i kompetencji członków organizacji.</p>
+                    {% if app.user.id != czlonek.id %}
+                        <a href="{{ path('opinia_czlonka_new', {'id': czlonek.id}) }}" class="btn btn-primary btn-enhanced">
+                            <i class="fas fa-plus"></i>
+                            <span>Dodaj pierwszą opinię</span>
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="action-buttons slide-up">
+                <a href="{{ path('czlonek_show', {'id': czlonek.id}) }}" class="btn btn-secondary btn-enhanced">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Powrót do profilu członka</span>
+                </a>
+                
+                {% if app.user.id != czlonek.id %}
+                    <a href="{{ path('opinia_czlonka_new', {'id': czlonek.id}) }}" class="btn btn-primary btn-enhanced">
+                        <i class="fas fa-plus"></i>
+                        <span>Dodaj {% if opinie|length > 0 %}kolejną {% endif %}opinię</span>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Add Button (Mobile) -->
+    {% if app.user.id != czlonek.id %}
+        <button class="floating-add-btn d-lg-none" 
+                onclick="window.location.href='{{ path('opinia_czlonka_new', {'id': czlonek.id}) }}'" 
+                title="Dodaj opinię">
+            <i class="fas fa-plus"></i>
+        </button>
+    {% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeViewSwitching();
+            initializeAnimations();
+        });
+        
+        function initializeViewSwitching() {
+            // Restore saved view preference
+            const savedView = localStorage.getItem('opinions_view') || 'timeline';
+            switchView(savedView, false);
+        }
+        
+        function switchView(view, savePreference = true) {
+            // Update buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-view="${view}"]`).classList.add('active');
+            
+            // Show/hide views
+            const timelineView = document.getElementById('timelineView');
+            const cardView = document.getElementById('cardView');
+            
+            if (view === 'timeline') {
+                timelineView.style.display = 'block';
+                cardView.style.display = 'none';
+                timelineView.classList.add('fade-in');
+            } else {
+                timelineView.style.display = 'none';
+                cardView.style.display = 'block';
+                cardView.classList.add('fade-in');
+            }
+            
+            // Save preference
+            if (savePreference) {
+                localStorage.setItem('opinions_view', view);
+            }
+        }
+        
+        function filterOpinions() {
+            const authorFilter = document.getElementById('authorFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+            const opinionItems = document.querySelectorAll('.opinion-item');
+            
+            let visibleCount = 0;
+            
+            opinionItems.forEach(item => {
+                let showItem = true;
+                
+                // Author filter
+                if (authorFilter && item.dataset.authorId !== authorFilter) {
+                    showItem = false;
+                }
+                
+                // Date filter
+                if (dateFilter) {
+                    const itemDate = new Date(item.dataset.date);
+                    const filterDate = new Date();
+                    filterDate.setDate(filterDate.getDate() - parseInt(dateFilter));
+                    
+                    if (itemDate < filterDate) {
+                        showItem = false;
+                    }
+                }
+                
+                if (showItem) {
+                    item.style.display = 'block';
+                    item.classList.add('fade-in');
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                    item.classList.remove('fade-in');
+                }
+            });
+            
+            // Show/hide empty state for filters
+            updateFilteredState(visibleCount);
+        }
+        
+        function updateFilteredState(visibleCount) {
+            let emptyState = document.querySelector('.filter-empty-state');
+            
+            if (visibleCount === 0) {
+                if (!emptyState) {
+                    emptyState = document.createElement('div');
+                    emptyState.className = 'empty-state filter-empty-state slide-up';
+                    emptyState.innerHTML = `
+                        <div class="empty-state-icon">
+                            <i class="fas fa-filter"></i>
+                        </div>
+                        <h5>Brak opinii spełniających kryteria</h5>
+                        <p>Spróbuj zmienić filtry, aby zobaczyć więcej opinii.</p>
+                        <button onclick="clearFilters()" class="btn btn-secondary btn-enhanced">
+                            <i class="fas fa-times"></i>
+                            <span>Wyczyść filtry</span>
+                        </button>
+                    `;
+                    
+                    const container = document.querySelector('.timeline-container') || document.querySelector('.opinions-grid');
+                    container.parentNode.insertBefore(emptyState, container.nextSibling);
+                }
+                emptyState.style.display = 'block';
+            } else if (emptyState) {
+                emptyState.style.display = 'none';
+            }
+        }
+        
+        function clearFilters() {
+            document.getElementById('authorFilter').value = '';
+            document.getElementById('dateFilter').value = '';
+            filterOpinions();
+        }
+        
+        function initializeAnimations() {
+            // Stagger animation for timeline items
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            timelineItems.forEach((item, index) => {
+                item.style.animationDelay = `${index * 0.1}s`;
+            });
+            
+            // Intersection Observer for scroll animations
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('slide-up');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            document.querySelectorAll('.timeline-item, .opinion-card').forEach(item => {
+                observer.observe(item);
+            });
+        }
+        
+        // Toast notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} position-fixed fade-in`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);';
+            toast.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close ms-auto" onclick="this.closest('.alert').remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.opacity = '0';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 5000);
+        }
+    </script>
+{% endblock %}

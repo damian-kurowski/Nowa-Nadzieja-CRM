@@ -1,0 +1,822 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ user.fullName }} - Młodzi dla Wolności - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Profil członka "Młodzi dla Wolności"{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, #0dcaf0 0%, #6f42c1 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            object-fit: cover;
+            background: white;
+        }
+        
+        .info-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+        
+        .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px var(--shadow-medium);
+        }
+        
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .info-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .info-card-icon.primary { background: linear-gradient(135deg, #0dcaf0 0%, #6f42c1 100%); color: white; }
+        .info-card-icon.success { background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white; }
+        .info-card-icon.info { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; }
+        .info-card-icon.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+        .info-card-icon.danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .info-item {
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+        
+        .info-item:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .info-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-value {
+            color: var(--text-primary);
+            font-size: 1rem;
+            word-break: break-word;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            gap: 0.5rem;
+        }
+        
+        .status-badge.active {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+        
+        .status-badge.inactive {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+        
+        .status-badge.suspended {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+        
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            gap: 0.5rem;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--btn-hover-shadow);
+        }
+        
+        .tab-navigation {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border-color);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+        
+        .tab-btn.active {
+            color: #0dcaf0;
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #0dcaf0 0%, #6f42c1 100%);
+            border-radius: 3px 3px 0 0;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            gap: 0.5rem;
+        }
+        
+        .social-link:hover {
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+        }
+        
+        .editable-field {
+            position: relative;
+            padding-right: 2rem;
+        }
+        
+        .edit-btn {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .editable-field:hover .edit-btn {
+            opacity: 1;
+        }
+        
+        .edit-btn:hover {
+            color: #0dcaf0;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .profile-header {
+                padding: 1.5rem;
+            }
+            
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .tab-navigation {
+                flex-wrap: nowrap;
+                overflow-x: scroll;
+            }
+        }
+        
+        /* Youth Theme Adjustments */
+        [data-theme="dark"] .info-card {
+            background: var(--bg-secondary);
+            border-color: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .social-link {
+            background: var(--bg-tertiary);
+        }
+        
+        [data-theme="dark"] .social-link:hover {
+            background: #3a3a3a;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                {% if user.zdjecie %}
+                    <img src="{{ asset('uploads/photos/' ~ user.zdjecie) }}" class="profile-avatar" alt="Zdjęcie">
+                {% else %}
+                    <div class="profile-avatar d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.2);">
+                        <i class="fas fa-user fa-3x text-white"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col">
+                <h2 class="mb-1">{{ user.fullName }}</h2>
+                {% if user.drugieImie %}
+                    <p class="mb-2 opacity-75">Drugie imię: {{ user.drugieImie }}</p>
+                {% endif %}
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    {% set statusClass = user.status == 'aktywny' ? 'active' : (user.status == 'nieaktywny' ? 'inactive' : 'suspended') %}
+                    <span class="status-badge {{ statusClass }}">
+                        <i class="fas fa-circle"></i>
+                        {{ user.status|title }}
+                    </span>
+                    <span class="status-badge" style="background: linear-gradient(135deg, #0dcaf0 0%, #6f42c1 100%);">
+                        <i class="fas fa-users"></i>
+                        Młodzi dla Wolności
+                    </span>
+                    {% if user.numerWPartii %}
+                        <span class="status-badge" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+                            <i class="fas fa-hashtag"></i>
+                            {{ user.numerWPartii }}
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="action-buttons">
+                    <a href="{{ path('mlodziezowka_edit', {id: user.id}) }}" class="action-btn btn btn-light">
+                        <i class="fas fa-edit"></i>
+                        Edytuj
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+        <button class="tab-btn active" onclick="switchTab('podstawowe')">
+            <i class="fas fa-user me-2"></i>Podstawowe
+        </button>
+        <button class="tab-btn" onclick="switchTab('kontakt')">
+            <i class="fas fa-address-book me-2"></i>Kontakt
+        </button>
+        <button class="tab-btn" onclick="switchTab('organizacja')">
+            <i class="fas fa-sitemap me-2"></i>Organizacja
+        </button>
+        <button class="tab-btn" onclick="switchTab('czlonkostwo')">
+            <i class="fas fa-id-card me-2"></i>Członkostwo
+        </button>
+        <button class="tab-btn" onclick="switchTab('zatrudnienie')">
+            <i class="fas fa-building me-2"></i>Zatrudnienie
+        </button>
+        {% if is_granted('ROLE_FUNKCYJNY') %}
+            <button class="tab-btn" onclick="switchTab('wewnetrzne')">
+                <i class="fas fa-lock me-2"></i>Wewnętrzne
+            </button>
+        {% endif %}
+    </div>
+    
+    <!-- Tab Contents -->
+    <div id="podstawowe" class="tab-content active">
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-card-icon primary">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h5 class="mb-0">Dane osobowe</h5>
+            </div>
+            <div class="info-grid">
+                <div class="info-item editable-field">
+                    <div class="info-label">Imię i nazwisko</div>
+                    <div class="info-value">{{ user.imie }} {{ user.nazwisko }}</div>
+                    <button class="edit-btn" onclick="editField('name')"><i class="fas fa-pen"></i></button>
+                </div>
+                {% if user.drugieImie %}
+                    <div class="info-item editable-field">
+                        <div class="info-label">Drugie imię</div>
+                        <div class="info-value">{{ user.drugieImie }}</div>
+                        <button class="edit-btn" onclick="editField('secondName')"><i class="fas fa-pen"></i></button>
+                    </div>
+                {% endif %}
+                <div class="info-item editable-field">
+                    <div class="info-label">PESEL</div>
+                    <div class="info-value">{{ user.pesel ?? 'Nie podano' }}</div>
+                    <button class="edit-btn" onclick="editField('pesel')"><i class="fas fa-pen"></i></button>
+                </div>
+                <div class="info-item editable-field">
+                    <div class="info-label">Data urodzenia</div>
+                    <div class="info-value">
+                        {{ user.dataUrodzenia ? user.dataUrodzenia|date('d.m.Y') : 'Nie podano' }}
+                        {% if user.dataUrodzenia %}
+                            <small class="text-muted">({{ user.wiek ?? (user.dataUrodzenia|date('now')|date('Y') - user.dataUrodzenia|date('Y')) }} lat)</small>
+                        {% endif %}
+                    </div>
+                    <button class="edit-btn" onclick="editField('birthDate')"><i class="fas fa-pen"></i></button>
+                </div>
+                <div class="info-item editable-field">
+                    <div class="info-label">Płeć</div>
+                    <div class="info-value">{{ user.plec ? user.plec|title : 'Nie podano' }}</div>
+                    <button class="edit-btn" onclick="editField('gender')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        {% if user.informacjeOmnie %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h5 class="mb-0">O mnie</h5>
+                </div>
+                <div class="editable-field">
+                    <p>{{ user.informacjeOmnie|nl2br }}</p>
+                    <button class="edit-btn" onclick="editField('about')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div id="kontakt" class="tab-content">
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-card-icon success">
+                    <i class="fas fa-phone"></i>
+                </div>
+                <h5 class="mb-0">Dane kontaktowe</h5>
+            </div>
+            <div class="info-grid">
+                <div class="info-item editable-field">
+                    <div class="info-label">Email</div>
+                    <div class="info-value">
+                        <a href="mailto:{{ user.email }}">{{ user.email }}</a>
+                    </div>
+                    <button class="edit-btn" onclick="editField('email')"><i class="fas fa-pen"></i></button>
+                </div>
+                <div class="info-item editable-field">
+                    <div class="info-label">Telefon</div>
+                    <div class="info-value">
+                        {% if user.telefon %}
+                            <a href="tel:{{ user.telefon }}">{{ user.telefon }}</a>
+                        {% else %}
+                            Nie podano
+                        {% endif %}
+                    </div>
+                    <button class="edit-btn" onclick="editField('phone')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        </div>
+        
+        {% if user.adresZamieszkania %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon warning">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h5 class="mb-0">Adres zamieszkania</h5>
+                </div>
+                <div class="editable-field">
+                    <p>{{ user.adresZamieszkania|nl2br }}</p>
+                    <button class="edit-btn" onclick="editField('address')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if user.socialMedia %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                    <h5 class="mb-0">Media społecznościowe</h5>
+                </div>
+                <div class="editable-field">
+                    <p>{{ user.socialMedia }}</p>
+                    <button class="edit-btn" onclick="editField('social')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <div id="organizacja" class="tab-content">
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-card-icon primary">
+                    <i class="fas fa-sitemap"></i>
+                </div>
+                <h5 class="mb-0">Struktura organizacyjna</h5>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Okręg</div>
+                    <div class="info-value">
+                        {% if user.okreg %}
+                            <span class="badge bg-primary">{{ user.okreg.nazwa }}</span>
+                        {% else %}
+                            <span class="text-muted">Brak przypisania</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Oddział</div>
+                    <div class="info-value">
+                        {% if user.oddzial %}
+                            <span class="badge bg-info">{{ user.oddzial.nazwa }}</span>
+                        {% else %}
+                            <span class="text-muted">Brak przypisania</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="czlonkostwo" class="tab-content">
+        <div class="info-card">
+            <div class="info-card-header">
+                <div class="info-card-icon success">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <h5 class="mb-0">Informacje członkowskie</h5>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Data rejestracji</div>
+                    <div class="info-value">{{ user.dataRejestracji|date('d.m.Y H:i') }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Data przyjęcia do organizacji</div>
+                    <div class="info-value">{{ user.dataPrzyjeciaDoPartii ? user.dataPrzyjeciaDoPartii|date('d.m.Y') : 'Nie podano' }}</div>
+                </div>
+                {% if user.numerWPartii %}
+                    <div class="info-item">
+                        <div class="info-label">Numer w organizacji</div>
+                        <div class="info-value">{{ user.numerWPartii }}</div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="alert alert-info mt-3">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Informacja:</strong> Młodzi dla Wolności nie płacą składek członkowskich.
+            </div>
+        </div>
+    </div>
+    
+    <div id="zatrudnienie" class="tab-content">
+        {% if user.zatrudnienieSpolkiMiejskie or user.zatrudnienieSpolkiSkarbuPanstwa or user.zatrudnienieSpolkiKomunalne %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon primary">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h5 class="mb-0">Zatrudnienie w spółkach</h5>
+                </div>
+                {% if user.zatrudnienieSpolkiMiejskie %}
+                    <div class="mb-3 editable-field">
+                        <h6><i class="fas fa-city me-2"></i>Spółki miejskie</h6>
+                        <p class="ps-3">{{ user.zatrudnienieSpolkiMiejskie|nl2br }}</p>
+                        <button class="edit-btn" onclick="editField('employmentMiejskie')"><i class="fas fa-pen"></i></button>
+                    </div>
+                {% endif %}
+                {% if user.zatrudnienieSpolkiSkarbuPanstwa %}
+                    <div class="mb-3 editable-field">
+                        <h6><i class="fas fa-landmark me-2"></i>Spółki Skarbu Państwa</h6>
+                        <p class="ps-3">{{ user.zatrudnienieSpolkiSkarbuPanstwa|nl2br }}</p>
+                        <button class="edit-btn" onclick="editField('employmentSkarbu')"><i class="fas fa-pen"></i></button>
+                    </div>
+                {% endif %}
+                {% if user.zatrudnienieSpolkiKomunalne %}
+                    <div class="mb-3 editable-field">
+                        <h6><i class="fas fa-home me-2"></i>Spółki komunalne</h6>
+                        <p class="ps-3">{{ user.zatrudnienieSpolkiKomunalne|nl2br }}</p>
+                        <button class="edit-btn" onclick="editField('employmentKomunalne')"><i class="fas fa-pen"></i></button>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        {% if user.historiaWyborow %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon success">
+                        <i class="fas fa-vote-yea"></i>
+                    </div>
+                    <h5 class="mb-0">Historia startów w wyborach</h5>
+                </div>
+                <p>{{ user.historiaWyborow|nl2br }}</p>
+            </div>
+        {% endif %}
+        
+        {% if user.zatrudnienieSpolki %}
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h5 class="mb-0">Inne zatrudnienie</h5>
+                </div>
+                <div class="editable-field">
+                    <p>{{ user.zatrudnienieSpolki|nl2br }}</p>
+                    <button class="edit-btn" onclick="editField('employment')"><i class="fas fa-pen"></i></button>
+                </div>
+            </div>
+        {% endif %}
+        
+        {% if not user.zatrudnienieSpolkiMiejskie and not user.zatrudnienieSpolkiSkarbuPanstwa and not user.zatrudnienieSpolkiKomunalne and not user.historiaWyborow and not user.zatrudnienieSpolki %}
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-briefcase fa-3x mb-3"></i>
+                <h5>Brak informacji zawodowych</h5>
+                <p>Ten członek nie podał jeszcze informacji zawodowych.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    {% if is_granted('ROLE_FUNKCYJNY') %}
+        <div id="wewnetrzne" class="tab-content">
+            {% if user.notatkaWewnetrzna %}
+                <div class="info-card border-warning">
+                    <div class="info-card-header">
+                        <div class="info-card-icon warning">
+                            <i class="fas fa-sticky-note"></i>
+                        </div>
+                        <h5 class="mb-0">Notatka wewnętrzna</h5>
+                        <small class="text-muted ms-auto">Widoczna tylko dla osób funkcyjnych</small>
+                    </div>
+                    <div class="editable-field">
+                        <p>{{ user.notatkaWewnetrzna|nl2br }}</p>
+                        <button class="edit-btn" onclick="editField('internalNote')"><i class="fas fa-pen"></i></button>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <div class="info-card">
+                <div class="info-card-header">
+                    <div class="info-card-icon info">
+                        <i class="fas fa-comment-alt"></i>
+                    </div>
+                    <h5 class="mb-0">
+                        Opinie o członku
+                        <span class="badge bg-info ms-2">{{ opinie|length }}</span>
+                    </h5>
+                    {% if app.user.id != user.id %}
+                        <a href="{{ path('opinia_czlonka_new', {'id': user.id}) }}" class="btn btn-sm btn-primary ms-auto">
+                            <i class="fas fa-plus me-1"></i>Dodaj opinię
+                        </a>
+                    {% endif %}
+                </div>
+                {% if opinie|length > 0 %}
+                    {% for opinia in opinie|slice(0, 3) %}
+                        <div class="border-start border-primary border-3 ps-3 mb-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <strong>{{ opinia.autor.fullName }}</strong>
+                                    <span class="badge bg-primary ms-2">{{ opinia.funkcjaAutora }}</span>
+                                </div>
+                                <small class="text-muted">{{ opinia.dataUtworzenia|date('d.m.Y') }}</small>
+                            </div>
+                            <p class="mb-0">{{ opinia.opinia|length > 200 ? opinia.opinia|slice(0, 200) ~ '...' : opinia.opinia }}</p>
+                        </div>
+                    {% endfor %}
+                    {% if opinie|length > 3 %}
+                        <div class="text-center">
+                            <a href="{{ path('opinia_czlonka_list', {'id': user.id}) }}" class="btn btn-outline-primary btn-sm">
+                                Zobacz wszystkie ({{ opinie|length }})
+                            </a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                        <p>Brak opinii o tym członku</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+    
+    
+    <!-- Back Button -->
+    <div class="mt-4">
+        <a href="{{ path('mlodziezowka_index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Powrót do listy
+        </a>
+    </div>
+    
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edytuj pole</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <div class="mb-3">
+                            <label class="form-label" id="editLabel">Wartość</label>
+                            <input type="text" class="form-control" id="editInput">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-primary" onclick="saveField()">Zapisz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Mark button as active
+            event.target.closest('.tab-btn').classList.add('active');
+        }
+        
+        let currentField = null;
+        
+        function editField(field) {
+            currentField = field;
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            
+            // Set appropriate label and current value
+            const labels = {
+                'name': 'Imię i nazwisko',
+                'secondName': 'Drugie imię',
+                'pesel': 'PESEL',
+                'birthDate': 'Data urodzenia',
+                'gender': 'Płeć',
+                'email': 'Email',
+                'phone': 'Telefon',
+                'address': 'Adres',
+                'about': 'O mnie',
+                'social': 'Media społecznościowe',
+                'employment': 'Inne zatrudnienie',
+                'employmentMiejskie': 'Spółki miejskie',
+                'employmentSkarbu': 'Spółki Skarbu Państwa',
+                'employmentKomunalne': 'Spółki komunalne',
+                'internalNote': 'Notatka wewnętrzna',
+                'additionalInfo': 'Dodatkowe informacje'
+            };
+            
+            document.getElementById('editLabel').textContent = labels[field] || 'Wartość';
+            
+            // Here you would load the current value from the database
+            // This is just a placeholder
+            document.getElementById('editInput').value = '';
+            
+            modal.show();
+        }
+        
+        function saveField() {
+            const value = document.getElementById('editInput').value;
+            
+            // Here you would send the update to the server
+            fetch(`/mlodziezowka/{{ user.id }}/edit-field`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    field: currentField,
+                    value: value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page or update the field dynamically
+                    location.reload();
+                } else {
+                    alert('Błąd podczas zapisywania');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Wystąpił błąd');
+            });
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+        }
+    </script>
+{% endblock %}

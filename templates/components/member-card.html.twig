@@ -1,0 +1,124 @@
+{# Unified Member Card Component - paymentStatus parameter expected #}
+<div class="unified-card animate-in" data-member-id="{{ member.id }}">
+    {# Status Badge #}
+    <div class="unified-card-status">
+        {% set statusType = member.status == 'aktywny' ? 'aktywny' : 'nieaktywny' %}
+        <span class="unified-status-badge {{ statusType }}">{{ member.status|title }}</span>
+    </div>
+
+    {# Card Header #}
+    <div class="unified-card-header">
+        <div class="unified-card-avatar">
+            {% if member.zdjecie %}
+                <img src="{{ asset('uploads/photos/' ~ member.zdjecie) }}" alt="{{ member.fullName }}">
+            {% else %}
+                <span class="unified-card-avatar-initials">
+                    {{ member.imie|first|upper }}{{ member.nazwisko|first|upper }}
+                </span>
+            {% endif %}
+        </div>
+        <div class="unified-card-info">
+            <h6 class="unified-card-name">{{ member.fullName }}</h6>
+            <div class="unified-card-meta">
+                {% if member.email %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ member.email }}</span>
+                    </div>
+                {% endif %}
+                {% if member.telefon %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ member.telefon }}</span>
+                    </div>
+                {% endif %}
+                {% if member.pesel %}
+                    <div class="unified-card-meta-item">
+                        <i class="fas fa-id-card"></i>
+                        <span>{{ member.pesel }}</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {# Card Body #}
+    <div class="unified-card-body">
+        <div class="unified-card-details">
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Okręg</span>
+                <span class="unified-detail-value">
+                    {% if member.okreg %}
+                        {{ member.okreg.nazwa }}
+                    {% else %}
+                        <em>Brak przypisania</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Oddział</span>
+                <span class="unified-detail-value">
+                    {% if member.oddzial %}
+                        {{ member.oddzial.nazwa }}
+                    {% else %}
+                        <em>Brak przypisania</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Członek od</span>
+                <span class="unified-detail-value">
+                    {% if member.dataPrzyjeciaDoPartii %}
+                        {{ member.dataPrzyjeciaDoPartii|date('d.m.Y') }}
+                    {% else %}
+                        <em>Brak daty</em>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="unified-card-detail">
+                <span class="unified-detail-label">Składka</span>
+                <span class="unified-detail-value">
+                    {% if paymentStatus is defined and paymentStatus %}
+                        {% if paymentStatus.status in ['paid', 'current', 'candidate_ready', 'future_member_prepaid'] %}
+                            <div class="unified-detail-payment">
+                                <span class="unified-payment-status paid">Opłacona</span>
+                                {% if paymentStatus.paidUntil %}
+                                    <small>do {{ paymentStatus.paidUntil|date('d.m.Y') }}</small>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <span class="unified-payment-status unpaid">Nieopłacona</span>
+                        {% endif %}
+                    {% elseif member.skladkaOplacona %}
+                        <div class="unified-detail-payment">
+                            <span class="unified-payment-status paid">Opłacona</span>
+                            {% if member.dataWaznosciSkladki %}
+                                <small>do {{ member.dataWaznosciSkladki|date('d.m.Y') }}</small>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <span class="unified-payment-status unpaid">Nieopłacona</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {# Card Footer #}
+    <div class="unified-card-footer">
+        <a href="{{ path('czlonek_show', {id: member.id}) }}" class="unified-action-btn primary">
+            <i class="fas fa-eye"></i>
+            <span>Zobacz</span>
+        </a>
+        <a href="{{ path('czlonek_edit', {id: member.id}) }}" class="unified-action-btn secondary">
+            <i class="fas fa-edit"></i>
+            <span>Edytuj</span>
+        </a>
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('opinia_czlonka_list', {id: member.id}) }}" class="unified-action-btn secondary">
+                <i class="fas fa-comment-alt"></i>
+                <span>Opinie</span>
+            </a>
+        {% endif %}
+    </div>
+</div>

@@ -1,0 +1,594 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mój profil - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Mój profil{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .profile-avatar-large {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255,255,255,0.3);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        
+        .profile-info-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 16px var(--shadow-light);
+            transition: all 0.3s ease;
+        }
+        
+        .profile-info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow-medium);
+        }
+        
+        .info-section {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .info-section:hover {
+            border-color: #6f42c1;
+            box-shadow: 0 4px 16px rgba(111, 66, 193, 0.1);
+        }
+        
+        .info-section h6 {
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 3px solid;
+            border-image: linear-gradient(135deg, #6f42c1, #5a32a3) 1;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-section h6 i {
+            background: linear-gradient(135deg, #6f42c1, #5a32a3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-right: 0.75rem;
+            font-size: 1.2rem;
+        }
+        
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .data-row:last-child {
+            border-bottom: none;
+        }
+        
+        .data-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            min-width: 120px;
+        }
+        
+        .data-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .function-badge {
+            background: linear-gradient(135deg, #6f42c1, #5a32a3);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin: 0.2rem;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(111, 66, 193, 0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .function-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
+        }
+        
+        .social-media-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .social-link {
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .social-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .activity-card {
+            background: linear-gradient(135deg, rgba(111, 66, 193, 0.1), rgba(90, 50, 163, 0.05));
+            border: 1px solid rgba(111, 66, 193, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            height: 100%;
+            box-shadow: 0 4px 16px var(--shadow-light);
+        }
+        
+        .activity-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #6f42c1;
+            box-shadow: 0 4px 16px rgba(111, 66, 193, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .activity-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(111, 66, 193, 0.4);
+        }
+        
+        .action-buttons {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+        }
+        
+        .btn-enhanced {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+        
+        .btn-primary-enhanced {
+            background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+            border-color: #6f42c1;
+            color: white;
+        }
+        
+        .btn-primary-enhanced:hover {
+            border-color: #5a32a3;
+            box-shadow: 0 4px 16px rgba(111, 66, 193, 0.3);
+        }
+        
+        .btn-info-enhanced {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            border-color: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info-enhanced:hover {
+            border-color: #138496;
+            box-shadow: 0 4px 16px rgba(23, 162, 184, 0.3);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Enhanced Profile Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+                {% if user.zdjecie %}
+                    <img src="{{ asset('uploads/photos/' ~ user.zdjecie) }}" 
+                         class="profile-avatar-large" alt="Zdjęcie {{ user.fullName }}">
+                {% else %}
+                    <div class="profile-avatar-large bg-white bg-opacity-25 d-flex align-items-center justify-content-center mx-auto">
+                        <i class="fas fa-user-circle fa-4x text-white"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <h1 class="mb-2">{{ user.fullName }}</h1>
+                <p class="mb-2 opacity-90 fs-5">{{ user.email }}</p>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-light text-dark px-3 py-2">{{ user.typUzytkownika|title }}</span>
+                    <span class="badge bg-{{ user.status == 'aktywny' ? 'success' : 'secondary' }} px-3 py-2">
+                        {{ user.status|title }}
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-3 text-center text-md-end">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('profil_edit') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-edit me-2"></i>Edytuj profil
+                    </a>
+                    <a href="{{ path('profil_photo') }}" class="btn btn-outline-light">
+                        <i class="fas fa-camera me-2"></i>Zarządzaj zdjęciem
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-8">
+            <!-- Enhanced Profile Information Card -->
+            <div class="profile-info-card">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <!-- Personal Information Section -->
+                        <div class="info-section">
+                            <h6>
+                                <i class="fas fa-user"></i>Dane osobowe
+                            </h6>
+                            
+                            <div class="data-row">
+                                <span class="data-label">Imię i nazwisko:</span>
+                                <span class="data-value">{{ user.fullName }}</span>
+                            </div>
+
+                            {% if user.drugieImie %}
+                            <div class="data-row">
+                                <span class="data-label">Drugie imię:</span>
+                                <span class="data-value">{{ user.drugieImie }}</span>
+                            </div>
+                            {% endif %}
+
+                            <div class="data-row">
+                                <span class="data-label">Email:</span>
+                                <span class="data-value">{{ user.email }}</span>
+                            </div>
+
+                            {% if user.telefon %}
+                            <div class="data-row">
+                                <span class="data-label">Telefon:</span>
+                                <span class="data-value">{{ user.telefon }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.pesel %}
+                            <div class="data-row">
+                                <span class="data-label">PESEL:</span>
+                                <span class="data-value">{{ user.pesel }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.dataUrodzenia %}
+                            <div class="data-row">
+                                <span class="data-label">Data urodzenia:</span>
+                                <span class="data-value">{{ user.dataUrodzenia|date('d.m.Y') }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <!-- Organization Information Section -->
+                        <div class="info-section">
+                            <h6>
+                                <i class="fas fa-info-circle"></i>Informacje organizacyjne
+                            </h6>
+
+                            <div class="data-row">
+                                <span class="data-label">Typ użytkownika:</span>
+                                <span class="data-value">
+                                    <span class="badge bg-primary">{{ user.typUzytkownika|title }}</span>
+                                </span>
+                            </div>
+
+                            <div class="data-row">
+                                <span class="data-label">Status:</span>
+                                <span class="data-value">
+                                    <span class="badge bg-{{ user.status == 'aktywny' ? 'success' : 'secondary' }}">
+                                        {{ user.status|title }}
+                                    </span>
+                                </span>
+                            </div>
+
+                            {% if user.okreg %}
+                            <div class="data-row">
+                                <span class="data-label">Okręg:</span>
+                                <span class="data-value">{{ user.okreg.nazwa }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.oddzial %}
+                            <div class="data-row">
+                                <span class="data-label">Oddział:</span>
+                                <span class="data-value">{{ user.oddzial.nazwa }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.dataRejestracji %}
+                            <div class="data-row">
+                                <span class="data-label">Data rejestracji:</span>
+                                <span class="data-value">{{ user.dataRejestracji|date('d.m.Y H:i') }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.numerWpartii %}
+                            <div class="data-row">
+                                <span class="data-label">Numer w partii:</span>
+                                <span class="data-value">{{ user.numerWpartii }}</span>
+                            </div>
+                            {% endif %}
+
+                            {% if user.numerKontaBankowego %}
+                            <div class="data-row">
+                                <span class="data-label">Numer konta:</span>
+                                <span class="data-value">
+                                    <code class="text-primary">{{ user.numerKontaBankowego }}</code>
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Functions Section -->
+                        <div class="info-section">
+                            <h6>
+                                <i class="fas fa-user-tie"></i>Pełnione funkcje
+                            </h6>
+                            
+                            {% set funkcjeFromRoles = user.funkcjeFromRoles %}
+
+                            <div class="mt-2">
+                                {% if funkcjeFromRoles is not empty %}
+                                    {% for funkcja in funkcjeFromRoles %}
+                                        <span class="function-badge">
+                                            <i class="fas fa-user-tie me-1"></i>
+                                            {{ funkcja }}
+                                        </span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">Brak pełnionych funkcji</span>
+                                {% endif %}
+                            </div>
+                            
+                            {# Dodatkowe funkcje z tabeli funkcje (jeśli istnieją) #}
+                            {% set activeFunctions = [] %}
+                            {% for funkcja in user.funkcje %}
+                                {% if funkcja.aktywna %}
+                                    {% set activeFunctions = activeFunctions|merge([funkcja]) %}
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if activeFunctions is not empty %}
+                                <div class="mt-3">
+                                    <small class="text-muted d-block mb-2">Dodatkowe funkcje:</small>
+                                    {% for funkcja in activeFunctions %}
+                                        <span class="badge bg-info text-dark me-1 mb-1">
+                                            <i class="fas fa-star me-1"></i>
+                                            {{ funkcja.displayName }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if user.adresZamieszkania %}
+                <!-- Address Section -->
+                <div class="info-section">
+                    <h6>
+                        <i class="fas fa-home"></i>Adres zamieszkania
+                    </h6>
+                    <div class="data-value">{{ user.adresZamieszkania|nl2br }}</div>
+                </div>
+                {% endif %}
+
+                {% if user.informacjeOmnie %}
+                <!-- About Me Section -->
+                <div class="info-section">
+                    <h6>
+                        <i class="fas fa-user-edit"></i>O mnie
+                    </h6>
+                    <div class="data-value">{{ user.informacjeOmnie|nl2br }}</div>
+                </div>
+                {% endif %}
+
+                {% if user.socialMedia %}
+                <!-- Social Media Section -->
+                <div class="info-section">
+                    <h6>
+                        <i class="fas fa-share-alt"></i>Social Media
+                    </h6>
+                    
+                    {% set socialLinks = user.socialMedia|split('\n') %}
+                    {% set foundSocials = [] %}
+                    
+                    <div class="social-media-links">
+                        {% for link in socialLinks %}
+                            {% set trimmedLink = link|trim %}
+                            {% if trimmedLink %}
+                                {% set socialIcon = '' %}
+                                {% set socialName = '' %}
+                                {% set socialColor = 'primary' %}
+                                
+                                {% if 'facebook.com' in trimmedLink|lower or 'fb.com' in trimmedLink|lower %}
+                                    {% set socialIcon = 'fab fa-facebook' %}
+                                    {% set socialName = 'Facebook' %}
+                                    {% set socialColor = '1877f2' %}
+                                    {% set foundSocials = foundSocials|merge(['facebook']) %}
+                                {% elseif 'instagram.com' in trimmedLink|lower or 'instagr.am' in trimmedLink|lower %}
+                                    {% set socialIcon = 'fab fa-instagram' %}
+                                    {% set socialName = 'Instagram' %}
+                                    {% set socialColor = 'E4405F' %}
+                                    {% set foundSocials = foundSocials|merge(['instagram']) %}
+                                {% elseif 'twitter.com' in trimmedLink|lower or 'x.com' in trimmedLink|lower %}
+                                    {% set socialIcon = 'fab fa-x-twitter' %}
+                                    {% set socialName = 'X (Twitter)' %}
+                                    {% set socialColor = '000000' %}
+                                    {% set foundSocials = foundSocials|merge(['twitter']) %}
+                                {% elseif 'tiktok.com' in trimmedLink|lower %}
+                                    {% set socialIcon = 'fab fa-tiktok' %}
+                                    {% set socialName = 'TikTok' %}
+                                    {% set socialColor = '000000' %}
+                                    {% set foundSocials = foundSocials|merge(['tiktok']) %}
+                                {% elseif 'linkedin.com' in trimmedLink|lower %}
+                                    {% set socialIcon = 'fab fa-linkedin' %}
+                                    {% set socialName = 'LinkedIn' %}
+                                    {% set socialColor = '0077b5' %}
+                                    {% set foundSocials = foundSocials|merge(['linkedin']) %}
+                                {% elseif 'youtube.com' in trimmedLink|lower or 'youtu.be' in trimmedLink|lower %}
+                                    {% set socialIcon = 'fab fa-youtube' %}
+                                    {% set socialName = 'YouTube' %}
+                                    {% set socialColor = 'FF0000' %}
+                                    {% set foundSocials = foundSocials|merge(['youtube']) %}
+                                {% elseif 'github.com' in trimmedLink|lower %}
+                                    {% set socialIcon = 'fab fa-github' %}
+                                    {% set socialName = 'GitHub' %}
+                                    {% set socialColor = '181717' %}
+                                    {% set foundSocials = foundSocials|merge(['github']) %}
+                                {% else %}
+                                    {% set socialIcon = 'fas fa-external-link-alt' %}
+                                    {% set socialName = 'Link zewnętrzny' %}
+                                    {% set socialColor = 'primary' %}
+                                {% endif %}
+                                
+                                {% if socialIcon %}
+                                    {% if 'http' not in trimmedLink|lower %}
+                                        {% set fullLink = 'https://' ~ trimmedLink %}
+                                    {% else %}
+                                        {% set fullLink = trimmedLink %}
+                                    {% endif %}
+                                    
+                                    <a href="{{ fullLink }}" target="_blank" rel="noopener noreferrer" 
+                                       class="social-link btn btn-outline-secondary btn-sm d-flex align-items-center"
+                                       style="border-color: #{{ socialColor }}; color: #{{ socialColor }};"
+                                       data-bs-toggle="tooltip" 
+                                       title="Odwiedź {{ socialName }}">
+                                        <i class="{{ socialIcon }} me-2"></i>
+                                        <span>{{ socialName }}</span>
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    
+                    {% if foundSocials is empty %}
+                        <div class="alert alert-info small mt-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Wskazówka:</strong> Aby automatycznie wyświetlały się ikony social media, 
+                            wpisz pełne adresy URL (np. https://facebook.com/twojprofil)
+                        </div>
+                        <div class="data-value mt-2">{{ user.socialMedia|nl2br }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Enhanced Activity Card -->
+            <div class="activity-card">
+                <div class="text-center mb-4">
+                    {% if user.zdjecie %}
+                        <img src="{{ asset('uploads/photos/' ~ user.zdjecie) }}" 
+                             class="activity-avatar" 
+                             alt="Zdjęcie {{ user.fullName }}">
+                    {% else %}
+                        <div class="activity-avatar bg-primary bg-opacity-75 d-flex align-items-center justify-content-center mx-auto">
+                            <i class="fas fa-user-circle fa-3x text-white"></i>
+                        </div>
+                    {% endif %}
+                    <h5 class="mt-3 mb-1">{{ user.fullName }}</h5>
+                    <small class="text-muted">{{ user.email }}</small>
+                </div>
+
+                <div class="activity-stats">
+                    <div class="data-row">
+                        <span class="data-label">Typ konta:</span>
+                        <span class="data-value fw-bold">{{ user.typUzytkownika|title }}</span>
+                    </div>
+
+                    <div class="data-row">
+                        <span class="data-label">Status:</span>
+                        <span class="data-value fw-bold">{{ user.status|title }}</span>
+                    </div>
+
+                    {% if user.okreg %}
+                    <div class="data-row">
+                        <span class="data-label">Okręg:</span>
+                        <span class="data-value fw-bold">{{ user.okreg.nazwa }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if user.oddzial %}
+                    <div class="data-row">
+                        <span class="data-label">Oddział:</span>
+                        <span class="data-value fw-bold">{{ user.oddzial.nazwa }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="action-buttons">
+                    <div class="d-grid gap-3">
+                        <a href="{{ path('profil_edit') }}" class="btn btn-enhanced btn-primary-enhanced">
+                            <i class="fas fa-edit me-2"></i>Edytuj dane
+                        </a>
+                        <a href="{{ path('profil_photo') }}" class="btn btn-enhanced btn-info-enhanced">
+                            <i class="fas fa-camera me-2"></i>Zarządzaj zdjęciem
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inicjalizacja tooltipów Bootstrap dla social media
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+{% endblock %}

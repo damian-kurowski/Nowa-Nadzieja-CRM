@@ -1,0 +1,41 @@
+<!-- Modal Wyznacz Protokolanta -->
+<div class="modal fade" id="wyznaczProtokolantaModal" tabindex="-1" aria-labelledby="wyznaczProtokolantaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="wyznaczProtokolantaModalLabel">
+                    <i class="fas fa-user-edit"></i> Wyznacz protokolanta
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    Protokolant będzie odpowiedzialny za dokumentowanie przebiegu zebrania i współudział w wyborze zarządu okręgu.
+                    <br><strong>Uwaga:</strong> Protokolant musi być członkiem okręgu {{ zebranie.okreg.nazwa }}.
+                </div>
+                
+                <div class="mb-3">
+                    <label for="protokolant_id" class="form-label">Wybierz protokolanta</label>
+                    <select id="protokolant_id" class="form-select">
+                        <option value="">-- Wybierz protokolanta --</option>
+                        {% for member in usersInOkreg %}
+                            <option value="{{ member.id }}">
+                                {{ member.imie }} {{ member.nazwisko }}
+                                ({{ member.najwyzszaFunkcja }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times"></i> Anuluj
+                </button>
+                <button type="button" class="btn btn-primary" onclick="wyznaczProtokolanta()">
+                    <i class="fas fa-check"></i> Wyznacz protokolanta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

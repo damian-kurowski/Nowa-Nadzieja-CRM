@@ -1,0 +1,785 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nowa faktura{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Enhanced Header for New Invoice -->
+            <div class="page-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="header-content">
+                            <div class="header-icon">
+                                <div class="icon-wrapper">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                            </div>
+                            <div class="header-text">
+                                <h1 class="page-title mb-1">Nowa Faktura</h1>
+                                <p class="page-subtitle mb-0">Utwórz wniosek o płatność do akceptacji</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="header-actions">
+                            <a href="{{ path('faktura_index') }}" class="btn btn-outline-light btn-lg header-btn me-2">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                <span>Anuluj</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Steps Indicator -->
+                <div class="quick-stats-bar mt-3">
+                    <div class="row">
+                        <div class="col">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="creation-progress">
+                                    <div class="progress-steps-horizontal">
+                                        <div class="step-h active">
+                                            <div class="step-h-number">1</div>
+                                            <div class="step-h-label">Wypełnij dane</div>
+                                        </div>
+                                        <div class="step-h-connector"></div>
+                                        <div class="step-h">
+                                            <div class="step-h-number">2</div>
+                                            <div class="step-h-label">Oczekiwanie</div>
+                                        </div>
+                                        <div class="step-h-connector"></div>
+                                        <div class="step-h">
+                                            <div class="step-h-number">3</div>
+                                            <div class="step-h-label">Akceptacja</div>
+                                        </div>
+                                        <div class="step-h-connector"></div>
+                                        <div class="step-h">
+                                            <div class="step-h-number">4</div>
+                                            <div class="step-h-label">Realizacja</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="header-breadcrumb">
+                                    <nav aria-label="breadcrumb">
+                                        <ol class="breadcrumb mb-0">
+                                            <li class="breadcrumb-item">
+                                                <a href="{{ path('dashboard') }}">
+                                                    <i class="fas fa-home me-1"></i>Dashboard
+                                                </a>
+                                            </li>
+                                            <li class="breadcrumb-item">
+                                                <a href="{{ path('faktura_index') }}">Faktury</a>
+                                            </li>
+                                            <li class="breadcrumb-item active">Nowa</li>
+                                        </ol>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Enhanced Form Card -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);">
+                            <div class="d-flex align-items-center">
+                                <div class="form-icon me-3">
+                                    <div class="mini-icon-wrapper">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h5 class="card-title mb-1">Szczegóły Faktury</h5>
+                                    <small class="text-white-50">Wypełnij wszystkie wymagane pola</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-4">
+                            {{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
+                            
+                            <!-- Podstawowe informacje -->
+                            <div class="form-section mb-4">
+                                <div class="section-header">
+                                    <div class="section-icon">
+                                        <i class="fas fa-info-circle"></i>
+                                    </div>
+                                    <h6 class="section-title">Podstawowe informacje</h6>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form_row(form.numerFaktury) }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form_row(form.kwota) }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form_row(form.numerKonta) }}
+                                </div>
+                            </div>
+
+                            <!-- Szczegóły płatności -->
+                            <div class="form-section mb-4">
+                                <div class="section-header">
+                                    <div class="section-icon">
+                                        <i class="fas fa-calendar-dollar"></i>
+                                    </div>
+                                    <h6 class="section-title">Szczegóły płatności</h6>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form_row(form.dataPlatnosci) }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form_row(form.pilnosc) }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form_row(form.kategoria) }}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form_row(form.celPlatnosci) }}
+                                </div>
+                            </div>
+
+                            <!-- Informacje o dostawcy -->
+                            <div class="form-section mb-4">
+                                <div class="section-header">
+                                    <div class="section-icon">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <h6 class="section-title">Informacje o dostawcy <span class="text-muted">(opcjonalnie)</span></h6>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form_row(form.nazwaDostaway) }}
+                                </div>
+
+                                <div class="mb-3">
+                                    {{ form_row(form.adresDostaway) }}
+                                </div>
+                            </div>
+
+                            <!-- Enhanced Action Buttons -->
+                            <div class="form-actions">
+                                <div class="action-buttons-wrapper">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="form-progress-info">
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Po zapisaniu faktura zostanie wysłana do akceptacji
+                                            </small>
+                                        </div>
+                                        <div class="action-buttons">
+                                            <a href="{{ path('faktura_index') }}" class="btn btn-outline-secondary btn-lg me-3">
+                                                <i class="fas fa-times me-2"></i>Anuluj
+                                            </a>
+                                            {{ form_widget(form.submit, {
+                                                'attr': {'class': 'btn btn-primary btn-lg submit-btn'},
+                                                'label': 'Utwórz Fakturę'
+                                            }) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <!-- Progress Steps -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-road me-2"></i>Proces faktury
+                            </h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="process-steps">
+                                <div class="step active">
+                                    <div class="step-icon">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                    <div class="step-content">
+                                        <h6>1. Tworzenie</h6>
+                                        <small class="text-muted">Wypełniasz formularz faktury</small>
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon">
+                                        <i class="fas fa-hourglass-half"></i>
+                                    </div>
+                                    <div class="step-content">
+                                        <h6>2. Oczekiwanie</h6>
+                                        <small class="text-muted">Skarbnik partii sprawdza fakturę</small>
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div class="step-content">
+                                        <h6>3. Akceptacja</h6>
+                                        <small class="text-muted">Faktura zostaje zaakceptowana</small>
+                                    </div>
+                                </div>
+                                <div class="step">
+                                    <div class="step-icon">
+                                        <i class="fas fa-money-check-alt"></i>
+                                    </div>
+                                    <div class="step-content">
+                                        <h6>4. Realizacja</h6>
+                                        <small class="text-muted">Płatność zostaje wykonana</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Tips -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-lightbulb me-2 text-warning"></i>Wskazówki
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="tip-item mb-3">
+                                <div class="d-flex">
+                                    <div class="tip-icon me-3">
+                                        <i class="fas fa-hashtag text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Numer faktury</h6>
+                                        <small class="text-muted">Użyj formatu: FA/2024/001</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tip-item mb-3">
+                                <div class="d-flex">
+                                    <div class="tip-icon me-3">
+                                        <i class="fas fa-university text-success"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Numer konta</h6>
+                                        <small class="text-muted">Sprawdź format IBAN (26-34 znaki)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tip-item mb-3">
+                                <div class="d-flex">
+                                    <div class="tip-icon me-3">
+                                        <i class="fas fa-fire text-danger"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Pilność</h6>
+                                        <small class="text-muted">Pilne faktury są szybciej realizowane</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tip-item">
+                                <div class="d-flex">
+                                    <div class="tip-icon me-3">
+                                        <i class="fas fa-edit text-info"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Edycja</h6>
+                                        <small class="text-muted">Możliwa tylko do akceptacji</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Format numeru konta
+    const numerKontaInput = document.querySelector('input[name="faktura[numerKonta]"]');
+    if (numerKontaInput) {
+        numerKontaInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, '');
+            if (value.length > 0) {
+                // Format IBAN - dodaj spacje co 4 znaki
+                value = value.match(/.{1,4}/g).join(' ');
+                e.target.value = value;
+            }
+        });
+    }
+
+    // Walidacja formularza
+    const form = document.querySelector('.needs-validation');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            // Tylko dodaj klasy wizualne, nie blokuj przesłania
+            form.classList.add('was-validated');
+            
+        });
+    }
+    
+    // Enhanced form validation with better feedback
+    document.querySelectorAll('.form-control, .form-select').forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+    });
+    
+    // Real-time IBAN validation feedback
+    const ibanInput = document.querySelector('input[name="faktura[numerKonta]"]');
+    if (ibanInput) {
+        ibanInput.addEventListener('input', function() {
+            const value = this.value.replace(/\s/g, '');
+            const ibanRegex = /^[A-Z]{2}[0-9]{2}[0-9]*$/;
+            
+            if (value.length >= 4 && ibanRegex.test(value.substring(0, 4))) {
+                this.style.borderColor = '#28a745';
+                this.style.boxShadow = '0 0 0 0.2rem rgba(40, 167, 69, 0.25)';
+            } else if (value.length > 0) {
+                this.style.borderColor = '#dc3545';
+                this.style.boxShadow = '0 0 0 0.2rem rgba(220, 53, 69, 0.25)';
+            }
+        });
+    }
+});
+</script>
+
+<style>
+    /* Enhanced Page Header */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+        background-size: 200% 200%;
+        animation: gradientShift 8s ease infinite;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.1),
+                    0 5px 15px rgba(0, 0, 0, 0.07);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        pointer-events: none;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-icon {
+        margin-right: 1.5rem;
+        animation: pulse 2s infinite;
+    }
+
+    .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .icon-wrapper i {
+        font-size: 24px;
+        color: white;
+    }
+
+    .header-text {
+        color: white;
+    }
+
+    .page-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        font-weight: 400;
+    }
+
+    .header-actions {
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-btn {
+        background: rgba(255, 255, 255, 0.15) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        font-weight: 600;
+        padding: 12px 24px;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-btn:hover {
+        background: rgba(255, 255, 255, 0.25) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        color: white !important;
+    }
+
+    .quick-stats-bar {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Progress Steps Horizontal */
+    .progress-steps-horizontal {
+        display: flex;
+        align-items: center;
+        gap: 0;
+    }
+
+    .step-h {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0.6;
+        transition: all 0.3s ease;
+    }
+
+    .step-h.active {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    .step-h-number {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .step-h.active .step-h-number {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    .step-h-label {
+        font-size: 0.85rem;
+        color: white;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    .step-h-connector {
+        width: 60px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.2);
+        margin: 0 1rem;
+    }
+
+    .header-breadcrumb {
+        color: white;
+    }
+
+    .breadcrumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .breadcrumb-item a {
+        color: rgba(255, 255, 255, 0.8);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+    .breadcrumb-item a:hover {
+        color: white;
+    }
+
+    .breadcrumb-item.active {
+        color: white;
+        font-weight: 600;
+    }
+
+    /* Animations */
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    /* Process Steps Styling */
+    .process-steps {
+        padding: 1rem;
+    }
+    
+    .step {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-left: 3px solid #e9ecef;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .step.active {
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        color: white;
+        border-left-color: #0984e3;
+        border-radius: 10px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .step.active .step-icon {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    
+    .step.active .step-content h6,
+    .step.active .step-content small {
+        color: white;
+    }
+    
+    .step-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .step-content h6 {
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+    
+    .tip-item {
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
+    }
+    
+    .tip-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .tip-icon {
+        width: 32px;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* Enhanced Form Section Styling */
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .form-section:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        border-color: #dee2e6;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .section-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3);
+    }
+
+    .section-icon i {
+        color: white;
+        font-size: 18px;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .mini-icon-wrapper {
+        width: 30px;
+        height: 30px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mini-icon-wrapper i {
+        font-size: 14px;
+        color: white;
+    }
+
+    /* Form Actions */
+    .form-actions {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-radius: 15px;
+        border: 1px solid #e9ecef;
+    }
+
+    .action-buttons-wrapper {
+        position: relative;
+    }
+
+    .form-progress-info {
+        display: flex;
+        align-items: center;
+    }
+
+    .submit-btn {
+        background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%) !important;
+        border: none !important;
+        padding: 12px 30px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-transform: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(116, 185, 255, 0.4);
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(116, 185, 255, 0.5);
+    }
+    
+    /* Enhanced form styling */
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #74b9ff;
+        box-shadow: 0 0 0 0.2rem rgba(116, 185, 255, 0.25);
+    }
+    
+    .is-valid {
+        border-color: #28a745 !important;
+    }
+    
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .page-header {
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .header-icon {
+            margin-right: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .page-title {
+            font-size: 1.8rem;
+        }
+        
+        .progress-steps-horizontal {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .step-h-connector {
+            width: 40px;
+            margin: 0 0.5rem;
+        }
+        
+        .header-breadcrumb {
+            margin-top: 1rem;
+        }
+    }
+</style>
+{% endblock %}
