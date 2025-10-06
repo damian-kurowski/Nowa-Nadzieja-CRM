@@ -1,27 +1,61 @@
-{% if awaiting_documents is not empty %}
-<div class="alert alert-warning" role="alert">
-    <div class="d-flex align-items-center mb-2">
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        <strong>OczekujÄ…ce dokumenty</strong>
-    </div>
-    <ul class="mb-0 small">
+{% if awaiting_documents|length > 0 %}
+    <div class="awaiting-documents-list">
+        <h5 class="mb-3">
+            <i class="fas fa-clock text-warning me-2"></i>
+            Dokumenty oczekujce na Twój podpis ({{ awaiting_documents|length }})
+        </h5>
+
         {% for document in awaiting_documents %}
-        <li>
-            <strong>{{ document.typ }}</strong>
-            {% if document.kandydat %}
-                - {{ document.kandydat.imie }} {{ document.kandydat.nazwisko }}
-            {% endif %}
-            <span class="text-muted">
-                ({{ document.dataUtworzenia|date('d.m.Y H:i') }})
-            </span>
-        </li>
+            <div class="document-card mb-3 border border-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1">
+                                <i class="fas fa-file-alt me-2"></i>
+                                {{ document.tytul }}
+                            </h6>
+                            <p class="text-muted small mb-2">
+                                Utworzony: {{ document.dataUtworzenia|date('Y-m-d H:i') }}
+                            </p>
+                            <p class="mb-2">{{ document.opis }}</p>
+
+                            {% if document.podpisy|length > 0 %}
+                                <div class="signatures-status mb-2">
+                                    <small class="text-muted">Podpisy:</small>
+                                    {% for podpis in document.podpisy %}
+                                        <span class="badge {% if podpis.isSigned() %}bg-success{% else %}bg-secondary{% endif %} ms-1">
+                                            {{ podpis.podpisujacy.fullName }}
+                                            {% if podpis.isSigned() %}
+                                                <i class="fas fa-check ms-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-clock ms-1"></i>
+                                            {% endif %}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-end">
+                            <a href="{{ path('dokument_show', {id: document.id}) }}"
+                               class="btn btn-sm btn-primary" target="_blank">
+                                <i class="fas fa-eye me-1"></i>
+                                Zobacz
+                            </a>
+                            <button class="btn btn-sm btn-success sign-document-btn"
+                                    data-document-id="{{ document.id }}">
+                                <i class="fas fa-pen me-1"></i>
+                                Podpisz
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         {% endfor %}
-    </ul>
-    <div class="mt-2">
-        <small class="text-muted">
-            <i class="fas fa-info-circle me-1"></i>
-            Te dokumenty wymagajÄ… podpisu lub zatwierdzenia przed kontynuowaniem zebrania.
-        </small>
     </div>
-</div>
+{% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Brak dokumentów oczekujcych na Twój podpis.
+    </div>
 {% endif %}

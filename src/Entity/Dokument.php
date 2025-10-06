@@ -14,8 +14,8 @@ class Dokument
     public const STATUS_PROJEKT = 'draft';
     public const STATUS_DRAFT = 'draft';  // Alias for compatibility
     public const STATUS_CZEKA_NA_PODPIS = 'pending';
-    public const STATUS_OCZEKUJE_NA_PODPIS = 'awaiting_signature';
     public const STATUS_PODPISANY = 'signed';
+    public const STATUS_WYKONANY = 'executed';  // Akcja dokumentu wykonana (rola nadana/odebrana)
     public const STATUS_ANULOWANY = 'rejected';
 
     // Typy dokumentów przyjęcia członka
@@ -56,6 +56,8 @@ class Dokument
     // Typy dokumentów zebrania członków okręgu
     public const TYP_WYBOR_PREZESA_OKREGU_WALNE = 'wybor_prezesa_okregu_walne';
     public const TYP_WYBOR_WICEPREZESA_OKREGU_WALNE = 'wybor_wiceprezesa_okregu_walne';
+    public const TYP_WYBOR_SEKRETARZA_OKREGU_WALNE = 'wybor_sekretarza_okregu_walne';
+    public const TYP_WYBOR_SKARBNIKA_OKREGU_WALNE = 'wybor_skarbnika_okregu_walne';
 
     // Nowe typy dokumentów - funkcje tymczasowe
     public const TYP_WYZNACZENIE_OSOBY_TYMCZASOWEJ = 'wyznaczenie_osoby_tymczasowej';
@@ -124,29 +126,27 @@ class Dokument
     private ?\DateTimeInterface $dataPodpisania = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $protokolantPodpisal = null;
+    private ?\DateTimeInterface $dataWykonania = null;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $prowadzacyPodpisal = null;
-
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[ORM\JoinColumn(nullable: false)]
     private User $tworca;
 
-    #[ORM\ManyToOne(targetEntity: Okreg::class)]
+
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Okreg')]
     #[ORM\JoinColumn(nullable: true)]
     private ?Okreg $okreg = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $kandydat = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $czlonek = null;
 
     /**
      * @var Collection<int, PodpisDokumentu>
      */
-    #[ORM\OneToMany(mappedBy: 'dokument', targetEntity: PodpisDokumentu::class, cascade: ['persist', 'remove'])]
+    #[ORM\OneToMany(mappedBy: 'dokument', targetEntity: 'App\Entity\PodpisDokumentu', cascade: ['persist', 'remove'])]
     private Collection $podpisy;
 
     /**
@@ -158,11 +158,11 @@ class Dokument
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $hashDokumentu = null;
 
-    #[ORM\ManyToOne(targetEntity: ZebranieOddzialu::class, inversedBy: 'dokumenty')]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\ZebranieOddzialu', inversedBy: 'dokumenty')]
     #[ORM\JoinColumn(nullable: true)]
     private ?ZebranieOddzialu $zebranieOddzialu = null;
 
-    #[ORM\ManyToOne(targetEntity: ZebranieOkregu::class, inversedBy: 'dokumenty')]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\ZebranieOkregu', inversedBy: 'dokumenty')]
     #[ORM\JoinColumn(nullable: true)]
     private ?ZebranieOkregu $zebranieOkregu = null;
 
@@ -170,6 +170,7 @@ class Dokument
     {
         $this->podpisy = new ArrayCollection();
         $this->dataUtworzenia = new \DateTime();
+        $this->dataWejsciaWZycie = new \DateTime();
     }
 
     public function getId(): ?int
@@ -269,6 +270,18 @@ class Dokument
     public function setDataPodpisania(?\DateTimeInterface $dataPodpisania): self
     {
         $this->dataPodpisania = $dataPodpisania;
+
+        return $this;
+    }
+
+    public function getDataWykonania(): ?\DateTimeInterface
+    {
+        return $this->dataWykonania;
+    }
+
+    public function setDataWykonania(?\DateTimeInterface $dataWykonania): self
+    {
+        $this->dataWykonania = $dataWykonania;
 
         return $this;
     }
@@ -476,13 +489,27 @@ class Dokument
             return false;
         }
 
+        $userSignature = null;
         foreach ($this->podpisy as $podpis) {
-            if ($podpis->getPodpisujacy() === $user && !$podpis->isSigned()) {
-                return true;
+            if ($podpis->getPodpisujacy() && $podpis->getPodpisujacy()->getId() === $user->getId() && !$podpis->isSigned()) {
+                $userSignature = $podpis;
+                break;
             }
         }
 
-        return false;
+        if (!$userSignature) {
+            return false;
+        }
+
+        // Sprawdź czy wszystkie podpisy z mniejszą kolejnością zostały już złożone
+        $userKolejnosc = $userSignature->getKolejnosc();
+        foreach ($this->podpisy as $podpis) {
+            if ($podpis->getKolejnosc() < $userKolejnosc && !$podpis->isSigned()) {
+                return false; // Ktoś wcześniejszy jeszcze nie podpisał
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -491,7 +518,7 @@ class Dokument
     public function getUserSignature(User $user): ?PodpisDokumentu
     {
         foreach ($this->podpisy as $podpis) {
-            if ($podpis->getPodpisujacy() === $user) {
+            if ($podpis->getPodpisujacy() && $podpis->getPodpisujacy()->getId() === $user->getId()) {
                 return $podpis;
             }
         }
@@ -650,25 +677,4 @@ class Dokument
         return $content;
     }
 
-    public function getProtokolantPodpisal(): ?\DateTimeInterface
-    {
-        return $this->protokolantPodpisal;
-    }
-
-    public function setProtokolantPodpisal(?\DateTimeInterface $protokolantPodpisal): self
-    {
-        $this->protokolantPodpisal = $protokolantPodpisal;
-        return $this;
-    }
-
-    public function getProwadzacyPodpisal(): ?\DateTimeInterface
-    {
-        return $this->prowadzacyPodpisal;
-    }
-
-    public function setProwadzacyPodpisal(?\DateTimeInterface $prowadzacyPodpisal): self
-    {
-        $this->prowadzacyPodpisal = $prowadzacyPodpisal;
-        return $this;
-    }
 }

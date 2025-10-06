@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Document\DocumentFactory;
 use App\Entity\Dokument;
 use App\Entity\Oddzial;
 use App\Entity\Okreg;
@@ -21,8 +22,7 @@ use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
-use App\Service\DocumentTemplates;
-use App\Document\DocumentFactory;
+use Twig\Environment;
 
 class DokumentService
 {
@@ -32,6 +32,7 @@ class DokumentService
         private UserRepository $userRepository,
         private FormFactoryInterface $formFactory,
         private LoggerInterface $logger,
+        private Environment $twig,
         private ?TokenStorageInterface $tokenStorage = null,
     ) {
     }
@@ -46,8 +47,17 @@ class DokumentService
         $types = [];
         $userRoles = $user->getRoles();
 
+        // WALIDACJA HIERARCHII: Role funkcyjne wymagają ROLE_CZLONEK_PARTII
+        $isMember = in_array('ROLE_CZLONEK_PARTII', $userRoles);
+        $isAdmin = in_array('ROLE_ADMIN', $userRoles);
+
+        // Jeśli użytkownik nie jest członkiem ani adminem, nie ma dostępu do dokumentów funkcyjnych
+        if (!$isMember && !$isAdmin) {
+            return $types;
+        }
+
         // 1. Okręgowy Pełnomocnik ds. przyjmowania nowych członków
-        if (in_array('ROLE_PELNOMOCNIK_PRZYJMOWANIA', $userRoles)) {
+        if (in_array('ROLE_PELNOMOCNIK_PRZYJMOWANIA', $userRoles) && $user->getOkreg() !== null) {
             $types[Dokument::TYP_PRZYJECIE_CZLONKA_PELNOMOCNIK] = [
                 'title' => 'Przyjęcie członka przez Pełnomocnika',
                 'category' => 'Członkostwo',
@@ -56,7 +66,7 @@ class DokumentService
         }
 
         // 2. Zarząd okręgu (Prezes Okręgu + drugi członek zarządu)
-        if (in_array('ROLE_PREZES_OKREGU', $userRoles)) {
+        if (in_array('ROLE_PREZES_OKREGU', $userRoles) && $user->getOkreg() !== null) {
             $types[Dokument::TYP_PRZYJECIE_CZLONKA_OKREG] = [
                 'title' => 'Przyjęcie członka przez zarząd okręgu',
                 'category' => 'Członkostwo',
@@ -143,10 +153,54 @@ class DokumentService
                 'category' => 'Odwołania',
                 'description' => 'Dokument odwołujący Pełniącego Obowiązki Prezesa Okręgu',
             ];
+
+            // Sekretarz Partii i Prezes Partii mogą tworzyć zebrania okręgu, więc muszą mieć dostęp do dokumentów zebrań
+            $types[Dokument::TYP_WYZNACZENIE_OBSERWATORA] = [
+                'title' => 'Wyznaczenie Obserwatora Zebrania Okręgu',
+                'category' => 'Zebrania',
+                'description' => 'Dokument wyznaczający obserwatora zebrania członków okręgu',
+            ];
+
+            $types[Dokument::TYP_WYZNACZENIE_PROTOKOLANTA] = [
+                'title' => 'Wyznaczenie Protokolanta Zebrania',
+                'category' => 'Zebrania',
+                'description' => 'Dokument wyznaczający protokolanta zebrania',
+            ];
+
+            $types[Dokument::TYP_WYZNACZENIE_PROWADZACEGO] = [
+                'title' => 'Wyznaczenie Prowadzącego Zebranie',
+                'category' => 'Zebrania',
+                'description' => 'Dokument wyznaczający prowadzącego zebranie',
+            ];
+
+            // Dokumenty wyboru zarządu okręgu
+            $types[Dokument::TYP_WYBOR_PREZESA_OKREGU_WALNE] = [
+                'title' => 'Wybór Prezesa Okręgu (Walne Zgromadzenie)',
+                'category' => 'Wybory Walne',
+                'description' => 'Dokument wyboru Prezesa Okręgu przez Walne Zgromadzenie Członków Okręgu',
+            ];
+
+            $types[Dokument::TYP_WYBOR_WICEPREZESA_OKREGU_WALNE] = [
+                'title' => 'Wybór Wiceprezesa Okręgu (Walne Zgromadzenie)',
+                'category' => 'Wybory Walne',
+                'description' => 'Dokument wyboru Wiceprezesa Okręgu przez Walne Zgromadzenie Członków Okręgu',
+            ];
+
+            $types[Dokument::TYP_WYBOR_SEKRETARZA_OKREGU_WALNE] = [
+                'title' => 'Wybór Sekretarza Okręgu (Walne Zgromadzenie)',
+                'category' => 'Wybory Walne',
+                'description' => 'Dokument wyboru Sekretarza Okręgu przez Walne Zgromadzenie Członków Okręgu',
+            ];
+
+            $types[Dokument::TYP_WYBOR_SKARBNIKA_OKREGU_WALNE] = [
+                'title' => 'Wybór Skarbnika Okręgu (Walne Zgromadzenie)',
+                'category' => 'Wybory Walne',
+                'description' => 'Dokument wyboru Skarbnika Okręgu przez Walne Zgromadzenie Członków Okręgu',
+            ];
         }
 
         // 6. Dokumenty dostępne dla Prezesów Okręgów
-        if (in_array('ROLE_PREZES_OKREGU', $userRoles) || in_array('ROLE_PO_PREZES_OKREGU', $userRoles)) {
+        if ((in_array('ROLE_PREZES_OKREGU', $userRoles) || in_array('ROLE_PO_PREZES_OKREGU', $userRoles)) && $user->getOkreg() !== null) {
             $types[Dokument::TYP_POWOLANIE_SEKRETARZ_OKREGU] = [
                 'title' => 'Powołanie Sekretarza Okręgu',
                 'category' => 'Powołania',
@@ -178,12 +232,25 @@ class DokumentService
             ];
         }
 
-        // 6. Dokumenty dostępne dla Sekretarza Okręgu
-        if (in_array('ROLE_SEKRETARZ_OKREGU', $userRoles)) {
+        // 7. Dokumenty dostępne dla Sekretarza Okręgu
+        if (in_array('ROLE_SEKRETARZ_OKREGU', $userRoles) && $user->getOkreg() !== null) {
             $types[Dokument::TYP_WYZNACZENIE_OBSERWATORA] = [
                 'title' => 'Wyznaczenie Obserwatora Zebrania',
                 'category' => 'Zebrania',
                 'description' => 'Dokument wyznaczający obserwatora zebrania członków oddziału',
+            ];
+
+            // Dokumenty walnego zgromadzenia okręgu
+            $types[Dokument::TYP_WYBOR_PREZESA_OKREGU_WALNE] = [
+                'title' => 'Wybór Prezesa Okręgu (Walne Zgromadzenie)',
+                'category' => 'Wybory Walne',
+                'description' => 'Dokument wyboru Prezesa Okręgu przez Walne Zgromadzenie Członków Okręgu',
+            ];
+
+            $types[Dokument::TYP_WYBOR_WICEPREZESA_OKREGU_WALNE] = [
+                'title' => 'Wybór Wiceprezesa Okręgu (Walne Zgromadzenie)',
+                'category' => 'Wybory Walne',
+                'description' => 'Dokument wyboru Wiceprezesa Okręgu przez Walne Zgromadzenie Członków Okręgu',
             ];
         }
 
@@ -333,6 +400,79 @@ class DokumentService
             ];
         }
 
+        // Obserwator zebrania - może tworzyć dokumenty wyznaczenia protokolanta i prowadzącego
+        if (in_array('ROLE_OBSERWATOR_ZEBRANIA', $userRoles)) {
+            $types[Dokument::TYP_WYZNACZENIE_PROTOKOLANTA] = [
+                'title' => 'Wyznaczenie Protokolanta Zebrania',
+                'category' => 'Zebrania',
+                'description' => 'Dokument wyznaczający protokolanta zebrania członków oddziału',
+            ];
+            $types[Dokument::TYP_WYZNACZENIE_PROWADZACEGO] = [
+                'title' => 'Wyznaczenie Prowadzącego Zebrania',
+                'category' => 'Zebrania',
+                'description' => 'Dokument wyznaczający prowadzącego zebrania członków oddziału',
+            ];
+        }
+
+        // Prowadzący i protokolant zebrania - mogą tworzyć dokumenty zebrań oddziału i okręgu
+        if (in_array('ROLE_PROWADZACY_ZEBRANIA', $userRoles) || in_array('ROLE_PROTOKOLANT_ZEBRANIA', $userRoles)) {
+            // Dokumenty zebrania oddziału - powołania
+            $types[Dokument::TYP_POWOLANIE_PRZEWODNICZACEGO_ODDZIALU] = [
+                'title' => 'Powołanie Przewodniczącego Oddziału',
+                'category' => 'Zebrania',
+                'description' => 'Dokument powołujący przewodniczącego oddziału przez zebranie członków',
+            ];
+            $types[Dokument::TYP_POWOLANIE_SEKRETARZA_ODDZIALU] = [
+                'title' => 'Powołanie Sekretarza Oddziału',
+                'category' => 'Zebrania',
+                'description' => 'Dokument powołujący sekretarza oddziału przez zebranie członków',
+            ];
+            $types[Dokument::TYP_POWOLANIE_ZASTEPCY_PRZEWODNICZACEGO] = [
+                'title' => 'Powołanie Zastępcy Przewodniczącego Oddziału',
+                'category' => 'Zebrania',
+                'description' => 'Dokument powołujący zastępcę przewodniczącego oddziału przez zebranie członków',
+            ];
+
+            // Dokumenty zebrania oddziału - odwołania
+            $types[Dokument::TYP_ODWOLANIE_PRZEWODNICZACEGO_ODDZIALU] = [
+                'title' => 'Odwołanie Przewodniczącego Oddziału',
+                'category' => 'Zebrania',
+                'description' => 'Dokument odwołujący przewodniczącego oddziału przez zebranie członków',
+            ];
+            $types[Dokument::TYP_ODWOLANIE_SEKRETARZA_ODDZIALU] = [
+                'title' => 'Odwołanie Sekretarza Oddziału',
+                'category' => 'Zebrania',
+                'description' => 'Dokument odwołujący sekretarza oddziału przez zebranie członków',
+            ];
+            $types[Dokument::TYP_ODWOLANIE_ZASTEPCY_PRZEWODNICZACEGO] = [
+                'title' => 'Odwołanie Zastępcy Przewodniczącego Oddziału',
+                'category' => 'Zebrania',
+                'description' => 'Dokument odwołujący zastępcę przewodniczącego oddziału przez zebranie członków',
+            ];
+
+            // Dokumenty zebrania okręgu - wybory
+            $types[Dokument::TYP_WYBOR_PREZESA_OKREGU_WALNE] = [
+                'title' => 'Wybór Prezesa Okręgu',
+                'category' => 'Zebrania',
+                'description' => 'Dokument wyboru prezesa okręgu przez walne zgromadzenie członków',
+            ];
+            $types[Dokument::TYP_WYBOR_WICEPREZESA_OKREGU_WALNE] = [
+                'title' => 'Wybór Wiceprezesa Okręgu',
+                'category' => 'Zebrania',
+                'description' => 'Dokument wyboru wiceprezesa okręgu przez walne zgromadzenie członków',
+            ];
+            $types[Dokument::TYP_WYBOR_SEKRETARZA_OKREGU_WALNE] = [
+                'title' => 'Wybór Sekretarza Okręgu',
+                'category' => 'Zebrania',
+                'description' => 'Dokument wyboru sekretarza okręgu przez walne zgromadzenie członków',
+            ];
+            $types[Dokument::TYP_WYBOR_SKARBNIKA_OKREGU_WALNE] = [
+                'title' => 'Wybór Skarbnika Okręgu',
+                'category' => 'Zebrania',
+                'description' => 'Dokument wyboru skarbnika okręgu przez walne zgromadzenie członków',
+            ];
+        }
+
         return $types;
     }
 
@@ -341,7 +481,8 @@ class DokumentService
      */
     public function canCreateDocumentType(User $user, string $type): bool
     {
-        return true;
+        $availableTypes = $this->getAvailableDocumentTypes($user);
+        return array_key_exists($type, $availableTypes);
     }
 
     /**
@@ -368,9 +509,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -402,9 +543,9 @@ class DokumentService
                         'required' => true,
                         'query_filter' => 'board_members',
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -435,11 +576,11 @@ class DokumentService
                         'entity' => 'User',
                         'label' => 'Drugi podpisujący (członek zarządu krajowego)',
                         'required' => true,
-                        'query_filter' => 'national_board_members',
+                        'query_filter' => 'national_board_members_enhanced',
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -465,9 +606,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -519,9 +660,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -573,9 +714,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -627,9 +768,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -681,9 +822,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -715,9 +856,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -742,9 +883,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -769,9 +910,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -796,10 +937,10 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
-                        'required' => false,
+                        'label' => 'Powód odwołania',
+                        'required' => true,
                         'rows' => 4,
                     ],
                 ],
@@ -823,9 +964,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -850,9 +991,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 4,
                     ],
@@ -871,16 +1012,38 @@ class DokumentService
                         'required' => true,
                         'maxlength' => 100,
                     ],
+                    'siedziba_oddzialu' => [
+                        'type' => 'text',
+                        'label' => 'Siedziba Oddziału',
+                        'required' => true,
+                        'maxlength' => 200,
+                        'help' => 'Miejscowość lub adres siedziby oddziału',
+                    ],
+                    'gminy' => [
+                        'type' => 'textarea',
+                        'label' => 'Gminy objęte działaniem oddziału',
+                        'required' => true,
+                        'rows' => 3,
+                        'help' => 'Wymień gminy oddzielone przecinkami',
+                    ],
                     'czlonkowie_oddzialu' => [
                         'type' => 'choice_multiple_enhanced',
                         'entity' => 'User',
-                        'label' => 'Członkowie Oddziału (minimum 2)',
+                        'label' => 'Członkowie założyciele oddziału (minimum 2)',
                         'required' => true,
                         'query_filter' => 'district_members_available',
                         'attr' => [
                             'class' => 'enhanced-multi-select',
                             'data-min-selection' => '2',
                         ],
+                    ],
+                    'koordynator' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Koordynator oddziału',
+                        'required' => true,
+                        'query_filter' => 'district_members_available',
+                        'help' => 'Osoba która będzie koordynować oddział do czasu wyboru przewodniczącego',
                     ],
                     'data_wejscia_w_zycie' => [
                         'type' => 'date',
@@ -893,13 +1056,7 @@ class DokumentService
                         'label' => 'Drugi podpisujący (członek zarządu okręgu)',
                         'required' => true,
                         'query_filter' => 'district_board_members',
-                        'help' => 'Wybierz Wiceprezesa, Sekretarza lub Skarbnika Okręgu, który podpisze dokument razem z Prezesem Okręgu',
-                    ],
-                    'uzasadnienie' => [
-                        'type' => 'textarea',
-                        'label' => 'Uzasadnienie utworzenia oddziału',
-                        'required' => false,
-                        'rows' => 4,
+                        'help' => 'Wybierz Wiceprezesa, Sekretarza lub Skarbnika Okręgu',
                     ],
                 ],
                 'signers' => [
@@ -930,9 +1087,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 3,
                     ],
@@ -957,9 +1114,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 3,
                     ],
@@ -984,9 +1141,9 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
-                        'label' => 'Uzasadnienie',
+                        'label' => 'Powód odwołania',
                         'required' => false,
                         'rows' => 3,
                     ],
@@ -1013,7 +1170,7 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
                         'label' => 'Uzasadnienie powołania',
                         'required' => false,
@@ -1042,7 +1199,7 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
                         'label' => 'Uzasadnienie odwołania',
                         'required' => true,
@@ -1071,7 +1228,7 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
                         'label' => 'Uzasadnienie powołania',
                         'required' => false,
@@ -1100,7 +1257,7 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
                         'label' => 'Uzasadnienie odwołania',
                         'required' => true,
@@ -1129,7 +1286,7 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
                         'label' => 'Uzasadnienie powołania',
                         'required' => false,
@@ -1158,7 +1315,7 @@ class DokumentService
                         'label' => 'Data wejścia w życie',
                         'required' => true,
                     ],
-                    'uzasadnienie' => [
+                    'powod_odwolania' => [
                         'type' => 'textarea',
                         'label' => 'Uzasadnienie odwołania',
                         'required' => true,
@@ -1188,8 +1345,9 @@ class DokumentService
                         'required' => true,
                     ],
                     'okreg' => [
-                        'type' => 'text',
-                        'label' => 'Nazwa Okręgu',
+                        'type' => 'entity',
+                        'entity' => 'Okreg',
+                        'label' => 'Okręg',
                         'required' => true,
                     ],
                 ],
@@ -1217,8 +1375,9 @@ class DokumentService
                         'required' => true,
                     ],
                     'okreg' => [
-                        'type' => 'text',
-                        'label' => 'Nazwa Okręgu',
+                        'type' => 'entity',
+                        'entity' => 'Okreg',
+                        'label' => 'Okręg',
                         'required' => true,
                     ],
                 ],
@@ -1226,6 +1385,824 @@ class DokumentService
                     'obserwator' => true,
                     'protokolant' => true,
                     'prowadzacy' => true,
+                ],
+            ],
+
+            Dokument::TYP_WYBOR_SEKRETARZA_OKREGU_WALNE => [
+                'title' => 'Dokument wyboru Sekretarza Okręgu przez Walne Zgromadzenie',
+                'description' => 'Dokument wybierający Sekretarza Okręgu przez Walne Zgromadzenie Członków Okręgu',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wybrany Sekretarz Okręgu',
+                        'required' => true,
+                        'query_filter' => 'okreg_members',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'okreg' => [
+                        'type' => 'entity',
+                        'entity' => 'Okreg',
+                        'label' => 'Okręg',
+                        'required' => true,
+                    ],
+                ],
+                'signers' => [
+                    'obserwator' => true,
+                    'protokolant' => true,
+                    'prowadzacy' => true,
+                ],
+            ],
+
+            Dokument::TYP_WYBOR_SKARBNIKA_OKREGU_WALNE => [
+                'title' => 'Dokument wyboru Skarbnika Okręgu przez Walne Zgromadzenie',
+                'description' => 'Dokument wybierający Skarbnika Okręgu przez Walne Zgromadzenie Członków Okręgu',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wybrany Skarbnik Okręgu',
+                        'required' => true,
+                        'query_filter' => 'okreg_members',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'okreg' => [
+                        'type' => 'entity',
+                        'entity' => 'Okreg',
+                        'label' => 'Okręg',
+                        'required' => true,
+                    ],
+                ],
+                'signers' => [
+                    'obserwator' => true,
+                    'protokolant' => true,
+                    'prowadzacy' => true,
+                ],
+            ],
+
+            Dokument::TYP_OSWIADCZENIE_WYSTAPIENIA => [
+                'title' => 'Oświadczenie o wystąpieniu z partii',
+                'description' => 'Dokument oświadczenia członka o dobrowolnym wystąpieniu z partii',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Członek występujący',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wystąpienia',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Oświadczenie/Uzasadnienie',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'czlonek' => true,  // Podpisuje sam członek
+                ],
+            ],
+
+            Dokument::TYP_UCHWALA_SKRESLENIA_CZLONKA => [
+                'title' => 'Uchwała o skreśleniu członka',
+                'description' => 'Uchwała zarządu o skreśleniu członka z partii',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Członek do skreślenia',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód skreślenia',
+                        'required' => true,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                    'drugi_podpisujacy' => true,
+                ],
+            ],
+
+            Dokument::TYP_WNIOSEK_ZAWIESZENIA_CZLONKOSTWA => [
+                'title' => 'Wniosek o zawieszenie członkostwa',
+                'description' => 'Wniosek zarządu o zawieszenie członkostwa',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Członek do zawieszenia',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód zawieszenia',
+                        'required' => true,
+                        'rows' => 4,
+                    ],
+                    'czas_trwania' => [
+                        'type' => 'text',
+                        'label' => 'Czas trwania zawieszenia',
+                        'required' => false,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                    'drugi_podpisujacy' => true,
+                ],
+            ],
+
+            Dokument::TYP_WNIOSEK_ODWIESZENIA_CZLONKOSTWA => [
+                'title' => 'Wniosek o odwieszenie członkostwa',
+                'description' => 'Wniosek zarządu o odwieszenie członkostwa',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Członek do odwieszenia',
+                        'required' => true,
+                        'query_filter' => 'suspended_members',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                    'drugi_podpisujacy' => true,
+                ],
+            ],
+
+            Dokument::TYP_REZYGNACJA_Z_FUNKCJI => [
+                'title' => 'Rezygnacja z funkcji',
+                'description' => 'Dokument rezygnacji z pełnionej funkcji partyjnej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Osoba rezygnująca',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'funkcja_do_rezygnacji' => [
+                        'type' => 'choice',
+                        'label' => 'Funkcja z której rezygnujesz',
+                        'required' => true,
+                        'choices' => 'user_roles',  // Specjalna wartość - pokaż role użytkownika
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data rezygnacji',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Uzasadnienie rezygnacji',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'czlonek' => true,  // Podpisuje osoba rezygnująca
+                ],
+            ],
+
+            // Dokumenty regionalne
+            Dokument::TYP_POWOLANIE_PREZES_REGIONU => [
+                'title' => 'Powołanie Prezesa Regionu',
+                'description' => 'Dokument powołujący Prezesa Regionu przez Prezesa Partii',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Członek do powołania na Prezesa Regionu',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                ],
+            ],
+
+            Dokument::TYP_ODWOLANIE_PREZES_REGIONU => [
+                'title' => 'Odwołanie Prezesa Regionu',
+                'description' => 'Dokument odwołujący Prezesa Regionu przez Prezesa Partii',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Prezes Regionu do odwołania',
+                        'required' => true,
+                        'query_filter' => 'prezesi_regionu',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => true,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                ],
+            ],
+
+            Dokument::TYP_WYBOR_SEKRETARZ_REGIONU => [
+                'title' => 'Wybór Sekretarza Regionu',
+                'description' => 'Dokument wyboru Sekretarza Regionu przez Kongres',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wybrany Sekretarz Regionu',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'przewodniczacy_kongresu' => true,
+                    'sekretarz_kongresu' => true,
+                ],
+            ],
+
+            Dokument::TYP_WYBOR_SKARBNIK_REGIONU => [
+                'title' => 'Wybór Skarbnika Regionu',
+                'description' => 'Dokument wyboru Skarbnika Regionu przez Kongres',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wybrany Skarbnik Regionu',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'przewodniczacy_kongresu' => true,
+                    'sekretarz_kongresu' => true,
+                ],
+            ],
+
+            // Dokumenty Rady Krajowej
+            Dokument::TYP_WYBOR_PRZEWODNICZACY_RADY => [
+                'title' => 'Wybór Przewodniczącego Rady Krajowej',
+                'description' => 'Dokument wyboru Przewodniczącego Rady Krajowej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wybrany Przewodniczący Rady',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                    'drugi_podpisujacy' => true,
+                ],
+            ],
+
+            Dokument::TYP_WYBOR_ZASTEPCA_PRZEWODNICZACY_RADY => [
+                'title' => 'Wybór Zastępcy Przewodniczącego Rady Krajowej',
+                'description' => 'Dokument wyboru Zastępcy Przewodniczącego Rady Krajowej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wybrany Zastępca Przewodniczącego Rady',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                    'drugi_podpisujacy' => true,
+                ],
+            ],
+
+            Dokument::TYP_ODWOLANIE_PRZEWODNICZACY_RADY => [
+                'title' => 'Odwołanie Przewodniczącego Rady Krajowej',
+                'description' => 'Dokument odwołania Przewodniczącego Rady Krajowej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Przewodniczący Rady do odwołania',
+                        'required' => true,
+                        'query_filter' => 'przewodniczacy_rady',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => true,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                    'drugi_podpisujacy' => true,
+                ],
+            ],
+
+            Dokument::TYP_ODWOLANIE_ZASTEPCA_PRZEWODNICZACY_RADY => [
+                'title' => 'Odwołanie Zastępcy Przewodniczącego Rady Krajowej',
+                'description' => 'Dokument odwołania Zastępcy Przewodniczącego Rady Krajowej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Zastępca Przewodniczącego Rady do odwołania',
+                        'required' => true,
+                        'query_filter' => 'zastepcy_przewodniczacy_rady',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => true,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                    'drugi_podpisujacy' => true,
+                ],
+            ],
+
+            // Dokumenty Komisji Rewizyjnej
+            Dokument::TYP_WYBOR_PRZEWODNICZACY_KOMISJI_REWIZYJNEJ => [
+                'title' => 'Wybór Przewodniczącego Komisji Rewizyjnej',
+                'description' => 'Dokument wyboru Przewodniczącego Komisji Rewizyjnej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wybrany Przewodniczący Komisji Rewizyjnej',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'przewodniczacy_kongresu' => true,
+                    'sekretarz_kongresu' => true,
+                ],
+            ],
+
+            Dokument::TYP_WYBOR_WICEPRZEWODNICZACY_KOMISJI_REWIZYJNEJ => [
+                'title' => 'Wybór Wiceprzewodniczącego Komisji Rewizyjnej',
+                'description' => 'Dokument wyboru Wiceprzewodniczącego Komisji Rewizyjnej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wybrany Wiceprzewodniczący Komisji Rewizyjnej',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'przewodniczacy_kongresu' => true,
+                    'sekretarz_kongresu' => true,
+                ],
+            ],
+
+            Dokument::TYP_WYBOR_SEKRETARZ_KOMISJI_REWIZYJNEJ => [
+                'title' => 'Wybór Sekretarza Komisji Rewizyjnej',
+                'description' => 'Dokument wyboru Sekretarza Komisji Rewizyjnej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wybrany Sekretarz Komisji Rewizyjnej',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'przewodniczacy_kongresu' => true,
+                    'sekretarz_kongresu' => true,
+                ],
+            ],
+
+            Dokument::TYP_ODWOLANIE_PRZEWODNICZACY_KOMISJI_REWIZYJNEJ => [
+                'title' => 'Odwołanie Przewodniczącego Komisji Rewizyjnej',
+                'description' => 'Dokument odwołania Przewodniczącego Komisji Rewizyjnej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Przewodniczący Komisji Rewizyjnej do odwołania',
+                        'required' => true,
+                        'query_filter' => 'przewodniczacy_komisji_rewizyjnej',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => true,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'przewodniczacy_kongresu' => true,
+                    'sekretarz_kongresu' => true,
+                ],
+            ],
+
+            Dokument::TYP_ODWOLANIE_WICEPRZEWODNICZACY_KOMISJI_REWIZYJNEJ => [
+                'title' => 'Odwołanie Wiceprzewodniczącego Komisji Rewizyjnej',
+                'description' => 'Dokument odwołania Wiceprzewodniczącego Komisji Rewizyjnej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wiceprzewodniczący Komisji Rewizyjnej do odwołania',
+                        'required' => true,
+                        'query_filter' => 'wiceprzewodniczacy_komisji_rewizyjnej',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => true,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'przewodniczacy_kongresu' => true,
+                    'sekretarz_kongresu' => true,
+                ],
+            ],
+
+            Dokument::TYP_ODWOLANIE_SEKRETARZ_KOMISJI_REWIZYJNEJ => [
+                'title' => 'Odwołanie Sekretarza Komisji Rewizyjnej',
+                'description' => 'Dokument odwołania Sekretarza Komisji Rewizyjnej',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Sekretarz Komisji Rewizyjnej do odwołania',
+                        'required' => true,
+                        'query_filter' => 'sekretarz_komisji_rewizyjnej',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => true,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'przewodniczacy_kongresu' => true,
+                    'sekretarz_kongresu' => true,
+                ],
+            ],
+
+            // Struktury parlamentarne
+            Dokument::TYP_POWOLANIE_PRZEWODNICZACY_KLUBU => [
+                'title' => 'Powołanie Przewodniczącego Klubu Parlamentarnego',
+                'description' => 'Dokument powołania Przewodniczącego Klubu Parlamentarnego',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Członek do powołania',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                ],
+            ],
+
+            Dokument::TYP_ODWOLANIE_PRZEWODNICZACY_KLUBU => [
+                'title' => 'Odwołanie Przewodniczącego Klubu Parlamentarnego',
+                'description' => 'Dokument odwołania Przewodniczącego Klubu Parlamentarnego',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Przewodniczący Klubu do odwołania',
+                        'required' => true,
+                        'query_filter' => 'przewodniczacy_klubu',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => true,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                ],
+            ],
+
+            Dokument::TYP_WYBOR_PRZEWODNICZACY_DELEGACJI => [
+                'title' => 'Wybór Przewodniczącego Delegacji',
+                'description' => 'Dokument wyboru Przewodniczącego Delegacji',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Wybrany Przewodniczący Delegacji',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                    'drugi_podpisujacy' => true,
+                ],
+            ],
+
+            Dokument::TYP_ODWOLANIE_PRZEWODNICZACY_DELEGACJI => [
+                'title' => 'Odwołanie Przewodniczącego Delegacji',
+                'description' => 'Dokument odwołania Przewodniczącego Delegacji',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Przewodniczący Delegacji do odwołania',
+                        'required' => true,
+                        'query_filter' => 'przewodniczacy_delegacji',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'powod' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => true,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                    'drugi_podpisujacy' => true,
+                ],
+            ],
+
+            // Pozostałe dokumenty
+            Dokument::TYP_WYZNACZENIE_OSOBY_TYMCZASOWEJ => [
+                'title' => 'Wyznaczenie osoby tymczasowej na funkcję',
+                'description' => 'Dokument wyznaczenia osoby tymczasowej na czas określony',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Osoba wyznaczona',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'funkcja_tymczasowa' => [
+                        'type' => 'choice',
+                        'label' => 'Funkcja tymczasowa',
+                        'required' => true,
+                        'choices' => 'available_roles',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data rozpoczęcia',
+                        'required' => true,
+                    ],
+                    'data_zakonczenia' => [
+                        'type' => 'date',
+                        'label' => 'Data zakończenia',
+                        'required' => true,
+                    ],
+                    'powod_odwolania' => [
+                        'type' => 'textarea',
+                        'label' => 'Powód odwołania',
+                        'required' => false,
+                        'rows' => 4,
+                    ],
+                ],
+                'signers' => [
+                    'creator' => true,
+                ],
+            ],
+
+            Dokument::TYP_POSTANOWIENIE_SADU_PARTYJNEGO => [
+                'title' => 'Postanowienie Sądu Partyjnego',
+                'description' => 'Dokument postanowienia Sądu Partyjnego',
+                'fields' => [
+                    'czlonek' => [
+                        'type' => 'entity',
+                        'entity' => 'User',
+                        'label' => 'Członek którego dotyczy postanowienie',
+                        'required' => true,
+                        'query_filter' => 'active_members_all',
+                    ],
+                    'data_wejscia_w_zycie' => [
+                        'type' => 'date',
+                        'label' => 'Data wejścia w życie',
+                        'required' => true,
+                    ],
+                    'tresc_postanowienia' => [
+                        'type' => 'textarea',
+                        'label' => 'Treść postanowienia',
+                        'required' => true,
+                        'rows' => 8,
+                    ],
+                    'typ_sankcji' => [
+                        'type' => 'choice',
+                        'label' => 'Typ sankcji',
+                        'required' => true,
+                        'choices' => [
+                            'Upomnienie' => 'upomnienie',
+                            'Nagana' => 'nagana',
+                            'Zawieszenie' => 'zawieszenie',
+                            'Wykluczenie' => 'wykluczenie',
+                            'Uniewinnienie' => 'uniewinnienie',
+                        ],
+                    ],
+                ],
+                'signers' => [
+                    'przewodniczacy_sadu' => true,
+                    'czlonek_sadu_1' => true,
+                    'czlonek_sadu_2' => true,
                 ],
             ],
 
@@ -1301,11 +2278,23 @@ class DokumentService
                 $options['choice_label'] = $this->getEntityChoiceLabel($fieldConfig['entity']);
 
                 if (isset($fieldConfig['query_filter'])) {
-                    $options['choices'] = $this->getFilteredEntityChoices(
+                    $choices = $this->getFilteredEntityChoices(
                         $fieldConfig['entity'],
                         $fieldConfig['query_filter'],
                         $user
                     );
+
+                    // For candidate filters and enhanced board members, choices are already an array of [label => entity]
+                    // So we can use them directly without choice_label
+                    if (in_array($fieldConfig['query_filter'], ['kandydaci', 'kandydaci_krajowy', 'national_board_members_enhanced'])) {
+                        $options['choices'] = $choices;
+                        $options['choice_label'] = function($user, $key, $value) {
+                            // The key is already our formatted label with progress/role info
+                            return $key;
+                        };
+                    } else {
+                        $options['choices'] = $choices;
+                    }
                 }
 
                 $formBuilder->add($fieldName, EntityType::class, $options);
@@ -1478,6 +2467,72 @@ class DokumentService
 
                 return $choices;
 
+            case 'national_board_members_enhanced':
+                // Członkowie zarządu krajowego z dodatkowymi informacjami - podobnie jak kandydaci
+                $connection = $this->entityManager->getConnection();
+                $sql = 'SELECT * FROM "user" u
+                        WHERE u.status = :status
+                        AND u.id != :currentUserId
+                        AND (
+                            u.roles::jsonb @> :prezes OR
+                            u.roles::jsonb @> :wiceprezes OR
+                            u.roles::jsonb @> :sekretarz OR
+                            u.roles::jsonb @> :skarbnik
+                        )
+                        ORDER BY u.nazwisko, u.imie';
+
+                $stmt = $connection->prepare($sql);
+                $result = $stmt->executeQuery([
+                    'status' => 'aktywny',
+                    'currentUserId' => $currentUser->getId(),
+                    'prezes' => '["ROLE_PREZES_PARTII"]',
+                    'wiceprezes' => '["ROLE_WICEPREZES_PARTII"]',
+                    'sekretarz' => '["ROLE_SEKRETARZ_PARTII"]',
+                    'skarbnik' => '["ROLE_SKARBNIK_PARTII"]',
+                ]);
+
+                $userIds = array_column($result->fetchAllAssociative(), 'id');
+                if (empty($userIds)) {
+                    return [];
+                }
+
+                $users = $this->userRepository->findBy(['id' => $userIds]);
+                $choices = [];
+                $counter = 0;
+                foreach ($users as $user) {
+                    $counter++;
+
+                    // Określ główną rolę w zarządzie krajowym
+                    $roles = $user->getRoles();
+                    $mainRole = 'Członek zarządu';
+
+                    if (in_array('ROLE_PREZES_PARTII', $roles)) {
+                        $mainRole = 'Prezes Partii';
+                    } elseif (in_array('ROLE_WICEPREZES_PARTII', $roles)) {
+                        $mainRole = 'Wiceprezes Partii';
+                    } elseif (in_array('ROLE_SEKRETARZ_PARTII', $roles)) {
+                        $mainRole = 'Sekretarz Partii';
+                    } elseif (in_array('ROLE_SKARBNIK_PARTII', $roles)) {
+                        $mainRole = 'Skarbnik Partii';
+                    }
+
+                    // Dodaj informację o okręgu jeśli ma
+                    $okregInfo = $user->getOkreg() ? ' (' . $user->getOkreg()->getNazwa() . ')' : ' (Zarząd Krajowy)';
+
+                    // Formatuj label podobnie jak dla kandydatów
+                    $label = sprintf(
+                        '%d. %s - %s%s',
+                        $counter,
+                        $user->getFullName(),
+                        $mainRole,
+                        $okregInfo
+                    );
+
+                    $choices[$label] = $user;
+                }
+
+                return $choices;
+
             default:
                 // Dla wszystkich innych filtrów używamy standardowego DQL
                 $queryBuilder = $this->userRepository->createQueryBuilder('u');
@@ -1528,8 +2583,10 @@ class DokumentService
                         break;
 
                     case 'kandydaci':
-                        // Kandydaci gotowi do przyjęcia
-                        $queryBuilder->where('u.typUzytkownika = :typ')
+                        // Wszyscy kandydaci - pokażemy ich postęp
+                        $queryBuilder->leftJoin('u.postepKandydataEntity', 'pk')
+                                   ->addSelect('pk')
+                                   ->where('u.typUzytkownika = :typ')
                                    ->andWhere('u.status = :status')
                                    ->setParameter('typ', 'kandydat')
                                    ->setParameter('status', 'aktywny');
@@ -1547,6 +2604,14 @@ class DokumentService
                                    ->andWhere('u.status = :status')
                                    ->setParameter('typ', 'czlonek')
                                    ->setParameter('status', 'aktywny');
+                        break;
+
+                    case 'suspended_members':
+                        // Członkowie zawieszeni (dla odwieszenia)
+                        $queryBuilder->where('u.typUzytkownika = :typ')
+                                   ->andWhere('u.status = :status')
+                                   ->setParameter('typ', 'czlonek')
+                                   ->setParameter('status', 'zawieszony');
                         break;
 
                     case 'pelnomocnicy_struktur':
@@ -1658,8 +2723,10 @@ class DokumentService
                         return $choices;
 
                     case 'kandydaci_krajowy':
-                        // Kandydaci z całego kraju (dla zarządu krajowego)
-                        $queryBuilder->where('u.typUzytkownika = :typ')
+                        // Wszyscy kandydaci z całego kraju - pokażemy ich postęp
+                        $queryBuilder->leftJoin('u.postepKandydataEntity', 'pk')
+                                   ->addSelect('pk')
+                                   ->where('u.typUzytkownika = :typ')
                                    ->andWhere('u.status = :status')
                                    ->setParameter('typ', 'kandydat')
                                    ->setParameter('status', 'aktywny');
@@ -1871,11 +2938,226 @@ class DokumentService
 
                         return $choices;
 
+                    case 'prezesi_regionu':
+                        $connection = $this->entityManager->getConnection();
+                        $sql = 'SELECT * FROM "user" u
+                                WHERE u.status = :status
+                                AND u.roles::jsonb @> :role
+                                ORDER BY u.nazwisko, u.imie';
+                        $stmt = $connection->prepare($sql);
+                        $result = $stmt->executeQuery([
+                            'status' => 'aktywny',
+                            'role' => '["ROLE_PREZES_REGIONU"]',
+                        ]);
+                        $userIds = array_column($result->fetchAllAssociative(), 'id');
+                        if (empty($userIds)) {
+                            return [];
+                        }
+                        $users = $this->userRepository->findBy(['id' => $userIds]);
+                        $choices = [];
+                        foreach ($users as $user) {
+                            $choices[$user->getFullName()] = $user;
+                        }
+                        return $choices;
+
+                    case 'przewodniczacy_rady':
+                        $connection = $this->entityManager->getConnection();
+                        $sql = 'SELECT * FROM "user" u
+                                WHERE u.status = :status
+                                AND u.roles::jsonb @> :role
+                                ORDER BY u.nazwisko, u.imie';
+                        $stmt = $connection->prepare($sql);
+                        $result = $stmt->executeQuery([
+                            'status' => 'aktywny',
+                            'role' => '["ROLE_PRZEWODNICZACY_RADY"]',
+                        ]);
+                        $userIds = array_column($result->fetchAllAssociative(), 'id');
+                        if (empty($userIds)) {
+                            return [];
+                        }
+                        $users = $this->userRepository->findBy(['id' => $userIds]);
+                        $choices = [];
+                        foreach ($users as $user) {
+                            $choices[$user->getFullName()] = $user;
+                        }
+                        return $choices;
+
+                    case 'zastepcy_przewodniczacy_rady':
+                        $connection = $this->entityManager->getConnection();
+                        $sql = 'SELECT * FROM "user" u
+                                WHERE u.status = :status
+                                AND u.roles::jsonb @> :role
+                                ORDER BY u.nazwisko, u.imie';
+                        $stmt = $connection->prepare($sql);
+                        $result = $stmt->executeQuery([
+                            'status' => 'aktywny',
+                            'role' => '["ROLE_ZASTEPCA_PRZEWODNICZACY_RADY"]',
+                        ]);
+                        $userIds = array_column($result->fetchAllAssociative(), 'id');
+                        if (empty($userIds)) {
+                            return [];
+                        }
+                        $users = $this->userRepository->findBy(['id' => $userIds]);
+                        $choices = [];
+                        foreach ($users as $user) {
+                            $choices[$user->getFullName()] = $user;
+                        }
+                        return $choices;
+
+                    case 'przewodniczacy_komisji_rewizyjnej':
+                        $connection = $this->entityManager->getConnection();
+                        $sql = 'SELECT * FROM "user" u
+                                WHERE u.status = :status
+                                AND u.roles::jsonb @> :role
+                                ORDER BY u.nazwisko, u.imie';
+                        $stmt = $connection->prepare($sql);
+                        $result = $stmt->executeQuery([
+                            'status' => 'aktywny',
+                            'role' => '["ROLE_PRZEWODNICZACY_KOMISJI_REW"]',
+                        ]);
+                        $userIds = array_column($result->fetchAllAssociative(), 'id');
+                        if (empty($userIds)) {
+                            return [];
+                        }
+                        $users = $this->userRepository->findBy(['id' => $userIds]);
+                        $choices = [];
+                        foreach ($users as $user) {
+                            $choices[$user->getFullName()] = $user;
+                        }
+                        return $choices;
+
+                    case 'wiceprzewodniczacy_komisji_rewizyjnej':
+                        $connection = $this->entityManager->getConnection();
+                        $sql = 'SELECT * FROM "user" u
+                                WHERE u.status = :status
+                                AND u.roles::jsonb @> :role
+                                ORDER BY u.nazwisko, u.imie';
+                        $stmt = $connection->prepare($sql);
+                        $result = $stmt->executeQuery([
+                            'status' => 'aktywny',
+                            'role' => '["ROLE_WICEPRZEWODNICZACY_KOMISJI_REW"]',
+                        ]);
+                        $userIds = array_column($result->fetchAllAssociative(), 'id');
+                        if (empty($userIds)) {
+                            return [];
+                        }
+                        $users = $this->userRepository->findBy(['id' => $userIds]);
+                        $choices = [];
+                        foreach ($users as $user) {
+                            $choices[$user->getFullName()] = $user;
+                        }
+                        return $choices;
+
+                    case 'sekretarz_komisji_rewizyjnej':
+                        $connection = $this->entityManager->getConnection();
+                        $sql = 'SELECT * FROM "user" u
+                                WHERE u.status = :status
+                                AND u.roles::jsonb @> :role
+                                ORDER BY u.nazwisko, u.imie';
+                        $stmt = $connection->prepare($sql);
+                        $result = $stmt->executeQuery([
+                            'status' => 'aktywny',
+                            'role' => '["ROLE_SEKRETARZ_KOMISJI_REW"]',
+                        ]);
+                        $userIds = array_column($result->fetchAllAssociative(), 'id');
+                        if (empty($userIds)) {
+                            return [];
+                        }
+                        $users = $this->userRepository->findBy(['id' => $userIds]);
+                        $choices = [];
+                        foreach ($users as $user) {
+                            $choices[$user->getFullName()] = $user;
+                        }
+                        return $choices;
+
+                    case 'przewodniczacy_klubu':
+                        $connection = $this->entityManager->getConnection();
+                        $sql = 'SELECT * FROM "user" u
+                                WHERE u.status = :status
+                                AND u.roles::jsonb @> :role
+                                ORDER BY u.nazwisko, u.imie';
+                        $stmt = $connection->prepare($sql);
+                        $result = $stmt->executeQuery([
+                            'status' => 'aktywny',
+                            'role' => '["ROLE_PRZEWODNICZACY_KLUBU"]',
+                        ]);
+                        $userIds = array_column($result->fetchAllAssociative(), 'id');
+                        if (empty($userIds)) {
+                            return [];
+                        }
+                        $users = $this->userRepository->findBy(['id' => $userIds]);
+                        $choices = [];
+                        foreach ($users as $user) {
+                            $choices[$user->getFullName()] = $user;
+                        }
+                        return $choices;
+
+                    case 'przewodniczacy_delegacji':
+                        $connection = $this->entityManager->getConnection();
+                        $sql = 'SELECT * FROM "user" u
+                                WHERE u.status = :status
+                                AND u.roles::jsonb @> :role
+                                ORDER BY u.nazwisko, u.imie';
+                        $stmt = $connection->prepare($sql);
+                        $result = $stmt->executeQuery([
+                            'status' => 'aktywny',
+                            'role' => '["ROLE_PRZEWODNICZACY_DELEGACJI"]',
+                        ]);
+                        $userIds = array_column($result->fetchAllAssociative(), 'id');
+                        if (empty($userIds)) {
+                            return [];
+                        }
+                        $users = $this->userRepository->findBy(['id' => $userIds]);
+                        $choices = [];
+                        foreach ($users as $user) {
+                            $choices[$user->getFullName()] = $user;
+                        }
+                        return $choices;
+
                     default:
                         return [];
                 }
 
                 $queryBuilder->orderBy('u.nazwisko, u.imie');
+
+                $users = $queryBuilder->getQuery()->getResult();
+
+                // Dla kandydatów dodaj informację o postępie
+                if (in_array($filter, ['kandydaci', 'kandydaci_krajowy'])) {
+                    $choices = [];
+                    $counter = 0;
+                    foreach ($users as $user) {
+                        $counter++;
+                        // Pobierz bezpośrednio z bazy
+                        $postepRepository = $this->entityManager->getRepository(\App\Entity\PostepKandydata::class);
+                        $postep = $postepRepository->findOneBy(['kandydat' => $user]);
+
+                        if ($postep) {
+                            $procentPostep = $postep->getPostepProcentowy();
+                        } else {
+                            $procentPostep = 0;
+                        }
+
+                        if ($procentPostep === 100) {
+                            $status = 'GOTOWY DO PRZYJĘCIA ✓';
+                        } elseif ($procentPostep >= 75) {
+                            $status = 'PRAWIE GOTOWY';
+                        } elseif ($procentPostep >= 50) {
+                            $status = 'W TRAKCIE';
+                        } else {
+                            $status = 'POCZĄTEK PROCESU';
+                        }
+
+                        $label = sprintf('%s (Postęp: %d%% - %s)',
+                            $user->getFullName(),
+                            $procentPostep,
+                            $status
+                        );
+
+                        $choices[$label] = $user;
+                    }
+                    return $choices;
+                }
 
                 return $queryBuilder->getQuery()->getResult();
         }
@@ -1953,34 +3235,50 @@ class DokumentService
      * Tworzy dokument na podstawie typu i danych z formularza.
      *
      * @param array<string, mixed> $data
+     * @param bool $skipPermissionCheck Pomija sprawdzanie uprawnień (dla dokumentów tworzonych automatycznie)
      */
-    public function createDocument(string $type, array $data, User $creator): Dokument
+    public function createDocument(string $type, array $data, User $creator, bool $skipPermissionCheck = false): Dokument
     {
         $definition = $this->getDocumentDefinition($type);
         if (!$definition) {
             throw new \InvalidArgumentException("Nieznany typ dokumentu: $type");
         }
 
-        // Sprawdź uprawnienia
-        if (!$this->canCreateDocumentType($creator, $type)) {
+        // Sprawdź uprawnienia (jeśli nie pominięto sprawdzania)
+        if (!$skipPermissionCheck && !$this->canCreateDocumentType($creator, $type)) {
             throw new AccessDeniedException('Brak uprawnień do utworzenia tego typu dokumentu');
         }
 
         $dokument = new Dokument();
         $dokument->setTyp($type);
         $dokument->setTworca($creator);
-        $dokument->setOkreg($creator->getOkreg());
-        
+        // NIE ustawiaj okręgu tutaj - mapFormDataToDocument ustawi go z danych
+        // Fallback do okręgu twórcy będzie później jeśli potrzebny
+
         // Generuj numer dokumentu po ustawieniu typu
         $dokument->generateNumerDokumentu();
 
-        // Ustaw dane z formularza
+        // Ustaw dane z formularza (w tym okręg z $data['okreg'])
         $this->mapFormDataToDocument($dokument, $data, $definition);
 
-        // Generuj unikalny numer dokumentu
+        // Fallback: jeśli okręg nie został ustawiony z danych, użyj okręgu twórcy
+        if (!$dokument->getOkreg() && $creator->getOkreg()) {
+            $dokument->setOkreg($creator->getOkreg());
+        }
+
+        // Fallback: jeśli dokument nadal nie ma okręgu, znajdź domyślny okręg
+        if (!$dokument->getOkreg()) {
+            // Spróbuj znaleźć główny okręg (pierwszy z listy) jako fallback
+            $defaultOkreg = $this->entityManager->getRepository(\App\Entity\Okreg::class)->findOneBy([], ['id' => 'ASC']);
+            if ($defaultOkreg) {
+                $dokument->setOkreg($defaultOkreg);
+            }
+        }
+
+        // Generuj unikalny numer dokumentu (użyj okręgu dokumentu, który może być już zaktualizowany z kandydata)
         $numerDokumentu = $this->dokumentRepository->generateNextDocumentNumber(
             $type,
-            $creator->getOkreg()
+            $dokument->getOkreg()
         );
         $dokument->setNumerDokumentu($numerDokumentu);
 
@@ -1994,9 +3292,110 @@ class DokumentService
         $dokument->setHashDokumentu($dokument->generateHash());
 
         $this->entityManager->persist($dokument);
-        $this->entityManager->flush();
+        // NOTE: Nie robimy flush() tutaj - pozwalamy wywołującemu dodać dodatkowe dane przed zapisem
+        // Wywołujący musi sam wywołać flush() po ustawieniu wszystkich danych
 
         return $dokument;
+    }
+
+    /**
+     * Renderuje treść dokumentu używając szablonu Twig.
+     *
+     * @return string Wyrenderowany HTML dokumentu
+     */
+    public function renderDocumentContent(Dokument $dokument): string
+    {
+        try {
+            // Sprawdź czy typ dokumentu jest obsługiwany
+            if (!DocumentFactory::isSupported($dokument->getTyp())) {
+                throw new \InvalidArgumentException(sprintf(
+                    'Typ dokumentu "%s" nie jest obsługiwany przez system szablonów',
+                    $dokument->getTyp()
+                ));
+            }
+
+            // Pobierz klasę dokumentu
+            $documentClass = DocumentFactory::create($dokument->getTyp());
+            $templateName = $documentClass->getTemplateName();
+
+            // Sprawdź czy szablon Twig istnieje
+            if (!$this->twig->getLoader()->exists($templateName)) {
+                throw new \RuntimeException(sprintf(
+                    'Szablon "%s" nie istnieje. Utwórz plik: templates/%s',
+                    $templateName,
+                    $templateName
+                ));
+            }
+
+            // Przygotuj dane dodatkowe - załaduj użytkowników jeśli są zapisani jako ID
+            $daneDodatkowe = $dokument->getDaneDodatkowe() ?? [];
+            if (isset($daneDodatkowe['czlonkowie_oddzialu']) && is_array($daneDodatkowe['czlonkowie_oddzialu'])) {
+                $userRepository = $this->entityManager->getRepository(User::class);
+                $czlonkowieList = [];
+                foreach ($daneDodatkowe['czlonkowie_oddzialu'] as $czlonek) {
+                    // Jeśli to ID (liczba), załaduj użytkownika z bazy
+                    if (is_numeric($czlonek)) {
+                        $user = $userRepository->find($czlonek);
+                        if ($user) {
+                            $czlonkowieList[] = sprintf(
+                                "%s (ID: %d)",
+                                $user->getFullName(),
+                                $user->getId()
+                            );
+                        }
+                    }
+                }
+                // Ustaw sformatowaną listę
+                if (!empty($czlonkowieList)) {
+                    $daneDodatkowe['czlonkowie_zalozyciele'] = implode("\n", $czlonkowieList);
+                    $daneDodatkowe['liczba_czlonkow'] = count($czlonkowieList);
+                }
+            }
+
+            // Przygotuj dane do szablonu
+            $templateData = $documentClass->prepareTemplateData(
+                $dokument,
+                $daneDodatkowe
+            );
+
+            // Dodaj podpisy i sam dokument do danych
+            $templateData['podpisy'] = $dokument->getPodpisy();
+            $templateData['dokument'] = $dokument;
+
+            // Renderuj szablon Twig
+            return $this->twig->render($templateName, $templateData);
+        } catch (\Exception $e) {
+            $this->logger->error('Błąd renderowania dokumentu przez Twig', [
+                'dokument_id' => $dokument->getId(),
+                'type' => $dokument->getTyp(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Fallback - zwróć komunikat o błędzie w ładnym formacie
+            $errorTemplate = isset($documentClass) ? $documentClass->getTemplateName() : 'nieznany';
+
+            return sprintf(
+                '<div class="alert alert-danger" style="padding: 20px; margin: 20px; border-left: 5px solid #dc3545; background: #f8d7da;">
+                    <h4 style="color: #721c24; margin-top: 0;">
+                        <i class="fas fa-exclamation-triangle"></i> Błąd renderowania dokumentu
+                    </h4>
+                    <p style="margin: 10px 0;"><strong>ID dokumentu:</strong> %s</p>
+                    <p style="margin: 10px 0;"><strong>Typ dokumentu:</strong> %s</p>
+                    <p style="margin: 10px 0;"><strong>Szablon:</strong> %s</p>
+                    <hr style="border-color: #f5c6cb;">
+                    <p style="margin: 10px 0;"><strong>Komunikat błędu:</strong></p>
+                    <pre style="background: #fff; padding: 10px; border: 1px solid #f5c6cb; border-radius: 4px; overflow-x: auto;">%s</pre>
+                    <p style="margin: 15px 0 0 0; font-size: 12px; color: #856404;">
+                        <i class="fas fa-info-circle"></i> Skontaktuj się z administratorem systemu w celu rozwiązania problemu.
+                    </p>
+                </div>',
+                htmlspecialchars((string)$dokument->getId()),
+                htmlspecialchars($dokument->getTyp()),
+                htmlspecialchars($errorTemplate),
+                htmlspecialchars($e->getMessage())
+            );
+        }
     }
 
     /**
@@ -2008,24 +3407,45 @@ class DokumentService
      */
     private function mapFormDataToDocument(Dokument $dokument, array $data, array $definition): void
     {
+        // Debug removed to fix memory issues
+
         foreach ($definition['fields'] as $fieldName => $fieldConfig) {
             if (!isset($data[$fieldName])) {
+                error_log("Field $fieldName not in form data");
                 continue;
             }
 
             $value = $data[$fieldName];
+            error_log("Processing field: $fieldName with value type: " . gettype($value));
 
             switch ($fieldName) {
                 case 'kandydat':
                 case 'powolywan_czlonek':
                 case 'odwolywan_czlonek':
                     $dokument->setKandydat($value);
+                    // For candidate-related documents, inherit district from candidate
+                    if ($value instanceof \App\Entity\User && $value->getOkreg()) {
+                        $dokument->setOkreg($value->getOkreg());
+                    }
                     break;
                 case 'czlonek':
                 case 'obserwator':
                 case 'protokolant':
                 case 'prowadzacy':
-                    $dokument->setCzlonek($value);
+                    if ($value instanceof \App\Entity\User) {
+                        $this->logger->info('Setting czlonek in document', [
+                            'field' => $fieldName,
+                            'user' => $value->getFullName(),
+                            'user_id' => $value->getId(),
+                        ]);
+                        $dokument->setCzlonek($value);
+                    } else {
+                        $this->logger->error('Invalid czlonek value - not a User object', [
+                            'field' => $fieldName,
+                            'type' => gettype($value),
+                            'value' => is_scalar($value) ? $value : 'complex',
+                        ]);
+                    }
                     break;
                 case 'data_wejscia_w_zycie':
                 case 'data_powolania':
@@ -2038,6 +3458,31 @@ class DokumentService
                 case 'okreg':
                     $dokument->setOkreg($value);
                     break;
+            }
+        }
+
+        // PREPROCESSING dla utworzenie_oddzialu - generuj pola z czlonkowie_oddzialu
+        if ($dokument->getTyp() === 'utworzenie_oddzialu' && isset($data['czlonkowie_oddzialu'])) {
+            $czlonkowieIds = $data['czlonkowie_oddzialu'];
+            if (is_array($czlonkowieIds)) {
+                $data['liczba_czlonkow'] = count($czlonkowieIds);
+
+                // Pobierz pełne nazwy członków
+                $czlonkowieNazwy = [];
+                foreach ($czlonkowieIds as $user) {
+                    if ($user instanceof \App\Entity\User) {
+                        $czlonkowieNazwy[] = $user->getFullName();
+                    }
+                }
+
+                $data['czlonkowie_zalozyciele'] = implode(', ', $czlonkowieNazwy);
+
+                // Koordynator - jeśli jest obiektem User, pobierz nazwę
+                if (isset($data['koordynator']) && $data['koordynator'] instanceof \App\Entity\User) {
+                    $data['koordynator'] = $data['koordynator']->getFullName();
+                } elseif (empty($data['koordynator'])) {
+                    $data['koordynator'] = $czlonkowieNazwy[0] ?? 'Do wyznaczenia';
+                }
             }
         }
 
@@ -2054,34 +3499,11 @@ class DokumentService
     private function generateDocumentContent(Dokument $dokument, array $definition, array $data): void
     {
         $title = $this->generateDocumentTitle($definition, $data);
-        
-        // Użyj nowego systemu klas dokumentów jeśli typ jest obsługiwany
-        if (DocumentFactory::isSupported($dokument->getTyp())) {
-            try {
-                $content = DocumentFactory::generateContent($dokument->getTyp(), $dokument, $data);
-            } catch (\Exception $e) {
-                $this->logger->error('Błąd generowania dokumentu przez DocumentFactory', [
-                    'type' => $dokument->getTyp(),
-                    'error' => $e->getMessage()
-                ]);
-                // Fallback do starej metody
-                $content = $this->generateDocumentContentText($definition, $data);
-            }
-        } else {
-            // Użyj szablonu z DocumentTemplates jeśli istnieje
-            $template = DocumentTemplates::getTemplate($dokument->getTyp());
-            if ($template) {
-                // Przygotuj dane do wypełnienia szablonu
-                $templateData = $this->prepareTemplateData($dokument, $data);
-                $content = DocumentTemplates::fillTemplate($template, $templateData);
-            } else {
-                // Fallback do starej metody generowania
-                $content = $this->generateDocumentContentText($definition, $data);
-            }
-        }
 
+        // NOWY WORKFLOW: Wszystkie dokumenty używają Twig
+        // Pole 'tresc' pozostaje puste - renderowanie odbywa się w czasie rzeczywistym
         $dokument->setTytul($title);
-        $dokument->setTresc($content);
+        $dokument->setTresc(''); // Deprecated - treść renderowana przez Twig w kontrolerze
     }
 
     /**
@@ -2115,8 +3537,10 @@ class DokumentService
     }
 
     /**
-     * Przygotowuje dane do wypełnienia szablonu.
+     * DEPRECATED: Użyj AbstractDocument::prepareTemplateData() zamiast tego.
+     * Ta metoda pozostaje tylko dla zachowania wstecznej kompatybilności.
      *
+     * @deprecated Będzie usunięte w przyszłej wersji
      * @param array<string, mixed> $data
      * @return array<string, string>
      */
@@ -2138,21 +3562,29 @@ class DokumentService
         if (isset($data['kandydat'])) {
             $kandydat = $data['kandydat'];
             $templateData['imie_nazwisko'] = $kandydat->getFullName();
+            $templateData['user_id'] = $kandydat->getId();
+            $templateData['numer_w_partii'] = $kandydat->getNumerWPartii() ?? 'BRAK';
             $templateData['pesel'] = $kandydat->getPesel() ?? 'BRAK';
             $templateData['adres'] = $kandydat->getFullAddress() ?? 'BRAK ADRESU';
         } elseif (isset($data['czlonek'])) {
             $czlonek = $data['czlonek'];
             $templateData['imie_nazwisko'] = $czlonek->getFullName();
+            $templateData['user_id'] = $czlonek->getId();
+            $templateData['numer_w_partii'] = $czlonek->getNumerWPartii() ?? 'BRAK';
             $templateData['pesel'] = $czlonek->getPesel() ?? 'BRAK';
             $templateData['adres'] = $czlonek->getFullAddress() ?? 'BRAK ADRESU';
         } elseif (isset($data['powolywan_czlonek'])) {
             $czlonek = $data['powolywan_czlonek'];
             $templateData['imie_nazwisko'] = $czlonek->getFullName();
+            $templateData['user_id'] = $czlonek->getId();
+            $templateData['numer_w_partii'] = $czlonek->getNumerWPartii() ?? 'BRAK';
             $templateData['pesel'] = $czlonek->getPesel() ?? 'BRAK';
             $templateData['adres'] = $czlonek->getFullAddress() ?? 'BRAK ADRESU';
         } elseif (isset($data['odwolywan_czlonek'])) {
             $czlonek = $data['odwolywan_czlonek'];
             $templateData['imie_nazwisko'] = $czlonek->getFullName();
+            $templateData['user_id'] = $czlonek->getId();
+            $templateData['numer_w_partii'] = $czlonek->getNumerWPartii() ?? 'BRAK';
             $templateData['pesel'] = $czlonek->getPesel() ?? 'BRAK';
             $templateData['adres'] = $czlonek->getFullAddress() ?? 'BRAK ADRESU';
         }
@@ -2231,8 +3663,10 @@ class DokumentService
     }
 
     /**
-     * Generuje treść dokumentu (stara metoda - fallback).
+     * DEPRECATED: Wszystkie dokumenty używają teraz szablonów Twig.
+     * Ta metoda pozostaje tylko dla zachowania wstecznej kompatybilności.
      *
+     * @deprecated Będzie usunięte w przyszłej wersji
      * @param array<string, mixed> $definition
      * @param array<string, mixed> $data
      */
@@ -2336,6 +3770,8 @@ class DokumentService
         $signers = $definition['signers'] ?? [];
         $kolejnosc = 1; // Licznik kolejności podpisów
 
+        // Debug removed to fix memory issues
+
         foreach ($signers as $signerType => $signerValue) {
             switch ($signerType) {
                 case 'creator':
@@ -2392,6 +3828,141 @@ class DokumentService
                         $prowadzacy = $dokument->getZebranieOddzialu()->getProwadzacy();
                         if ($prowadzacy) {
                             $this->addSigner($dokument, $prowadzacy, $kolejnosc++);
+                        }
+                    }
+                    break;
+
+                case 'przewodniczacy_kongresu':
+                    // Przewodniczący Kongresu - pobiera się z danych formularza
+                    if (true === $signerValue && isset($data['przewodniczacy_kongresu']) && $data['przewodniczacy_kongresu'] instanceof User) {
+                        $this->addSigner($dokument, $data['przewodniczacy_kongresu'], $kolejnosc++);
+                    }
+                    break;
+
+                case 'sekretarz_kongresu':
+                    // Sekretarz Kongresu - pobiera się z danych formularza
+                    if (true === $signerValue && isset($data['sekretarz_kongresu']) && $data['sekretarz_kongresu'] instanceof User) {
+                        $this->addSigner($dokument, $data['sekretarz_kongresu'], $kolejnosc++);
+                    }
+                    break;
+
+                case 'czlonek_zebrania':
+                    // Członek zebrania - pobiera się z danych formularza (dla wyznaczenia prowadzącego)
+                    if (true === $signerValue && isset($data['czlonek_zebrania']) && $data['czlonek_zebrania'] instanceof User) {
+                        $this->addSigner($dokument, $data['czlonek_zebrania'], $kolejnosc++);
+                    }
+                    break;
+
+                case 'obserwator':
+                    // Obserwator zebrania walnego - pobiera się z danych formularza lub zebrania
+                    if (true === $signerValue) {
+                        $obserwator = null;
+
+                        // Próba 1: Z formularza
+                        if (isset($data['obserwator']) && $data['obserwator'] instanceof User) {
+                            $obserwator = $data['obserwator'];
+                        }
+
+                        // Próba 2: Z zebrania oddziału (jeśli istnieje relacja)
+                        if (!$obserwator && $dokument->getZebranieOddzialu()) {
+                            $obserwator = $dokument->getZebranieOddzialu()->getObserwator();
+                        }
+
+                        if ($obserwator) {
+                            $this->addSigner($dokument, $obserwator, $kolejnosc++);
+                        }
+                    }
+                    break;
+
+                case 'protokolant':
+                    // Protokolant zebrania walnego - pobiera się z danych formularza lub zebrania
+                    if (true === $signerValue) {
+                        $protokolant = null;
+
+                        if (isset($data['protokolant']) && $data['protokolant'] instanceof User) {
+                            $protokolant = $data['protokolant'];
+                        }
+
+                        if (!$protokolant && $dokument->getZebranieOddzialu()) {
+                            $protokolant = $dokument->getZebranieOddzialu()->getProtokolant();
+                        }
+
+                        if ($protokolant) {
+                            $this->addSigner($dokument, $protokolant, $kolejnosc++);
+                        }
+                    }
+                    break;
+
+                case 'prowadzacy':
+                    // Prowadzący zebranie walne - pobiera się z danych formularza lub zebrania
+                    if (true === $signerValue) {
+                        $prowadzacy = null;
+
+                        if (isset($data['prowadzacy']) && $data['prowadzacy'] instanceof User) {
+                            $prowadzacy = $data['prowadzacy'];
+                        }
+
+                        if (!$prowadzacy && $dokument->getZebranieOddzialu()) {
+                            $prowadzacy = $dokument->getZebranieOddzialu()->getProwadzacy();
+                        }
+
+                        if ($prowadzacy) {
+                            $this->addSigner($dokument, $prowadzacy, $kolejnosc++);
+                        }
+                    }
+                    break;
+
+                case 'czlonek':
+                    // Podpis członka (np. oświadczenie, rezygnacja)
+                    if (true === $signerValue) {
+                        $czlonek = $dokument->getCzlonek();
+                        if ($czlonek) {
+                            $this->addSigner($dokument, $czlonek, $kolejnosc++);
+                        }
+                    }
+                    break;
+
+                case 'przewodniczacy_kongresu':
+                    // Przewodniczący Kongresu - pobiera z danych formularza
+                    if (true === $signerValue) {
+                        if (isset($data['przewodniczacy_kongresu']) && $data['przewodniczacy_kongresu'] instanceof User) {
+                            $this->addSigner($dokument, $data['przewodniczacy_kongresu'], $kolejnosc++);
+                        }
+                    }
+                    break;
+
+                case 'sekretarz_kongresu':
+                    // Sekretarz Kongresu - pobiera z danych formularza
+                    if (true === $signerValue) {
+                        if (isset($data['sekretarz_kongresu']) && $data['sekretarz_kongresu'] instanceof User) {
+                            $this->addSigner($dokument, $data['sekretarz_kongresu'], $kolejnosc++);
+                        }
+                    }
+                    break;
+
+                case 'przewodniczacy_sadu':
+                    // Przewodniczący Sądu Partyjnego - pobiera z danych formularza
+                    if (true === $signerValue) {
+                        if (isset($data['przewodniczacy_sadu']) && $data['przewodniczacy_sadu'] instanceof User) {
+                            $this->addSigner($dokument, $data['przewodniczacy_sadu'], $kolejnosc++);
+                        }
+                    }
+                    break;
+
+                case 'czlonek_sadu_1':
+                    // Członek Sądu 1 - pobiera z danych formularza
+                    if (true === $signerValue) {
+                        if (isset($data['czlonek_sadu_1']) && $data['czlonek_sadu_1'] instanceof User) {
+                            $this->addSigner($dokument, $data['czlonek_sadu_1'], $kolejnosc++);
+                        }
+                    }
+                    break;
+
+                case 'czlonek_sadu_2':
+                    // Członek Sądu 2 - pobiera z danych formularza
+                    if (true === $signerValue) {
+                        if (isset($data['czlonek_sadu_2']) && $data['czlonek_sadu_2'] instanceof User) {
+                            $this->addSigner($dokument, $data['czlonek_sadu_2'], $kolejnosc++);
                         }
                     }
                     break;
@@ -2460,7 +4031,7 @@ class DokumentService
     /**
      * Wykonuje akcje związane z dokumentem po jego podpisaniu.
      */
-    private function executeDocumentAction(Dokument $dokument): void
+    public function executeDocumentAction(Dokument $dokument): void
     {
         $this->logger->info('Executing document action', [
             'document_type' => $dokument->getTyp(),
@@ -2575,7 +4146,134 @@ class DokumentService
             case Dokument::TYP_WYZNACZENIE_PROWADZACEGO:
                 $this->handleAppointmentProwadzacy($dokument);
                 break;
+
+            // Wybory walne okręgu
+            case Dokument::TYP_WYBOR_PREZESA_OKREGU_WALNE:
+                $this->handleElectionPrezesOkregu($dokument);
+                break;
+
+            case Dokument::TYP_WYBOR_WICEPREZESA_OKREGU_WALNE:
+                $this->handleElectionWiceprezesOkregu($dokument);
+                break;
+
+            // Dokumenty członkostwa
+            case Dokument::TYP_OSWIADCZENIE_WYSTAPIENIA:
+                $this->handleOswiadczenieWystapienia($dokument);
+                break;
+
+            case Dokument::TYP_UCHWALA_SKRESLENIA_CZLONKA:
+                $this->handleUchwalaSkreslenia($dokument);
+                break;
+
+            case Dokument::TYP_WNIOSEK_ZAWIESZENIA_CZLONKOSTWA:
+                $this->handleWniosekZawieszenia($dokument);
+                break;
+
+            case Dokument::TYP_WNIOSEK_ODWIESZENIA_CZLONKOSTWA:
+                $this->handleWniosekOdwieszenia($dokument);
+                break;
+
+            case Dokument::TYP_REZYGNACJA_Z_FUNKCJI:
+                $this->handleRezygnacjaZFunkcji($dokument);
+                break;
+
+            // Dokumenty regionalne
+            case Dokument::TYP_POWOLANIE_PREZES_REGIONU:
+                $this->handleAppointmentPrezesRegionu($dokument);
+                break;
+
+            case Dokument::TYP_ODWOLANIE_PREZES_REGIONU:
+                $this->handleDismissalPrezesRegionu($dokument);
+                break;
+
+            case Dokument::TYP_WYBOR_SEKRETARZ_REGIONU:
+                $this->handleElectionSekretarzRegionu($dokument);
+                break;
+
+            case Dokument::TYP_WYBOR_SKARBNIK_REGIONU:
+                $this->handleElectionSkarbnikRegionu($dokument);
+                break;
+
+            // Dokumenty Rady Krajowej
+            case Dokument::TYP_WYBOR_PRZEWODNICZACY_RADY:
+                $this->handleElectionPrzewodniczacyRady($dokument);
+                break;
+
+            case Dokument::TYP_WYBOR_ZASTEPCA_PRZEWODNICZACY_RADY:
+                $this->handleElectionZastepcaPrzewodniczacyRady($dokument);
+                break;
+
+            case Dokument::TYP_ODWOLANIE_PRZEWODNICZACY_RADY:
+                $this->handleDismissalPrzewodniczacyRady($dokument);
+                break;
+
+            case Dokument::TYP_ODWOLANIE_ZASTEPCA_PRZEWODNICZACY_RADY:
+                $this->handleDismissalZastepcaPrzewodniczacyRady($dokument);
+                break;
+
+            // Komisja Rewizyjna
+            case Dokument::TYP_WYBOR_PRZEWODNICZACY_KOMISJI_REWIZYJNEJ:
+                $this->handleElectionPrzewodniczacyKomisjiRewizyjnej($dokument);
+                break;
+
+            case Dokument::TYP_WYBOR_WICEPRZEWODNICZACY_KOMISJI_REWIZYJNEJ:
+                $this->handleElectionWiceprzewodniczacyKomisjiRewizyjnej($dokument);
+                break;
+
+            case Dokument::TYP_WYBOR_SEKRETARZ_KOMISJI_REWIZYJNEJ:
+                $this->handleElectionSekretarzKomisjiRewizyjnej($dokument);
+                break;
+
+            case Dokument::TYP_ODWOLANIE_PRZEWODNICZACY_KOMISJI_REWIZYJNEJ:
+                $this->handleDismissalPrzewodniczacyKomisjiRewizyjnej($dokument);
+                break;
+
+            case Dokument::TYP_ODWOLANIE_WICEPRZEWODNICZACY_KOMISJI_REWIZYJNEJ:
+                $this->handleDismissalWiceprzewodniczacyKomisjiRewizyjnej($dokument);
+                break;
+
+            case Dokument::TYP_ODWOLANIE_SEKRETARZ_KOMISJI_REWIZYJNEJ:
+                $this->handleDismissalSekretarzKomisjiRewizyjnej($dokument);
+                break;
+
+            // Struktury parlamentarne
+            case Dokument::TYP_POWOLANIE_PRZEWODNICZACY_KLUBU:
+                $this->handleAppointmentPrzewodniczacyKlubu($dokument);
+                break;
+
+            case Dokument::TYP_ODWOLANIE_PRZEWODNICZACY_KLUBU:
+                $this->handleDismissalPrzewodniczacyKlubu($dokument);
+                break;
+
+            case Dokument::TYP_WYBOR_PRZEWODNICZACY_DELEGACJI:
+                $this->handleElectionPrzewodniczacyDelegacji($dokument);
+                break;
+
+            case Dokument::TYP_ODWOLANIE_PRZEWODNICZACY_DELEGACJI:
+                $this->handleDismissalPrzewodniczacyDelegacji($dokument);
+                break;
+
+            // Pozostałe
+            case Dokument::TYP_WYZNACZENIE_OSOBY_TYMCZASOWEJ:
+                $this->handleWyznaczenieTymczasowe($dokument);
+                break;
+
+            case Dokument::TYP_POSTANOWIENIE_SADU_PARTYJNEGO:
+                $this->handlePostanowienieSadu($dokument);
+                break;
         }
+
+        // Oznacz dokument jako wykonany
+        $dokument->setStatus(Dokument::STATUS_WYKONANY);
+        $dokument->setDataWykonania(new \DateTime());
+        $this->entityManager->persist($dokument);
+        $this->entityManager->flush();
+
+        $this->logger->info('Document action executed successfully', [
+            'document_id' => $dokument->getId(),
+            'document_type' => $dokument->getTyp(),
+            'status' => Dokument::STATUS_WYKONANY,
+        ]);
     }
 
     /**
@@ -2730,12 +4428,27 @@ class DokumentService
         // Zmień typ użytkownika z kandydata na członka
         $kandydat->setTypUzytkownika('czlonek');
 
-        // Dodaj rolę członka partii
+        // Dodaj rolę członka partii i usuń role konfliktujące
         $currentRoles = $kandydat->getRoles();
+
+        // Usuń role podstawowe konfliktujące (kandydat, sympatyk, darczyńca, były członek)
+        // WAŻNE: Dodano też ROLE_KANDYDAT (alias) i ROLE_BYLY_CZLONEK
+        $currentRoles = array_filter($currentRoles, function ($role) {
+            return !in_array($role, [
+                'ROLE_KANDYDAT',
+                'ROLE_KANDYDAT_PARTII',
+                'ROLE_SYMPATYK',
+                'ROLE_DARCZYNCA',
+                'ROLE_BYLY_CZLONEK'
+            ]);
+        });
+
         if (!in_array('ROLE_CZLONEK_PARTII', $currentRoles)) {
             $currentRoles[] = 'ROLE_CZLONEK_PARTII';
-            $kandydat->setRoles($currentRoles);
         }
+
+        // Reindeksuj tablicę (usuń luki w kluczach)
+        $kandydat->setRoles(array_values($currentRoles));
 
         // Ustaw datę przyjęcia do partii
         $kandydat->setDataPrzyjeciaDoPartii($dokument->getDataPodpisania() ?? new \DateTime());
@@ -2799,6 +4512,32 @@ class DokumentService
             return;
         }
 
+        // Sprawdź czy już istnieje Sekretarz Partii (walidacja unikalności)
+        $connection = $this->entityManager->getConnection();
+        $sql = 'SELECT id FROM "user"
+                WHERE status = :status
+                AND roles::jsonb @> :role
+                AND id != :current_user_id';
+
+        $stmt = $connection->prepare($sql);
+        $result = $stmt->executeQuery([
+            'status' => 'aktywny',
+            'role' => '["ROLE_SEKRETARZ_PARTII"]',
+            'current_user_id' => $czlonek->getId(),
+        ]);
+
+        $existingSecretaryId = $result->fetchOne();
+        if ($existingSecretaryId) {
+            // Usuń rolę poprzedniemu Sekretarzowi
+            $previousSecretary = $this->userRepository->find($existingSecretaryId);
+            if ($previousSecretary) {
+                $roles = $previousSecretary->getRoles();
+                $roles = array_filter($roles, fn($r) => $r !== 'ROLE_SEKRETARZ_PARTII');
+                $previousSecretary->setRoles(array_values($roles));
+                $this->entityManager->persist($previousSecretary);
+            }
+        }
+
         // Dodaj rolę Sekretarza Partii
         $currentRoles = $czlonek->getRoles();
         if (!in_array('ROLE_SEKRETARZ_PARTII', $currentRoles)) {
@@ -2841,6 +4580,32 @@ class DokumentService
         $czlonek = $dokument->getCzlonek();
         if (!$czlonek) {
             return;
+        }
+
+        // Sprawdź czy już istnieje Skarbnik Partii (walidacja unikalności)
+        $connection = $this->entityManager->getConnection();
+        $sql = 'SELECT id FROM "user"
+                WHERE status = :status
+                AND roles::jsonb @> :role
+                AND id != :current_user_id';
+
+        $stmt = $connection->prepare($sql);
+        $result = $stmt->executeQuery([
+            'status' => 'aktywny',
+            'role' => '["ROLE_SKARBNIK_PARTII"]',
+            'current_user_id' => $czlonek->getId(),
+        ]);
+
+        $existingTreasurerId = $result->fetchOne();
+        if ($existingTreasurerId) {
+            // Usuń rolę poprzedniemu Skarbnikowi
+            $previousTreasurer = $this->userRepository->find($existingTreasurerId);
+            if ($previousTreasurer) {
+                $roles = $previousTreasurer->getRoles();
+                $roles = array_filter($roles, fn($r) => $r !== 'ROLE_SKARBNIK_PARTII');
+                $previousTreasurer->setRoles(array_values($roles));
+                $this->entityManager->persist($previousTreasurer);
+            }
         }
 
         // Dodaj rolę Skarbnika Partii
@@ -3386,6 +5151,222 @@ class DokumentService
     }
 
     /**
+     * Obsługuje wybór Prezesa Okręgu przez Walne Zgromadzenie.
+     */
+    private function handleElectionPrezesOkregu(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            $this->logger->error('Election Prezes Okregu error: missing czlonek');
+            return;
+        }
+
+        $okreg = $dokument->getOkreg();
+        if (!$okreg) {
+            $this->logger->error('Election Prezes Okregu error: missing okreg');
+            return;
+        }
+
+        $this->logger->info('Processing Prezes Okregu election', [
+            'elected_person' => $czlonek->getFullName(),
+            'okreg' => $okreg->getNazwa(),
+        ]);
+
+        // Najpierw usuń rolę ROLE_PREZES_OKREGU poprzedniemu Prezesowi w tym okręgu
+        $connection = $this->entityManager->getConnection();
+        $sql = 'SELECT id FROM "user"
+                WHERE okreg_id = :okreg_id
+                AND status = :status
+                AND roles::jsonb @> :role
+                AND id != :current_user_id';
+
+        $stmt = $connection->prepare($sql);
+        $result = $stmt->executeQuery([
+            'okreg_id' => $okreg->getId(),
+            'status' => 'aktywny',
+            'role' => '["ROLE_PREZES_OKREGU"]',
+            'current_user_id' => $czlonek->getId(),
+        ]);
+
+        $previousPrezesId = $result->fetchOne();
+        if ($previousPrezesId) {
+            $previousPrezes = $this->userRepository->find($previousPrezesId);
+            if ($previousPrezes) {
+                $roles = $previousPrezes->getRoles();
+                $roles = array_filter($roles, fn($r) => $r !== 'ROLE_PREZES_OKREGU');
+                $previousPrezes->setRoles(array_values($roles));
+                $this->entityManager->persist($previousPrezes);
+
+                $this->logger->info('Removed ROLE_PREZES_OKREGU from previous Prezes', [
+                    'previous_prezes' => $previousPrezes->getFullName(),
+                ]);
+            }
+        }
+
+        // Dodaj rolę nowemu Prezesowi
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_PREZES_OKREGU', $currentRoles)) {
+            $currentRoles[] = 'ROLE_PREZES_OKREGU';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        // Ustaw przypisanie do okręgu
+        $czlonek->setOkreg($okreg);
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+
+        $this->logger->info('ROLE_PREZES_OKREGU granted successfully', [
+            'user' => $czlonek->getFullName(),
+        ]);
+    }
+
+    /**
+     * Obsługuje wybór Wiceprezesa Okręgu przez Walne Zgromadzenie.
+     */
+    private function handleElectionWiceprezesOkregu(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            $this->logger->error('Election Wiceprezes Okregu error: missing czlonek');
+            return;
+        }
+
+        $okreg = $dokument->getOkreg();
+        if (!$okreg) {
+            $this->logger->error('Election Wiceprezes Okregu error: missing okreg');
+            return;
+        }
+
+        $this->logger->info('Processing Wiceprezes Okregu election', [
+            'elected_person' => $czlonek->getFullName(),
+            'okreg' => $okreg->getNazwa(),
+        ]);
+
+        // Dodaj rolę Wiceprezesa Okręgu
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_WICEPREZES_OKREGU', $currentRoles)) {
+            $currentRoles[] = 'ROLE_WICEPREZES_OKREGU';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        // Ustaw przypisanie do okręgu
+        $czlonek->setOkreg($okreg);
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+
+        $this->logger->info('ROLE_WICEPREZES_OKREGU granted successfully', [
+            'user' => $czlonek->getFullName(),
+        ]);
+    }
+
+    /**
+     * Obsługuje oświadczenie o wystąpieniu z partii.
+     */
+    private function handleOswiadczenieWystapienia(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Zmień status członka na "wystąpił"
+        $czlonek->setStatus('wystapil');
+        $czlonek->setDataWystapienia($dokument->getDataPodpisania() ?? new \DateTime());
+
+        // Usuń wszystkie role partyjne (zachowaj tylko ROLE_USER)
+        $czlonek->setRoles(['ROLE_USER']);
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Obsługuje uchwałę o skreśleniu członka.
+     */
+    private function handleUchwalaSkreslenia(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Zmień status członka na "skreślony"
+        $czlonek->setStatus('skreslony');
+
+        // Usuń wszystkie role partyjne (zachowaj tylko ROLE_USER)
+        $czlonek->setRoles(['ROLE_USER']);
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Obsługuje wniosek o zawieszenie członkostwa.
+     */
+    private function handleWniosekZawieszenia(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Zmień status członka na "zawieszony"
+        $czlonek->setStatus('zawieszony');
+
+        // NIE usuwaj ról - członek zawieszony zachowuje swoje funkcje
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Obsługuje wniosek o odwieszenie członkostwa.
+     */
+    private function handleWniosekOdwieszenia(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Zmień status członka z powrotem na "aktywny"
+        $czlonek->setStatus('aktywny');
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    /**
+     * Obsługuje rezygnację z funkcji.
+     */
+    private function handleRezygnacjaZFunkcji(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        $daneDodatkowe = $dokument->getDaneDodatkowe();
+        if (!isset($daneDodatkowe['funkcja_do_rezygnacji'])) {
+            return;
+        }
+
+        $roleToRemove = $daneDodatkowe['funkcja_do_rezygnacji'];
+
+        // Usuń wskazaną rolę
+        $currentRoles = $czlonek->getRoles();
+        $currentRoles = array_filter($currentRoles, function($role) use ($roleToRemove) {
+            return $role !== $roleToRemove;
+        });
+
+        $czlonek->setRoles(array_values($currentRoles));
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    /**
      * Odświeża token bezpieczeństwa użytkownika jeśli to aktualnie zalogowany użytkownik.
      */
     private function refreshUserTokenIfNeeded(User $user): void
@@ -3417,5 +5398,512 @@ class DokumentService
             'user_name' => $user->getFullName(),
             'new_roles' => $user->getRoles(),
         ]);
+    }
+
+    // ===== HANDLERY DOKUMENTÓW REGIONALNYCH =====
+
+    private function handleAppointmentPrezesRegionu(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Dodaj rolę ROLE_PREZES_REGIONU
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_PREZES_REGIONU', $currentRoles)) {
+            $currentRoles[] = 'ROLE_PREZES_REGIONU';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleDismissalPrezesRegionu(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Usuń rolę ROLE_PREZES_REGIONU
+        $currentRoles = $czlonek->getRoles();
+        $currentRoles = array_filter($currentRoles, fn($r) => $r !== 'ROLE_PREZES_REGIONU');
+        $czlonek->setRoles(array_values($currentRoles));
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleElectionSekretarzRegionu(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Usuń rolę u poprzedniego Sekretarza Regionu
+        $connection = $this->entityManager->getConnection();
+        $sql = 'SELECT id FROM "user"
+                WHERE status = :status
+                AND roles::jsonb @> :role
+                AND id != :current_user_id';
+
+        $stmt = $connection->prepare($sql);
+        $result = $stmt->executeQuery([
+            'status' => 'aktywny',
+            'role' => '["ROLE_SEKRETARZ_REGIONU"]',
+            'current_user_id' => $czlonek->getId(),
+        ]);
+
+        $previousId = $result->fetchOne();
+        if ($previousId) {
+            $previous = $this->userRepository->find($previousId);
+            if ($previous) {
+                $roles = $previous->getRoles();
+                $roles = array_filter($roles, fn($r) => $r !== 'ROLE_SEKRETARZ_REGIONU');
+                $previous->setRoles(array_values($roles));
+                $this->entityManager->persist($previous);
+            }
+        }
+
+        // Dodaj rolę nowemu Sekretarzowi Regionu
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_SEKRETARZ_REGIONU', $currentRoles)) {
+            $currentRoles[] = 'ROLE_SEKRETARZ_REGIONU';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleElectionSkarbnikRegionu(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Usuń rolę u poprzedniego Skarbnika Regionu
+        $connection = $this->entityManager->getConnection();
+        $sql = 'SELECT id FROM "user"
+                WHERE status = :status
+                AND roles::jsonb @> :role
+                AND id != :current_user_id';
+
+        $stmt = $connection->prepare($sql);
+        $result = $stmt->executeQuery([
+            'status' => 'aktywny',
+            'role' => '["ROLE_SKARBNIK_REGIONU"]',
+            'current_user_id' => $czlonek->getId(),
+        ]);
+
+        $previousId = $result->fetchOne();
+        if ($previousId) {
+            $previous = $this->userRepository->find($previousId);
+            if ($previous) {
+                $roles = $previous->getRoles();
+                $roles = array_filter($roles, fn($r) => $r !== 'ROLE_SKARBNIK_REGIONU');
+                $previous->setRoles(array_values($roles));
+                $this->entityManager->persist($previous);
+            }
+        }
+
+        // Dodaj rolę nowemu Skarbnikowi Regionu
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_SKARBNIK_REGIONU', $currentRoles)) {
+            $currentRoles[] = 'ROLE_SKARBNIK_REGIONU';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    // ===== HANDLERY RADY KRAJOWEJ =====
+
+    private function handleElectionPrzewodniczacyRady(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Usuń rolę u poprzedniego Przewodniczącego Rady
+        $connection = $this->entityManager->getConnection();
+        $sql = 'SELECT id FROM "user"
+                WHERE status = :status
+                AND roles::jsonb @> :role
+                AND id != :current_user_id';
+
+        $stmt = $connection->prepare($sql);
+        $result = $stmt->executeQuery([
+            'status' => 'aktywny',
+            'role' => '["ROLE_PRZEWODNICZACY_RADY"]',
+            'current_user_id' => $czlonek->getId(),
+        ]);
+
+        $previousId = $result->fetchOne();
+        if ($previousId) {
+            $previous = $this->userRepository->find($previousId);
+            if ($previous) {
+                $roles = $previous->getRoles();
+                $roles = array_filter($roles, fn($r) => $r !== 'ROLE_PRZEWODNICZACY_RADY');
+                $previous->setRoles(array_values($roles));
+                $this->entityManager->persist($previous);
+            }
+        }
+
+        // Dodaj rolę nowemu Przewodniczącemu Rady
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_PRZEWODNICZACY_RADY', $currentRoles)) {
+            $currentRoles[] = 'ROLE_PRZEWODNICZACY_RADY';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleElectionZastepcaPrzewodniczacyRady(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Dodaj rolę Zastępcy Przewodniczącego Rady (może być wielu)
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_ZASTEPCA_PRZEWODNICZACY_RADY', $currentRoles)) {
+            $currentRoles[] = 'ROLE_ZASTEPCA_PRZEWODNICZACY_RADY';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleDismissalPrzewodniczacyRady(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Usuń rolę ROLE_PRZEWODNICZACY_RADY
+        $currentRoles = $czlonek->getRoles();
+        $currentRoles = array_filter($currentRoles, fn($r) => $r !== 'ROLE_PRZEWODNICZACY_RADY');
+        $czlonek->setRoles(array_values($currentRoles));
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleDismissalZastepcaPrzewodniczacyRady(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Usuń rolę ROLE_ZASTEPCA_PRZEWODNICZACY_RADY
+        $currentRoles = $czlonek->getRoles();
+        $currentRoles = array_filter($currentRoles, fn($r) => $r !== 'ROLE_ZASTEPCA_PRZEWODNICZACY_RADY');
+        $czlonek->setRoles(array_values($currentRoles));
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    // ===== HANDLERY KOMISJI REWIZYJNEJ =====
+
+    private function handleElectionPrzewodniczacyKomisjiRewizyjnej(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Usuń rolę u poprzedniego Przewodniczącego
+        $connection = $this->entityManager->getConnection();
+        $sql = 'SELECT id FROM "user"
+                WHERE status = :status
+                AND roles::jsonb @> :role
+                AND id != :current_user_id';
+
+        $stmt = $connection->prepare($sql);
+        $result = $stmt->executeQuery([
+            'status' => 'aktywny',
+            'role' => '["ROLE_PRZEWODNICZACY_KOMISJI_REW"]',
+            'current_user_id' => $czlonek->getId(),
+        ]);
+
+        $previousId = $result->fetchOne();
+        if ($previousId) {
+            $previous = $this->userRepository->find($previousId);
+            if ($previous) {
+                $roles = $previous->getRoles();
+                $roles = array_filter($roles, fn($r) => $r !== 'ROLE_PRZEWODNICZACY_KOMISJI_REW');
+                $previous->setRoles(array_values($roles));
+                $this->entityManager->persist($previous);
+            }
+        }
+
+        // Dodaj rolę nowemu Przewodniczącemu
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_PRZEWODNICZACY_KOMISJI_REW', $currentRoles)) {
+            $currentRoles[] = 'ROLE_PRZEWODNICZACY_KOMISJI_REW';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleElectionWiceprzewodniczacyKomisjiRewizyjnej(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Dodaj rolę Wiceprzewodniczącego (może być wielu)
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_WICEPRZEWODNICZACY_KOMISJI_REW', $currentRoles)) {
+            $currentRoles[] = 'ROLE_WICEPRZEWODNICZACY_KOMISJI_REW';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleElectionSekretarzKomisjiRewizyjnej(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Usuń rolę u poprzedniego Sekretarza
+        $connection = $this->entityManager->getConnection();
+        $sql = 'SELECT id FROM "user"
+                WHERE status = :status
+                AND roles::jsonb @> :role
+                AND id != :current_user_id';
+
+        $stmt = $connection->prepare($sql);
+        $result = $stmt->executeQuery([
+            'status' => 'aktywny',
+            'role' => '["ROLE_SEKRETARZ_KOMISJI_REW"]',
+            'current_user_id' => $czlonek->getId(),
+        ]);
+
+        $previousId = $result->fetchOne();
+        if ($previousId) {
+            $previous = $this->userRepository->find($previousId);
+            if ($previous) {
+                $roles = $previous->getRoles();
+                $roles = array_filter($roles, fn($r) => $r !== 'ROLE_SEKRETARZ_KOMISJI_REW');
+                $previous->setRoles(array_values($roles));
+                $this->entityManager->persist($previous);
+            }
+        }
+
+        // Dodaj rolę nowemu Sekretarzowi
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_SEKRETARZ_KOMISJI_REW', $currentRoles)) {
+            $currentRoles[] = 'ROLE_SEKRETARZ_KOMISJI_REW';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleDismissalPrzewodniczacyKomisjiRewizyjnej(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        $currentRoles = $czlonek->getRoles();
+        $currentRoles = array_filter($currentRoles, fn($r) => $r !== 'ROLE_PRZEWODNICZACY_KOMISJI_REW');
+        $czlonek->setRoles(array_values($currentRoles));
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleDismissalWiceprzewodniczacyKomisjiRewizyjnej(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        $currentRoles = $czlonek->getRoles();
+        $currentRoles = array_filter($currentRoles, fn($r) => $r !== 'ROLE_WICEPRZEWODNICZACY_KOMISJI_REW');
+        $czlonek->setRoles(array_values($currentRoles));
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleDismissalSekretarzKomisjiRewizyjnej(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        $currentRoles = $czlonek->getRoles();
+        $currentRoles = array_filter($currentRoles, fn($r) => $r !== 'ROLE_SEKRETARZ_KOMISJI_REW');
+        $czlonek->setRoles(array_values($currentRoles));
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    // ===== HANDLERY STRUKTUR PARLAMENTARNYCH =====
+
+    private function handleAppointmentPrzewodniczacyKlubu(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Dodaj rolę ROLE_PRZEWODNICZACY_KLUBU
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_PRZEWODNICZACY_KLUBU', $currentRoles)) {
+            $currentRoles[] = 'ROLE_PRZEWODNICZACY_KLUBU';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleDismissalPrzewodniczacyKlubu(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        $currentRoles = $czlonek->getRoles();
+        $currentRoles = array_filter($currentRoles, fn($r) => $r !== 'ROLE_PRZEWODNICZACY_KLUBU');
+        $czlonek->setRoles(array_values($currentRoles));
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleElectionPrzewodniczacyDelegacji(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        // Dodaj rolę ROLE_PRZEWODNICZACY_DELEGACJI
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array('ROLE_PRZEWODNICZACY_DELEGACJI', $currentRoles)) {
+            $currentRoles[] = 'ROLE_PRZEWODNICZACY_DELEGACJI';
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    private function handleDismissalPrzewodniczacyDelegacji(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        $currentRoles = $czlonek->getRoles();
+        $currentRoles = array_filter($currentRoles, fn($r) => $r !== 'ROLE_PRZEWODNICZACY_DELEGACJI');
+        $czlonek->setRoles(array_values($currentRoles));
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+    }
+
+    // ===== HANDLERY POZOSTAŁYCH DOKUMENTÓW =====
+
+    private function handleWyznaczenieTymczasowe(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        $daneDodatkowe = $dokument->getDaneDodatkowe();
+        if (!isset($daneDodatkowe['funkcja_tymczasowa'])) {
+            return;
+        }
+
+        $roleToAdd = $daneDodatkowe['funkcja_tymczasowa'];
+
+        // Dodaj tymczasową rolę
+        $currentRoles = $czlonek->getRoles();
+        if (!in_array($roleToAdd, $currentRoles)) {
+            $currentRoles[] = $roleToAdd;
+            $czlonek->setRoles($currentRoles);
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
+
+        // Role is automatically removed by scheduled task: app:remove-expired-temporary-roles
+    }
+
+    private function handlePostanowienieSadu(Dokument $dokument): void
+    {
+        $czlonek = $dokument->getCzlonek();
+        if (!$czlonek) {
+            return;
+        }
+
+        $daneDodatkowe = $dokument->getDaneDodatkowe();
+        if (!isset($daneDodatkowe['typ_sankcji'])) {
+            return;
+        }
+
+        $typSankcji = $daneDodatkowe['typ_sankcji'];
+
+        switch ($typSankcji) {
+            case 'zawieszenie':
+                $czlonek->setStatus('zawieszony');
+                break;
+
+            case 'wykluczenie':
+                $czlonek->setStatus('skreslony');
+                // Usuń wszystkie role partyjne
+                $czlonek->setRoles(['ROLE_USER']);
+                break;
+
+            case 'upomnienie':
+            case 'nagana':
+                // Nie zmienia statusu ani ról, tylko zapisane w dokumencie
+                break;
+
+            case 'uniewinnienie':
+                // Przywróć status aktywny jeśli był zawieszony
+                if ($czlonek->getStatus() === 'zawieszony') {
+                    $czlonek->setStatus('aktywny');
+                }
+                break;
+        }
+
+        $this->entityManager->persist($czlonek);
+        $this->entityManager->flush();
     }
 }

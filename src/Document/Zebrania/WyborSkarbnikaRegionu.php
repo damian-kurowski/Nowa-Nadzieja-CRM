@@ -39,7 +39,12 @@ class WyborSkarbnikaRegionu extends AbstractDocument
             'drugi_podpisujacy' => true,  // Członek Zarządu Regionu
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/wybor_skarbnik_regionu.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

@@ -2731,8 +2731,8 @@
                     </li>
                     {% endif %}
                     <li class="nav-item">
-                        <a class="nav-link text-white {% if 'mlodziezowka' in app.request.get('_route') %}active{% endif %}" 
-                           href="{{ path('mlodziezowka_index') }}" 
+                        <a class="nav-link text-white {% if 'mlodziezowka' in app.request.get('_route') %}active{% endif %}"
+                           href="{{ path('mlodziezowka_index') }}"
                            data-tooltip="Młodzi dla Wolności"
                            data-turbo="false">
                             <i class="fas fa-graduation-cap"></i>
@@ -2740,8 +2740,17 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white {% if 'bylo_czlonek' in app.request.get('_route') %}active{% endif %}" 
-                           href="{{ path('bylo_czlonek_index') }}" 
+                        <a class="nav-link text-white {% if 'sympatyk' in app.request.get('_route') %}active{% endif %}"
+                           href="{{ path('sympatyk_index') }}"
+                           data-tooltip="Sympatycy"
+                           data-turbo="false">
+                            <i class="fas fa-handshake"></i>
+                            <span>Sympatycy</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white {% if 'bylo_czlonek' in app.request.get('_route') %}active{% endif %}"
+                           href="{{ path('bylo_czlonek_index') }}"
                            data-tooltip="Byli członkowie"
                            data-turbo="false">
                             <i class="fas fa-user-times"></i>
@@ -2760,17 +2769,27 @@
                     <span class="section-text">Media i komunikacja</span>
                 </div>
                 <ul class="nav flex-column">
+                    {% if is_granted('ROLE_PRZEKAZ') %}
                     <li class="nav-item">
-                        <a class="nav-link text-white {% if 'wystep_medialny' in app.request.get('_route') %}active{% endif %}" 
-                           href="{{ path('wystep_medialny_index') }}" 
+                        <a class="nav-link text-white {% if 'przekaz_medialny' in app.request.get('_route') %}active{% endif %}"
+                           href="{{ path('przekaz_medialny_index') }}"
+                           data-tooltip="Przekazy Medialne">
+                            <i class="fas fa-bullhorn"></i>
+                            <span>Przekazy Medialne</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link text-white {% if 'wystep_medialny' in app.request.get('_route') %}active{% endif %}"
+                           href="{{ path('wystep_medialny_index') }}"
                            data-tooltip="Wystąpienia medialne">
                             <i class="fas fa-microphone"></i>
                             <span>Wystąpienia medialne</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-white {% if 'konferencja_prasowa' in app.request.get('_route') %}active{% endif %}" 
-                           href="{{ path('konferencja_prasowa_index') }}" 
+                        <a class="nav-link text-white {% if 'konferencja_prasowa' in app.request.get('_route') %}active{% endif %}"
+                           href="{{ path('konferencja_prasowa_index') }}"
                            data-tooltip="Konferencje prasowe">
                             <i class="fas fa-microphone-alt"></i>
                             <span>Konferencje prasowe</span>

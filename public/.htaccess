@@ -53,6 +53,18 @@ DirectoryIndex index.php
     AddOutputFilterByType DEFLATE application/x-javascript
 </IfModule>
 
+# PHP memory limit
+<IfModule mod_php.c>
+    php_value memory_limit 512M
+</IfModule>
+<IfModule mod_php7.c>
+    php_value memory_limit 512M
+</IfModule>
+<IfModule mod_php8.c>
+    php_value memory_limit 512M
+</IfModule>
+php_value memory_limit 512M
+
 # Security headers
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options nosniff

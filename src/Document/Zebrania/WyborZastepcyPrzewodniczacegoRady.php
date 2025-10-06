@@ -39,7 +39,12 @@ class WyborZastepcyPrzewodniczacegoRady extends AbstractDocument
             'sekretarz_zebrania' => true,  // Sekretarz zebrania
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/wybor_zastepcy_przewodniczacego_rady.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

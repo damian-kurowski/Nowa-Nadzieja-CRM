@@ -38,9 +38,6 @@ class ZebranieOddzialuController extends AbstractController
     ) {
     }
 
-    /**
-     * Lista zebrań (dla obserwatorów i administratorów).
-     */
     #[Route('/', name: 'zebranie_oddzialu_index')]
     public function index(): Response
     {
@@ -81,9 +78,6 @@ class ZebranieOddzialuController extends AbstractController
         ]);
     }
 
-    /**
-     * Wyznaczenie obserwatora (dla Sekretarza Okręgu).
-     */
     #[Route('/wyznacz-obserwatora', name: 'zebranie_wyznacz_obserwatora')]
     #[IsGranted('ROLE_SEKRETARZ_OKREGU')]
     public function wyznaczObserwatora(Request $request, OddzialRepository $oddzialRepository, UserRepository $userRepository): Response
@@ -183,10 +177,7 @@ class ZebranieOddzialuController extends AbstractController
         ]);
     }
 
-    /**
-     * Kreator zebrania - główny wizard.
-     */
-    #[Route('/{id}/wizard', name: 'zebranie_wizard')]
+    #[Route('/{id}/wizard', name: 'zebranie_wizard', requirements: ['id' => '\d+'])]
     public function wizard(ZebranieOddzialu $zebranie, Request $request): Response
     {
         /** @var User $user */
@@ -219,10 +210,29 @@ class ZebranieOddzialuController extends AbstractController
 
 
 
-    /**
-     * Wyznaczenie protokolanta przez obserwatora.
-     */
-    #[Route('/{id}/wyznacz-protokolanta', name: 'zebranie_oddzialu_wyznacz_protokolanta', methods: ['POST'])]
+    #[Route('/{id}/wyznacz-protokolanta', name: 'zebranie_oddzialu_wyznacz_protokolanta', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function wyznaczProtokolanta(ZebranieOddzialu $zebranie): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Sprawdź uprawnienia
+        if (!$zebranie->canAssignProtokolant($user)) {
+            $this->addFlash('danger', 'Nie masz uprawnień do wyznaczenia protokolanta.');
+            return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
+        }
+
+        // Pobierz członków oddziału którzy mogą być protokolantami
+        $oddzial = $zebranie->getOddzial();
+        $czlonkowie = $oddzial->getCzlonkowie()->toArray();
+
+        return $this->render('zebranie_oddzialu/wyznacz_protokolanta.html.twig', [
+            'zebranie' => $zebranie,
+            'czlonkowie' => $czlonkowie,
+        ]);
+    }
+
+    #[Route('/{id}/wyznacz-protokolanta', name: 'zebranie_oddzialu_wyznacz_protokolanta_post', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function wyznaczProtokolantaPost(ZebranieOddzialu $zebranie, Request $request): Response
     {
         /** @var User $user */
@@ -231,25 +241,25 @@ class ZebranieOddzialuController extends AbstractController
         // Sprawdź token CSRF
         if (!$this->csrfService->validateToken('wyznacz_protokolanta' . $zebranie->getId(), $request->request->get('_token'))) {
             $this->addFlash('danger', 'Nieprawidłowy token bezpieczeństwa.');
-            return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
+            return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
         }
 
         // Sprawdź uprawnienia
         if (!$zebranie->canAssignProtokolant($user)) {
             $this->addFlash('danger', 'Nie masz uprawnień do wyznaczenia protokolanta.');
-            return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
+            return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
         }
 
         $protokolantId = $request->request->get('protokolant');
         if (!$protokolantId) {
             $this->addFlash('danger', 'Musisz wybrać protokolanta.');
-            return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
+            return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
         }
 
         $protokolant = $this->entityManager->getRepository(User::class)->find($protokolantId);
         if (!$protokolant) {
             $this->addFlash('danger', 'Wybrany użytkownik nie istnieje.');
-            return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
+            return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
         }
 
         try {
@@ -259,13 +269,32 @@ class ZebranieOddzialuController extends AbstractController
             $this->addFlash('danger', 'Wystąpił błąd: ' . $e->getMessage());
         }
 
-        return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
+        return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
     }
 
-    /**
-     * Wyznaczenie prowadzącego przez obserwatora.
-     */
-    #[Route('/{id}/wyznacz-prowadzacego', name: 'zebranie_oddzialu_wyznacz_prowadzacego', methods: ['POST'])]
+    #[Route('/{id}/wyznacz-prowadzacego', name: 'zebranie_oddzialu_wyznacz_prowadzacego', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function wyznaczProwadzacego(ZebranieOddzialu $zebranie): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Sprawdź uprawnienia
+        if (!$zebranie->canAssignProwadzacy($user)) {
+            $this->addFlash('danger', 'Nie masz uprawnień do wyznaczenia prowadzącego.');
+            return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
+        }
+
+        // Pobierz członków oddziału którzy mogą być prowadzącymi
+        $oddzial = $zebranie->getOddzial();
+        $czlonkowie = $oddzial->getCzlonkowie()->toArray();
+
+        return $this->render('zebranie_oddzialu/wyznacz_prowadzacego.html.twig', [
+            'zebranie' => $zebranie,
+            'czlonkowie' => $czlonkowie,
+        ]);
+    }
+
+    #[Route('/{id}/wyznacz-prowadzacego', name: 'zebranie_oddzialu_wyznacz_prowadzacego_post', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function wyznaczProwadzacegoPost(ZebranieOddzialu $zebranie, Request $request): Response
     {
         /** @var User $user */
@@ -274,25 +303,25 @@ class ZebranieOddzialuController extends AbstractController
         // Sprawdź token CSRF
         if (!$this->csrfService->validateToken('wyznacz_prowadzacego' . $zebranie->getId(), $request->request->get('_token'))) {
             $this->addFlash('danger', 'Nieprawidłowy token bezpieczeństwa.');
-            return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
+            return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
         }
 
         // Sprawdź uprawnienia
         if (!$zebranie->canAssignProwadzacy($user)) {
             $this->addFlash('danger', 'Nie masz uprawnień do wyznaczenia prowadzącego.');
-            return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
+            return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
         }
 
         $prowadzacyId = $request->request->get('prowadzacy');
         if (!$prowadzacyId) {
             $this->addFlash('danger', 'Musisz wybrać prowadzącego.');
-            return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
+            return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
         }
 
         $prowadzacy = $this->entityManager->getRepository(User::class)->find($prowadzacyId);
         if (!$prowadzacy) {
             $this->addFlash('danger', 'Wybrany użytkownik nie istnieje.');
-            return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
+            return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
         }
 
         try {
@@ -302,90 +331,110 @@ class ZebranieOddzialuController extends AbstractController
             $this->addFlash('danger', 'Wystąpił błąd: ' . $e->getMessage());
         }
 
-        return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
+        return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
     }
 
-    /**
-     * Składanie podpisów elektronicznych przez uczestników zebrania.
-     */
-    #[Route('/{id}/zloz-podpis', name: 'zebranie_oddzialu_zloz_podpis', methods: ['POST'])]
-    public function zlozPodpis(ZebranieOddzialu $zebranie, Request $request): JsonResponse
+    #[Route('/{id}/api/pending-documents', name: 'zebranie_api_pending_documents', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function apiPendingDocuments(ZebranieOddzialu $zebranie): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
 
+        if (!$this->zebranieService->canUserManageMeeting($user, $zebranie)) {
+            return $this->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $awaitingDocuments = $this->zebranieService->getAwaitingDocuments($zebranie, $user);
+
+        $documents = array_map(fn($doc) => [
+            'id' => $doc->getId(),
+            'title' => $doc->getTytul(),
+            'type' => $doc->getTyp(),
+            'created_at' => $doc->getDataUtworzenia()->format('Y-m-d H:i:s'),
+            'status' => $doc->getStatus(),
+        ], $awaitingDocuments);
+
+        return $this->json([
+            'success' => true,
+            'documents' => $documents,
+        ]);
+    }
+
+    #[Route('/{id}/sign-document/{documentId}', name: 'zebranie_sign_document', requirements: ['id' => '\d+', 'documentId' => '\d+'], methods: ['POST'])]
+    public function signDocument(ZebranieOddzialu $zebranie, int $documentId, Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Sprawdź rate limiting dla operacji podpisu
+        if ($this->rateLimitService->isSensitiveOperationLimited($request)) {
+            return $this->json(['success' => false, 'error' => 'Zbyt wiele prób. Spróbuj ponownie za kilka minut.'], 429);
+        }
+
         // Sprawdź token CSRF
-        if (!$this->csrfService->validateToken('sign_' . $zebranie->getId(), $request->request->get('_token'))) {
+        if (!$this->csrfService->validateToken('sign_doc_' . $documentId, $request->request->get('_token'))) {
             return $this->json(['success' => false, 'error' => 'Nieprawidłowy token bezpieczeństwa.']);
         }
 
-        // Sprawdź czy użytkownik może złożyć podpis
-        $canSign = false;
-        $action = '';
-        
-        if ($zebranie->canUserPerformAction($user, 'podpisz_obserwator')) {
-            $canSign = true;
-            $action = 'obserwator';
-        } elseif ($zebranie->canUserPerformAction($user, 'podpisz_protokolant')) {
-            $canSign = true;
-            $action = 'protokolant';
-        } elseif ($zebranie->canUserPerformAction($user, 'podpisz_prowadzacy')) {
-            $canSign = true;
-            $action = 'prowadzacy';
-        } elseif ($zebranie->canUserPerformAction($user, 'podpisz_przewodniczacy')) {
-            $canSign = true;
-            $action = 'przewodniczacy';
-        } elseif ($zebranie->canUserPerformAction($user, 'podpisz_zastepca1')) {
-            $canSign = true;
-            $action = 'zastepca1';
-        } elseif ($zebranie->canUserPerformAction($user, 'podpisz_zastepca2')) {
-            $canSign = true;
-            $action = 'zastepca2';
+        if (!$this->zebranieService->canUserManageMeeting($user, $zebranie)) {
+            return $this->json(['success' => false, 'error' => 'Nie masz uprawnień do tego zebrania.']);
         }
 
-        if (!$canSign) {
-            return $this->json(['success' => false, 'error' => 'Nie masz uprawnień do złożenia podpisu lub już podpisałeś.']);
+        // Znajdź dokument
+        $dokument = $this->dokumentRepository->find($documentId);
+        if (!$dokument || $dokument->getZebranieOddzialu() !== $zebranie) {
+            return $this->json(['success' => false, 'error' => 'Dokument nie znaleziony lub nie należy do tego zebrania.']);
         }
 
-        // Pobierz dane podpisu
+        // Pobierz dane podpisu z walidacją i sanityzacją
         $signatureData = $request->request->get('signature');
-        if (!$signatureData) {
-            return $this->json(['success' => false, 'error' => 'Brak danych podpisu.']);
+        if ($signatureData) {
+            // Sanityzacja i walidacja danych podpisu
+            $signatureData = trim(strip_tags($signatureData));
+            if (empty($signatureData) || strlen($signatureData) < 10) {
+                return $this->json(['success' => false, 'error' => 'Nieprawidłowe dane podpisu.']);
+            }
+            
+            // Sprawdź czy to prawidłowy base64 image (podpis elektroniczny)
+            if (!preg_match('/^data:image\/(png|jpeg|jpg);base64,/', $signatureData)) {
+                return $this->json(['success' => false, 'error' => 'Nieprawidłowy format podpisu elektronicznego.']);
+            }
+            
+            // Sprawdź rozmiar podpisu (max 2MB)
+            if (strlen($signatureData) > 2 * 1024 * 1024) {
+                return $this->json(['success' => false, 'error' => 'Podpis elektroniczny jest zbyt duży (maksimum 2MB).']);
+            }
+            
+            // Sprawdź czy base64 jest prawidłowy
+            $base64Data = substr($signatureData, strpos($signatureData, ',') + 1);
+            if (!base64_decode($base64Data, true)) {
+                return $this->json(['success' => false, 'error' => 'Nieprawidłowe kodowanie podpisu elektronicznego.']);
+            }
         }
 
         try {
-            // Złóż podpis w zależności od roli
-            match($action) {
-                'obserwator' => $zebranie->podpiszJakoObserwator(),
-                'protokolant' => $zebranie->podpiszJakoProtokolant(),
-                'prowadzacy' => $zebranie->podpiszJakoProwadzacy(),
-                'przewodniczacy' => $zebranie->podpiszJakoPrzewodniczacy(),
-                'zastepca1' => $zebranie->podpiszJakoZastepca1(),
-                'zastepca2' => $zebranie->podpiszJakoZastepca2(),
-            };
+            // Podpisz dokument używając DokumentService
+            $this->dokumentService->signDocument($dokument, $user, null, $signatureData);
 
-            // Sprawdź czy wszyscy już podpisali
-            if ($zebranie->czyWszyscyPodpisali()) {
+            // Sprawdź czy wszystkie dokumenty zostały w pełni podpisane
+            if ($this->areAllDocumentsFullySigned($zebranie)) {
                 $zebranie->setStatus(ZebranieOddzialu::STATUS_ZAKONCZONE);
                 $zebranie->setDataZakonczenia(new \DateTime());
+                $this->entityManager->flush();
             }
-
-            $this->entityManager->flush();
 
             return $this->json([
                 'success' => true,
-                'message' => 'Podpis został złożony pomyślnie.',
-                'all_signed' => $zebranie->czyWszyscyPodpisali()
+                'message' => 'Dokument został podpisany pomyślnie.',
+                'meeting_completed' => $zebranie->getStatus() === ZebranieOddzialu::STATUS_ZAKONCZONE
             ]);
 
         } catch (\Exception $e) {
-            return $this->json(['success' => false, 'error' => 'Wystąpił błąd podczas składania podpisu: ' . $e->getMessage()]);
+            return $this->json(['success' => false, 'error' => 'Wystąpił błąd podczas podpisywania dokumentu: ' . $e->getMessage()]);
         }
     }
 
-    /**
-     * Wyświetla szczegóły zebrania.
-     */
+
     #[Route('/{id}', name: 'zebranie_oddzialu_show', requirements: ['id' => '\d+'])]
     public function show(ZebranieOddzialu $zebranie, UserRepository $userRepository): Response
     {
@@ -405,10 +454,7 @@ class ZebranieOddzialuController extends AbstractController
         ]);
     }
 
-    /**
-     * Wybór przewodniczącego zebrania przez protokolanta i prowadzącego.
-     */
-    #[Route('/{id}/wybor-przewodniczacego', name: 'zebranie_oddzialu_wybor_przewodniczacego', methods: ['POST'])]
+    #[Route('/{id}/wybor-przewodniczacego', name: 'zebranie_oddzialu_wybor_przewodniczacego', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function wyborPrzewodniczacego(ZebranieOddzialu $zebranie, Request $request): Response
     {
         /** @var User $user */
@@ -455,9 +501,6 @@ class ZebranieOddzialuController extends AbstractController
         return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
     }
 
-    /**
-     * Wybór zastępcy przewodniczącego przez przewodniczącego.
-     */
     #[Route('/{id}/wybor-zastepcy/{numer}', name: 'zebranie_oddzialu_wybor_zastepcy', requirements: ['numer' => '1|2'], methods: ['POST'])]
     public function wyborZastepcy(ZebranieOddzialu $zebranie, int $numer, Request $request): Response
     {
@@ -506,17 +549,18 @@ class ZebranieOddzialuController extends AbstractController
         return $this->redirectToRoute('zebranie_oddzialu_show', ['id' => $zebranie->getId()]);
     }
 
-    /**
-     * Krok 3: Wybór zarządu oddziału.
-     */
-    #[Route('/{id}/wybor-zarzadu', name: 'zebranie_wybor_zarzadu')]
+    #[Route('/{id}/wybor-zarzadu', name: 'zebranie_wybor_zarzadu', requirements: ['id' => '\d+'])]
     public function wyborZarzadu(ZebranieOddzialu $zebranie, Request $request): Response
     {
         /** @var User $user */
         $user = $this->getUser();
 
-        // Tylko prowadzący lub protokolant może wybierać zarząd
-        if (!$zebranie->canManagePositions($user)) {
+        // Sprawdź uprawnienia w zależności od aktualnego statusu zebrania
+        $hasPermission = $zebranie->canSelectPrzewodniczacy($user)
+                      || $zebranie->canSelectZastepcy($user)
+                      || $zebranie->canManagePositions($user);
+
+        if (!$hasPermission) {
             $this->addFlash('error', 'Nie masz uprawnień do wyboru zarządu');
 
             return $this->redirectToRoute('zebranie_wizard', ['id' => $zebranie->getId()]);
@@ -568,10 +612,7 @@ class ZebranieOddzialuController extends AbstractController
         ]);
     }
 
-    /**
-     * AJAX API: Pobierz kandydatów na funkcję.
-     */
-    #[Route('/{id}/api/candidates', name: 'zebranie_api_candidates', methods: ['GET'])]
+    #[Route('/{id}/api/candidates', name: 'zebranie_api_candidates', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function apiCandidates(ZebranieOddzialu $zebranie, Request $request): JsonResponse
     {
         /** @var User $user */
@@ -602,10 +643,7 @@ class ZebranieOddzialuController extends AbstractController
         }
     }
 
-    /**
-     * AJAX API: Powołaj na funkcję.
-     */
-    #[Route('/{id}/api/appoint', name: 'zebranie_api_appoint', methods: ['POST'])]
+    #[Route('/{id}/api/appoint', name: 'zebranie_api_appoint', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function apiAppoint(ZebranieOddzialu $zebranie, Request $request): JsonResponse
     {
         // Rate limiting check
@@ -682,10 +720,7 @@ class ZebranieOddzialuController extends AbstractController
         }
     }
 
-    /**
-     * AJAX API: Odwołaj z funkcji.
-     */
-    #[Route('/{id}/api/dismiss', name: 'zebranie_api_dismiss', methods: ['POST'])]
+    #[Route('/{id}/api/dismiss', name: 'zebranie_api_dismiss', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function apiDismiss(ZebranieOddzialu $zebranie, Request $request): JsonResponse
     {
         /** @var User $user */
@@ -742,10 +777,7 @@ class ZebranieOddzialuController extends AbstractController
         }
     }
 
-    /**
-     * Zakończ zebranie.
-     */
-    #[Route('/{id}/zakoncz', name: 'zebranie_zakoncz')]
+    #[Route('/{id}/zakoncz', name: 'zebranie_zakoncz', requirements: ['id' => '\d+'])]
     public function zakonczZebranie(ZebranieOddzialu $zebranie): Response
     {
         /** @var User $user */
@@ -767,10 +799,7 @@ class ZebranieOddzialuController extends AbstractController
         return $this->redirectToRoute('zebranie_oddzialu_index');
     }
 
-    /**
-     * API: Get CSRF tokens for JavaScript.
-     */
-    #[Route('/{id}/api/csrf-tokens', name: 'zebranie_api_csrf_tokens', methods: ['GET'])]
+    #[Route('/{id}/api/csrf-tokens', name: 'zebranie_api_csrf_tokens', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function apiCsrfTokens(ZebranieOddzialu $zebranie): JsonResponse
     {
         /** @var User $user */
@@ -789,10 +818,7 @@ class ZebranieOddzialuController extends AbstractController
         ]);
     }
 
-    /**
-     * API: Real-time status check.
-     */
-    #[Route('/{id}/api/status', name: 'zebranie_api_status', methods: ['GET'])]
+    #[Route('/{id}/api/status', name: 'zebranie_api_status', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function apiStatus(ZebranieOddzialu $zebranie): JsonResponse
     {
         /** @var User $user */
@@ -820,10 +846,7 @@ class ZebranieOddzialuController extends AbstractController
         ]);
     }
 
-    /**
-     * API: Refresh dynamic content.
-     */
-    #[Route('/{id}/api/refresh', name: 'zebranie_api_refresh', methods: ['GET'])]
+    #[Route('/{id}/api/refresh', name: 'zebranie_api_refresh', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function apiRefresh(ZebranieOddzialu $zebranie): JsonResponse
     {
         /** @var User $user */
@@ -845,9 +868,6 @@ class ZebranieOddzialuController extends AbstractController
         ]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private function calculateProgress(ZebranieOddzialu $zebranie): array
     {
         $totalSteps = 5;
@@ -882,10 +902,7 @@ class ZebranieOddzialuController extends AbstractController
         ];
     }
 
-    /**
-     * AJAX: Zarządzaj funkcją.
-     */
-    #[Route('/{id}/ajax/zarzadzaj-funkcja', name: 'zebranie_ajax_zarzadzaj_funkcja', methods: ['POST'])]
+    #[Route('/{id}/ajax/zarzadzaj-funkcja', name: 'zebranie_ajax_zarzadzaj_funkcja', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function ajaxZarzadzajFunkcja(ZebranieOddzialu $zebranie, Request $request): JsonResponse
     {
         /** @var User $user */
@@ -933,17 +950,11 @@ class ZebranieOddzialuController extends AbstractController
         }
     }
 
-    /**
-     * Pomocnicze: Określ aktualny krok wizarda.
-     */
     private function determineCurrentStep(ZebranieOddzialu $zebranie): string
     {
         return $zebranie->getCurrentStep();
     }
 
-    /**
-     * Historia zebrań.
-     */
     #[Route('/historia', name: 'zebranie_historia')]
     public function historia(Request $request): Response
     {
@@ -974,9 +985,6 @@ class ZebranieOddzialuController extends AbstractController
         ]);
     }
 
-    /**
-     * Szczegóły zakończonego zebrania (archiwum).
-     */
     #[Route('/{id}/archiwum', name: 'zebranie_archiwum', requirements: ['id' => '\d+'])]
     public function archiwum(ZebranieOddzialu $zebranie): Response
     {
@@ -1015,11 +1023,6 @@ class ZebranieOddzialuController extends AbstractController
         ]);
     }
 
-    /**
-     * Pomocnicze: Pobierz obecne stanowiska w oddziale.
-     *
-     * @return array<string, mixed>
-     */
     private function pobierzObecneStanowiska(Oddzial $oddzial): array
     {
         $stanowiska = [
@@ -1045,9 +1048,6 @@ class ZebranieOddzialuController extends AbstractController
         return $stanowiska;
     }
 
-    /**
-     * Pomocnicze: Nazwa funkcji.
-     */
     private function getNazweFunkcji(string $funkcja): string
     {
         return match ($funkcja) {
@@ -1058,9 +1058,6 @@ class ZebranieOddzialuController extends AbstractController
         };
     }
 
-    /**
-     * Pomocnicze: Sprawdź czy można powołać kandydata.
-     */
     private function validateAppointment(ZebranieOddzialu $zebranie, string $functionType, User $candidate): void
     {
         // Sprawdź czy kandydat należy do oddziału
@@ -1105,9 +1102,6 @@ class ZebranieOddzialuController extends AbstractController
         }
     }
 
-    /**
-     * Sprawdź czy osoba została odwołana z funkcji w tym zebraniu.
-     */
     private function sprawdzCzyOdwolanoWZebraniu(ZebranieOddzialu $zebranie, string $funkcja, User $osoba): bool
     {
         $typDokumentu = match ($funkcja) {
@@ -1131,5 +1125,35 @@ class ZebranieOddzialuController extends AbstractController
         }
 
         return false;
+    }
+
+    private function areAllDocumentsFullySigned(ZebranieOddzialu $zebranie): bool
+    {
+        $dokumenty = $this->dokumentRepository->createQueryBuilder('d')
+            ->where('d.zebranieOddzialu = :zebranie')
+            ->setParameter('zebranie', $zebranie)
+            ->getQuery()
+            ->getResult();
+
+        if (empty($dokumenty)) {
+            return false; // Brak dokumentów - zebranie nie może być zakończone
+        }
+
+        foreach ($dokumenty as $dokument) {
+            // Sprawdź czy dokument ma wszystkie wymagane podpisy
+            $allSignaturesCompleted = true;
+            foreach ($dokument->getPodpisy() as $podpis) {
+                if ($podpis->getStatus() !== \App\Entity\PodpisDokumentu::STATUS_PODPISANY) {
+                    $allSignaturesCompleted = false;
+                    break;
+                }
+            }
+            
+            if (!$allSignaturesCompleted) {
+                return false; // Przynajmniej jeden dokument nie jest w pełni podpisany
+            }
+        }
+
+        return true; // Wszystkie dokumenty są w pełni podpisane
     }
 }

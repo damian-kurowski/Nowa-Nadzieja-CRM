@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del:*)",
+      "Bash(test:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(if [ -d \"C:\\Users\\Cogitech\\Desktop\\nowa-nadzieja-crm\\templates\\sympatyk\" ])",
+      "Bash(then echo \"exists\")",
+      "Bash(else echo \"not found\")",
+      "Bash(fi)",
+      "Bash(set PGPASSWORD=ha)",
+      "Bash(tasklist)",
+      "Bash(git remote remove:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

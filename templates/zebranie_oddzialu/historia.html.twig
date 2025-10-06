@@ -1,239 +1,192 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Historia Zebrań - {{ okreg.nazwa }} - CRM Nowa Nadzieja{% endblock %}
+{% block title %}Historia ZebraD OddziaBu - CRM Nowa Nadzieja{% endblock %}
 
-{% block page_title %}Historia Zebrań Członków Oddziałów{% endblock %}
-
-{% block stylesheets %}
-    {{ parent() }}
-    <style>
-        .stats-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            color: white;
-        }
-
-        .stat-item {
-            text-align: center;
-            padding: 1rem;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .meeting-card {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .meeting-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px var(--shadow-light);
-        }
-
-        .meeting-status {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .meeting-status.completed {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .meeting-status.active {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .section-header {
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 1rem;
-            margin-bottom: 2rem;
-        }
-    </style>
-{% endblock %}
+{% block page_title %}Historia ZebraD OddziaBu{% endblock %}
 
 {% block body %}
-    <div class="stats-card">
-        <h1 class="mb-4">
-            <i class="fas fa-history me-2"></i>
-            Historia Zebrań - {{ okreg.nazwa }}
-        </h1>
-        <div class="row">
-            <div class="col-md-4">
-                <div class="stat-item">
-                    <span class="stat-number">{{ stats.total }}</span>
-                    <span class="stat-label">Wszystkich zebrań</span>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-item">
-                    <span class="stat-number">{{ stats.active }}</span>
-                    <span class="stat-label">Aktywnych zebrań</span>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-item">
-                    <span class="stat-number">{{ stats.completed }}</span>
-                    <span class="stat-label">Zakończonych zebrań</span>
+    <div class="container-fluid">
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="fas fa-history me-2"></i>
+                            Historia ZebraD - Okrg {{ okreg.nazwa }}
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        {% if stats %}
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <div class="stat-card text-center p-3 border rounded">
+                                        <h3 class="text-primary">{{ stats.total ?? 0 }}</h3>
+                                        <p class="text-muted mb-0">Wszystkich zebraD</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card text-center p-3 border rounded">
+                                        <h3 class="text-success">{{ stats.completed ?? 0 }}</h3>
+                                        <p class="text-muted mb-0">ZakoDczonych</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card text-center p-3 border rounded">
+                                        <h3 class="text-warning">{{ stats.active ?? 0 }}</h3>
+                                        <p class="text-muted mb-0">Aktywnych</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card text-center p-3 border rounded">
+                                        <h3 class="text-info">{{ stats.this_month ?? 0 }}</h3>
+                                        <p class="text-muted mb-0">W tym miesicu</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="row">
-        <div class="col-md-8">
-            <div class="section-header">
-                <h3>
-                    <i class="fas fa-flag-checkered me-2"></i>
-                    Ostatnie Zakończone Zebrania
-                </h3>
-            </div>
-            
-            {% if completed_meetings|length > 0 %}
-                {% for zebranie in completed_meetings %}
-                    <div class="meeting-card">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h5 class="mb-1">
-                                    <i class="fas fa-users me-2"></i>
-                                    {{ zebranie.oddzial.nazwa }}
-                                </h5>
-                                <p class="text-muted mb-0">
-                                    <small>
-                                        <i class="fas fa-calendar me-1"></i>
-                                        {{ zebranie.dataRozpoczecia|date('Y-m-d H:i') }} - {{ zebranie.dataZakonczenia|date('Y-m-d H:i') }}
-                                    </small>
-                                </p>
-                            </div>
-                            <span class="meeting-status completed">
-                                <i class="fas fa-check me-1"></i>
-                                Zakończone
-                            </span>
+        {% if user_meetings|length > 0 %}
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-user me-2"></i>
+                                Twoje zebrania
+                            </h5>
                         </div>
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <strong>Obserwator:</strong><br>
-                                <small class="text-muted">{{ zebranie.obserwator.fullName }}</small>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Data</th>
+                                            <th>OddziaB</th>
+                                            <th>Twoja rola</th>
+                                            <th>Status</th>
+                                            <th>Akcje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for zebranie in user_meetings %}
+                                            <tr>
+                                                <td>{{ zebranie.dataRozpoczecia|date('Y-m-d H:i') }}</td>
+                                                <td>{{ zebranie.oddzial.nazwa }}</td>
+                                                <td>
+                                                    {% if zebranie.obserwator == app.user %}
+                                                        <span class="badge bg-primary">Obserwator</span>
+                                                    {% endif %}
+                                                    {% if zebranie.protokolant == app.user %}
+                                                        <span class="badge bg-info">Protokolant</span>
+                                                    {% endif %}
+                                                    {% if zebranie.prowadzacy == app.user %}
+                                                        <span class="badge bg-success">Prowadzcy</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-{{ zebranie.statusBadgeClass }}">
+                                                        {{ zebranie.statusDisplayName }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if zebranie.isAktywne() %}
+                                                        <a href="{{ path('zebranie_wizard', {id: zebranie.id}) }}"
+                                                           class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-play me-1"></i>
+                                                            Kontynuuj
+                                                        </a>
+                                                    {% else %}
+                                                        <a href="{{ path('zebranie_oddzialu_show', {id: zebranie.id}) }}"
+                                                           class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye me-1"></i>
+                                                            Zobacz
+                                                        </a>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="col-md-4">
-                                <strong>Protokolant:</strong><br>
-                                <small class="text-muted">{{ zebranie.protokolant ? zebranie.protokolant.fullName : 'Brak' }}</small>
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Prowadzący:</strong><br>
-                                <small class="text-muted">{{ zebranie.prowadzacy ? zebranie.prowadzacy.fullName : 'Brak' }}</small>
-                            </div>
-                        </div>
-                        
-                        <div class="d-flex justify-content-end">
-                            <a href="{{ path('zebranie_archiwum', {id: zebranie.id}) }}" 
-                               class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-archive me-1"></i>
-                                Zobacz archiwum
-                            </a>
                         </div>
                     </div>
-                {% endfor %}
-            {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">Brak zakończonych zebrań</p>
                 </div>
-            {% endif %}
-        </div>
-
-        <div class="col-md-4">
-            <div class="section-header">
-                <h3>
-                    <i class="fas fa-user me-2"></i>
-                    Twoja Aktywność
-                </h3>
             </div>
-            
-            {% if user_meetings|length > 0 %}
-                {% for zebranie in user_meetings %}
-                    <div class="meeting-card">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <h6 class="mb-1">{{ zebranie.oddzial.nazwa }}</h6>
-                                <small class="text-muted">
-                                    {{ zebranie.dataRozpoczecia|date('Y-m-d') }}
-                                </small>
+        {% endif %}
+
+        {% if completed_meetings|length > 0 %}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Ostatnie zakoDczone zebrania
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Data rozpoczcia</th>
+                                            <th>Data zakoDczenia</th>
+                                            <th>OddziaB</th>
+                                            <th>Obserwator</th>
+                                            <th>Dokumenty</th>
+                                            <th>Akcje</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for zebranie in completed_meetings %}
+                                            <tr>
+                                                <td>{{ zebranie.dataRozpoczecia|date('Y-m-d H:i') }}</td>
+                                                <td>
+                                                    {% if zebranie.dataZakonczenia %}
+                                                        {{ zebranie.dataZakonczenia|date('Y-m-d H:i') }}
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>{{ zebranie.oddzial.nazwa }}</td>
+                                                <td>{{ zebranie.obserwator.fullName }}</td>
+                                                <td>
+                                                    <span class="badge bg-info">
+                                                        {{ zebranie.dokumenty|length }} dok.
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <a href="{{ path('zebranie_oddzialu_show', {id: zebranie.id}) }}"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye me-1"></i>
+                                                        Zobacz szczeg�By
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
                             </div>
-                            <span class="meeting-status {{ zebranie.isAktywne ? 'active' : 'completed' }}">
-                                {% if zebranie.isAktywne %}
-                                    <i class="fas fa-clock me-1"></i>
-                                    Aktywne
-                                {% else %}
-                                    <i class="fas fa-check me-1"></i>
-                                    Zakończone
-                                {% endif %}
-                            </span>
-                        </div>
-                        
-                        <div class="mb-2">
-                            <small>
-                                {% if zebranie.obserwator == app.user %}
-                                    <span class="badge bg-primary">Obserwator</span>
-                                {% endif %}
-                                {% if zebranie.protokolant == app.user %}
-                                    <span class="badge bg-success">Protokolant</span>
-                                {% endif %}
-                                {% if zebranie.prowadzacy == app.user %}
-                                    <span class="badge bg-info">Prowadzący</span>
-                                {% endif %}
-                            </small>
-                        </div>
-                        
-                        <div class="d-flex justify-content-end">
-                            {% if zebranie.isAktywne %}
-                                <a href="{{ path('zebranie_wizard', {id: zebranie.id}) }}" 
-                                   class="btn btn-xs btn-primary">
-                                    <i class="fas fa-arrow-right me-1"></i>
-                                    Kontynuuj
-                                </a>
-                            {% else %}
-                                <a href="{{ path('zebranie_archiwum', {id: zebranie.id}) }}" 
-                                   class="btn btn-xs btn-outline-secondary">
-                                    <i class="fas fa-archive me-1"></i>
-                                    Archiwum
-                                </a>
-                            {% endif %}
                         </div>
                     </div>
-                {% endfor %}
-            {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-user-clock fa-2x text-muted mb-2"></i>
-                    <p class="text-muted small">Nie brałeś udziału w żadnym zebraniu</p>
                 </div>
-            {% endif %}
-        </div>
-    </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Brak zakoDczonych zebraD w historii.
+            </div>
+        {% endif %}
 
-    <div class="mt-4">
-        <a href="{{ path('zebranie_oddzialu_index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-2"></i>
-            Powrót do zebrań
-        </a>
+        <div class="mt-4">
+            <a href="{{ path('zebranie_oddzialu_index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Powr�t do listy zebraD
+            </a>
+        </div>
     </div>
 {% endblock %}

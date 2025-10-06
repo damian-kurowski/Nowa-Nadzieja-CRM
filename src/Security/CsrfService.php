@@ -115,6 +115,19 @@ class CsrfService
     }
 
     /**
+     * Validate CSRF token with custom tokenId and token value.
+     */
+    public function validateToken(string $tokenId, ?string $tokenValue): bool
+    {
+        if (!$tokenValue) {
+            return false;
+        }
+
+        $token = new CsrfToken($tokenId, $tokenValue);
+        return $this->csrfTokenManager->isTokenValid($token);
+    }
+
+    /**
      * Log CSRF token violations.
      */
     private function logCsrfViolation(Request $request, string $violationType): void

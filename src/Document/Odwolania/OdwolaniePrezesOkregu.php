@@ -38,7 +38,12 @@ class OdwolaniePrezesOkregu extends AbstractDocument
             'creator' => true,  // Prezes Partii
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/odwolania/odwolanie_prezes_okregu.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

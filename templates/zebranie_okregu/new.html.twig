@@ -2,6 +2,10 @@
 
 {% block title %}Nowe Zebranie Okręgu{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+{% endblock %}
+
 {% block body %}
 <div class="container-fluid">
     <div class="row">
@@ -141,21 +145,29 @@
                                         <h6 class="section-title">Wybór obserwatora</h6>
                                     </div>
                                     
-                                    <div class="enhanced-select-wrapper">
-                                        <select name="obserwator_id" id="obserwator_id" class="form-select enhanced-select" required>
-                                            <option value="">Wybierz osobę nadzorującą zebranie</option>
+                                    <div class="enhanced-select-wrapper position-relative">
+                                        <!-- Search Input -->
+                                        <div class="search-box mb-2">
+                                            <input type="text"
+                                                   id="obserwator_search"
+                                                   class="form-control"
+                                                   placeholder="🔍 Wpisz imię, nazwisko lub okręg aby wyszukać..."
+                                                   autocomplete="off">
+                                        </div>
+
+                                        <!-- Select with filtered options -->
+                                        <select name="obserwator_id" id="obserwator_id" class="form-select enhanced-select" required size="10">
+                                            <option value="">-- Wybierz obserwatora --</option>
                                             {% for user in users %}
-                                                <option value="{{ user.id }}" 
+                                                <option value="{{ user.id }}"
                                                         data-okreg="{{ user.okreg ? user.okreg.id : '' }}"
-                                                        data-okreg-name="{{ user.okreg ? user.okreg.nazwa : '' }}">
+                                                        data-okreg-name="{{ user.okreg ? user.okreg.nazwa : '' }}"
+                                                        data-search="{{ (user.imie ~ ' ' ~ user.nazwisko ~ ' ' ~ (user.okreg ? user.okreg.nazwa : ''))|lower }}">
                                                     {{ user.imie }} {{ user.nazwisko }}
-                                                    {% if user.okreg %}<span class="text-muted">({{ user.okreg.nazwa }})</span>{% endif %}
+                                                    {% if user.okreg %} ({{ user.okreg.nazwa }}){% endif %}
                                                 </option>
                                             {% endfor %}
                                         </select>
-                                        <div class="select-icon">
-                                            <i class="fas fa-user-tie"></i>
-                                        </div>
                                         <div class="invalid-feedback">
                                             Proszę wybrać obserwatora zebrania.
                                         </div>
@@ -163,7 +175,7 @@
                                     
                                     <div class="form-help mt-2">
                                         <i class="fas fa-info-circle text-muted me-2"></i>
-                                        <span class="text-muted">Obserwator będzie nadzorował cały proces wyborczy</span>
+                                        <span class="text-muted">Obserwator musi być z <strong>innego okręgu</strong> (neutralny obserwator)</span>
                                     </div>
                                     
                                     <!-- Dynamic feedback for observer selection -->
@@ -301,8 +313,8 @@
                                         <i class="fas fa-eye text-info"></i>
                                     </div>
                                     <div>
-                                        <h6 class="mb-1">Rola obserwatora</h6>
-                                        <small class="text-muted">Obserwator nadzoruje zgodność z procedurami</small>
+                                        <h6 class="mb-1">Neutralny obserwator</h6>
+                                        <small class="text-muted">Obserwator musi być z <strong>innego okręgu</strong> aby zapewnić neutralność</small>
                                     </div>
                                 </div>
                             </div>
@@ -324,7 +336,7 @@
                                     </div>
                                     <div>
                                         <h6 class="mb-1">Wybór obserwatora</h6>
-                                        <small class="text-muted">Najlepiej wybrać kogoś z tego samego okręgu</small>
+                                        <small class="text-muted">Obserwator musi być z <strong>innego okręgu</strong> aby zapewnić neutralność</small>
                                     </div>
                                 </div>
                             </div>
@@ -361,84 +373,118 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const okregSelect = document.getElementById('okreg_id');
+    const obserwatorSearch = document.getElementById('obserwator_search');
     const obserwatorSelect = document.getElementById('obserwator_id');
     const observerFeedback = document.getElementById('observer-feedback');
     const form = document.querySelector('.needs-validation');
-    
-    // Enhanced okreg change handler
-    okregSelect.addEventListener('change', function() {
-        const selectedOkregId = this.value;
-        
-        // Reset all observer options styling
-        Array.from(obserwatorSelect.options).forEach(option => {
-            if (option.value === '') return;
-            
-            option.style.backgroundColor = '';
-            option.style.fontWeight = '';
-            option.style.color = '';
+
+    let selectedOkregId = '';
+    let allOptions = Array.from(obserwatorSelect.options);
+
+    // Search functionality
+    obserwatorSearch.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+
+        allOptions.forEach(option => {
+            if (option.value === '') {
+                option.style.display = 'block';
+                return;
+            }
+
+            const searchData = option.getAttribute('data-search');
+            if (!searchTerm || searchData.includes(searchTerm)) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
         });
-        
-        // Hide feedback initially
-        observerFeedback.style.display = 'none';
-        
-        if (selectedOkregId) {
-            // Highlight users from the same okreg
-            Array.from(obserwatorSelect.options).forEach(option => {
-                if (option.value === '') return;
-                
-                const optionOkregId = option.getAttribute('data-okreg');
-                if (optionOkregId === selectedOkregId) {
-                    option.style.backgroundColor = '#e8f5e8';
-                    option.style.fontWeight = 'bold';
-                    option.style.color = '#155724';
-                }
-            });
+
+        // Reset selection if current selection is hidden
+        if (obserwatorSelect.value) {
+            const selectedOption = obserwatorSelect.options[obserwatorSelect.selectedIndex];
+            if (selectedOption && selectedOption.style.display === 'none') {
+                obserwatorSelect.value = '';
+            }
         }
-        
-        // Trigger observer validation if already selected
+    });
+
+    // Color-code options based on okreg
+    function updateOptionsColoring() {
+        allOptions.forEach(option => {
+            if (option.value === '') return;
+
+            const optionOkregId = option.getAttribute('data-okreg');
+
+            if (selectedOkregId && optionOkregId) {
+                if (optionOkregId !== selectedOkregId) {
+                    // Valid - different okreg
+                    option.style.backgroundColor = '#e8f5e8';
+                    option.style.color = '#155724';
+                    option.style.fontWeight = 'bold';
+                } else {
+                    // Invalid - same okreg
+                    option.style.backgroundColor = '#f8d7da';
+                    option.style.color = '#721c24';
+                    option.style.fontWeight = 'bold';
+                }
+            } else {
+                option.style.backgroundColor = '';
+                option.style.color = '';
+                option.style.fontWeight = '';
+            }
+        });
+    }
+
+    // Okreg change handler
+    okregSelect.addEventListener('change', function() {
+        selectedOkregId = this.value;
+        observerFeedback.style.display = 'none';
+
+        updateOptionsColoring();
+
         if (obserwatorSelect.value) {
             validateObserverChoice();
         }
     });
-    
+
     // Observer selection handler
     obserwatorSelect.addEventListener('change', validateObserverChoice);
-    
+
     function validateObserverChoice() {
-        const selectedOkregId = okregSelect.value;
         const selectedObserverId = obserwatorSelect.value;
-        
+
         if (!selectedOkregId || !selectedObserverId) {
             observerFeedback.style.display = 'none';
             return;
         }
-        
-        const selectedObserverOption = obserwatorSelect.querySelector(`option[value="${selectedObserverId}"]`);
-        const observerOkregId = selectedObserverOption.getAttribute('data-okreg');
-        
+
+        const selectedOption = obserwatorSelect.options[obserwatorSelect.selectedIndex];
+        const observerOkregId = selectedOption.getAttribute('data-okreg');
+
         if (observerOkregId === selectedOkregId) {
-            // Show positive feedback
+            // Show ERROR - same okreg is NOT allowed
             observerFeedback.innerHTML = `
-                <div class="alert alert-success border-0">
+                <div class="alert alert-danger border-0">
                     <div class="d-flex align-items-center">
-                        <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
+                        <i class="fas fa-times-circle text-danger me-3 fa-lg"></i>
                         <div>
-                            <div class="fw-bold text-success">Doskonały wybór!</div>
-                            <small class="text-muted">Obserwator jest z tego samego okręgu</small>
+                            <div class="fw-bold text-danger">Nieprawidłowy wybór!</div>
+                            <small class="text-muted">Obserwator musi być z <strong>innego okręgu</strong> (neutralny obserwator)</small>
                         </div>
                     </div>
                 </div>
             `;
             observerFeedback.style.display = 'block';
         } else if (observerOkregId) {
-            // Show warning for different okreg
+            // Show SUCCESS - different okreg is GOOD
+            const okregName = selectedOption.getAttribute('data-okreg-name');
             observerFeedback.innerHTML = `
-                <div class="alert alert-warning border-0">
+                <div class="alert alert-success border-0">
                     <div class="d-flex align-items-center">
-                        <i class="fas fa-exclamation-triangle text-warning me-3 fa-lg"></i>
+                        <i class="fas fa-check-circle text-success me-3 fa-lg"></i>
                         <div>
-                            <div class="fw-bold text-warning">Uwaga</div>
-                            <small class="text-muted">Obserwator jest z innego okręgu</small>
+                            <div class="fw-bold text-success">Doskonały wybór!</div>
+                            <small class="text-muted">Obserwator z okręgu <strong>${okregName}</strong> - neutralny obserwator ✓</small>
                         </div>
                     </div>
                 </div>
@@ -448,17 +494,17 @@ document.addEventListener('DOMContentLoaded', function() {
             observerFeedback.style.display = 'none';
         }
     }
-    
+
     // Form validation
     form.addEventListener('submit', function(event) {
         if (!form.checkValidity()) {
             event.preventDefault();
             event.stopPropagation();
         }
-        
+
         form.classList.add('was-validated');
     });
-    
+
     // Enhanced form field validation
     [okregSelect, obserwatorSelect].forEach(select => {
         select.addEventListener('change', function() {
@@ -750,5 +796,45 @@ document.addEventListener('DOMContentLoaded', function() {
     .step-h-connector { width: 40px; margin: 0 0.5rem; }
     .header-breadcrumb { margin-top: 1rem; }
 }
+
+/* Search Box Styling */
+.search-box input {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 12px 15px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    outline: none;
+}
+
+/* Enhanced Select with scrollable list */
+#obserwator_id {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 8px;
+}
+
+#obserwator_id option {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#obserwator_id option:hover {
+    opacity: 0.8;
+}
 </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
 {% endblock %}

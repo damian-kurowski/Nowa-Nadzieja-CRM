@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Export for use in other modules
-export function lazyLoadImage(img) {
+window.lazyLoadImage = function(img) {
     if (img.dataset.src) {
         img.src = img.dataset.src;
         if (img.dataset.srcset) {
@@ -57,4 +57,4 @@ export function lazyLoadImage(img) {
         }
         img.classList.add('loaded');
     }
-}
+};

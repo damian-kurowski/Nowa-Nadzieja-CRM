@@ -29,17 +29,31 @@ class UtworzenieOddzialu extends AbstractDocument
     
     public function getRequiredFields(): array
     {
-        return ['nazwa_oddzialu', 'gminy', 'data_wejscia_w_zycie', 'drugi_podpisujacy'];
+        return [
+            'nazwa_oddzialu',
+            'siedziba_oddzialu',
+            'gminy',
+            'liczba_czlonkow',
+            'czlonkowie_zalozyciele',
+            'koordynator',
+            'data_wejscia_w_zycie',
+            'drugi_podpisujacy'
+        ];
     }
     
     public function getSignersConfig(): array
     {
         return [
-            'creator' => true,  // Prezes Okręgu
-            'drugi_podpisujacy' => true,  // Sekretarz Okręgu lub członek zarządu
+            'creator' => true,  // Prezes Okręgu (twórca dokumentu)
+            'district_board_member' => true,  // Członek Zarządu Okręgu (Sekretarz/Wiceprezes/Skarbnik)
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/struktura/utworzenie_oddzialu.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

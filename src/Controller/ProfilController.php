@@ -138,4 +138,27 @@ class ProfilController extends AbstractController
 
         return $this->redirectToRoute('profil_index');
     }
+
+    #[Route('/prywatnosc', name: 'profil_prywatnosc')]
+    public function prywatnosc(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $user = $this->getUser();
+
+        if ($request->isMethod('POST')) {
+            // Zapisz zgody na API
+            $user->setZgodaApiEmail($request->request->get('api_email') === 'on');
+            $user->setZgodaApiTelefon($request->request->get('api_telefon') === 'on');
+            $user->setZgodaApiZdjecie($request->request->get('api_zdjecie') === 'on');
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Ustawienia prywatności zostały zapisane');
+
+            return $this->redirectToRoute('profil_prywatnosc');
+        }
+
+        return $this->render('profil/prywatnosc.html.twig', [
+            'user' => $user,
+        ]);
+    }
 }

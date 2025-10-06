@@ -39,7 +39,12 @@ class PowolaniePrzewodniczacegoKlubu extends AbstractDocument
             'sekretarz_klubu' => true,  // Sekretarz Klubu
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/powolanie_przewodniczacego_klubu.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

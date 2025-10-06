@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Zgoda na przetwarzanie danych - Nowa Nadzieja CRM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --text-light: #1f2937;
+            --text-muted: #6b7280;
+            --card-light: #ffffff;
+            --bg-light: #f9fafb;
+            --border-light: #e5e7eb;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-light);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .card-custom {
+            background: var(--card-light);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px var(--shadow);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header-custom::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .card-header-custom h3 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header-custom p {
+            font-size: 1rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+            margin: 0;
+        }
+
+        .icon-shield {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+        }
+
+        .card-body-custom {
+            padding: 3rem 2.5rem;
+        }
+
+        .progress-steps {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            gap: 1rem;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .step-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .step-circle.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .step-circle.inactive {
+            background: var(--bg-light);
+            color: var(--text-muted);
+        }
+
+        .step-line {
+            width: 60px;
+            height: 3px;
+            background: var(--border-light);
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .alert-custom {
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: shake 0.5s ease-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+        }
+
+        .consent-box {
+            background: var(--bg-light);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 2px solid var(--border-light);
+        }
+
+        .consent-box h4 {
+            color: var(--primary);
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .consent-content {
+            color: var(--text-light);
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+        }
+
+        .consent-content p {
+            margin-bottom: 1rem;
+        }
+
+        .consent-content ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .consent-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .consent-content strong {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .checkbox-custom {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.25rem;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid var(--border-light);
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-custom:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .checkbox-custom input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: var(--primary);
+            margin-top: 2px;
+        }
+
+        .checkbox-label {
+            flex: 1;
+            color: var(--text-light);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .checkbox-label strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .btn-custom {
+            width: 100%;
+            padding: 1.125rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .info-text {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .card-header-custom {
+                padding: 2rem 1.5rem;
+            }
+
+            .card-header-custom h3 {
+                font-size: 1.5rem;
+            }
+
+            .icon-shield {
+                font-size: 3rem;
+            }
+
+            .card-body-custom {
+                padding: 2rem 1.5rem;
+            }
+
+            .progress-steps {
+                gap: 0.5rem;
+            }
+
+            .step-circle {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            .step-line {
+                width: 30px;
+            }
+
+            .step-label {
+                font-size: 0.65rem;
+            }
+
+            .consent-box {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding: 10px;
+            }
+
+            .card-custom {
+                border-radius: 16px;
+            }
+
+            .card-header-custom {
+                padding: 1.5rem 1rem;
+            }
+
+            .card-header-custom h3 {
+                font-size: 1.25rem;
+            }
+
+            .card-body-custom {
+                padding: 1.5rem 1rem;
+            }
+
+            .consent-box {
+                padding: 1rem;
+            }
+
+            .checkbox-custom {
+                padding: 1rem;
+            }
+
+            .step-label {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <div class="icon-shield">
+                    <i class="fas fa-shield-check"></i>
+                </div>
+                <h3>Zgoda na przetwarzanie danych</h3>
+                <p>Krok 1 z 4 - Pierwsza konfiguracja konta</p>
+            </div>
+
+            <div class="card-body-custom">
+                <!-- Progress Steps -->
+                <div class="progress-steps">
+                    <div class="step">
+                        <div class="step-circle active">1</div>
+                        <div class="step-label">RODO</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step">
+                        <div class="step-circle inactive">2</div>
+                        <div class="step-label">Hasło</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step">
+                        <div class="step-circle inactive">3</div>
+                        <div class="step-label">2FA</div>
+                    </div>
+                    <div class="step-line"></div>
+                    <div class="step">
+                        <div class="step-circle inactive">4</div>
+                        <div class="step-label">Zdjęcie</div>
+                    </div>
+                </div>
+
+                {% if error %}
+                    <div class="alert-custom alert-danger">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 1.25rem;"></i>
+                        <div>
+                            <strong>Wymagana akceptacja</strong><br>
+                            {{ error }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <form method="post" id="rodoForm">
+                    <!-- Consent Box -->
+                    <div class="consent-box">
+                        <h4>
+                            <i class="fas fa-user-shield"></i>
+                            Ochrona danych osobowych
+                        </h4>
+
+                        <div class="consent-content">
+                            <p>Witaj <strong>{{ user.imie }} {{ user.nazwisko }}</strong>!</p>
+
+                            <p>Przed rozpoczęciem korzystania z systemu CRM Nowa Nadzieja, prosimy o zapoznanie się z informacjami dotyczącymi przetwarzania Twoich danych osobowych.</p>
+
+                            <p><strong>Administrator danych:</strong> Partia Nowa Nadzieja</p>
+
+                            <p><strong>Jakie dane zbieramy:</strong></p>
+                            <ul>
+                                <li>Dane identyfikacyjne (imię, nazwisko, PESEL)</li>
+                                <li>Dane kontaktowe (adres, telefon, e-mail)</li>
+                                <li>Zdjęcie profilowe</li>
+                                <li>Dane dotyczące Twojej działalności w strukturach partii</li>
+                                <li>Historia aktywności w systemie (logi systemowe)</li>
+                            </ul>
+
+                            <p><strong>Cel przetwarzania danych:</strong></p>
+                            <ul>
+                                <li>Zarządzanie członkostwem w partii</li>
+                                <li>Organizacja struktury partii (okręgi, oddziały, funkcje)</li>
+                                <li>Komunikacja wewnętrzna</li>
+                                <li>Dokumentacja działalności statutowej</li>
+                                <li>Zapewnienie bezpieczeństwa systemu</li>
+                            </ul>
+
+                            <p><strong>Twoje prawa:</strong></p>
+                            <ul>
+                                <li>Prawo dostępu do swoich danych</li>
+                                <li>Prawo do sprostowania danych</li>
+                                <li>Prawo do usunięcia danych (po zakończeniu członkostwa)</li>
+                                <li>Prawo do ograniczenia przetwarzania</li>
+                                <li>Prawo do przenoszenia danych</li>
+                            </ul>
+
+                            <p>Szczegółowe informacje znajdziesz w naszej <strong>Polityce Prywatności</strong>.</p>
+                        </div>
+                    </div>
+
+                    <!-- Checkbox 1: RODO -->
+                    <label class="checkbox-custom">
+                        <input type="checkbox" name="accept_rodo" id="accept_rodo" required>
+                        <div class="checkbox-label">
+                            <strong>Wyrażam zgodę na przetwarzanie moich danych osobowych</strong>
+                            Zgadzam się na przetwarzanie moich danych osobowych przez Partię Nowa Nadzieja w celach związanych z funkcjonowaniem struktury partii, zarządzaniem członkostwem oraz komunikacją wewnętrzną, zgodnie z RODO.
+                        </div>
+                    </label>
+
+                    <!-- Checkbox 2: Monitoring -->
+                    <label class="checkbox-custom">
+                        <input type="checkbox" name="accept_monitoring" id="accept_monitoring" required>
+                        <div class="checkbox-label">
+                            <strong>Akceptuję monitorowanie aktywności w systemie</strong>
+                            Rozumiem i akceptuję, że moja aktywność w systemie CRM (logowanie, edycja danych, tworzenie dokumentów) jest rejestrowana w celach bezpieczeństwa, audytu oraz zapewnienia prawidłowego funkcjonowania systemu.
+                        </div>
+                    </label>
+
+                    <!-- Zgody na udostępnianie danych na stronie internetowej (opcjonalne) -->
+                    <div class="consent-box" style="margin-top: 2rem; background: #f0f9ff; border-color: #3b82f6;">
+                        <h4 style="color: #1e40af;">
+                            <i class="fas fa-laptop-code"></i>
+                            Udostępnianie danych na stronie internetowej partii
+                        </h4>
+                        <p style="color: #374151; margin-bottom: 1.5rem;">
+                            Strona internetowa partii wyświetla strukturę organizacyjną. Możesz zdecydować, które dane kontaktowe chcesz udostępniać na stronie WWW.
+                            <strong>Te zgody są opcjonalne</strong> i możesz je później zmienić w ustawieniach konta.
+                        </p>
+
+                        <!-- Checkbox 3: Website Email (opcjonalne) -->
+                        <label class="checkbox-custom" style="background: white; margin-bottom: 1rem;">
+                            <input type="checkbox" name="api_email" id="api_email">
+                            <div class="checkbox-label">
+                                <strong>Udostępniam adres e-mail na stronie internetowej</strong>
+                                <span style="color: #6b7280;">Twój adres e-mail będzie widoczny na stronie internetowej partii w sekcji struktury organizacyjnej</span>
+                            </div>
+                        </label>
+
+                        <!-- Checkbox 4: Website Telefon (opcjonalne) -->
+                        <label class="checkbox-custom" style="background: white; margin-bottom: 1rem;">
+                            <input type="checkbox" name="api_telefon" id="api_telefon">
+                            <div class="checkbox-label">
+                                <strong>Udostępniam numer telefonu na stronie internetowej</strong>
+                                <span style="color: #6b7280;">Twój numer telefonu będzie widoczny na stronie internetowej partii w sekcji struktury organizacyjnej</span>
+                            </div>
+                        </label>
+
+                        <!-- Checkbox 5: Website Zdjęcie (opcjonalne) -->
+                        <label class="checkbox-custom" style="background: white;">
+                            <input type="checkbox" name="api_zdjecie" id="api_zdjecie">
+                            <div class="checkbox-label">
+                                <strong>Udostępniam zdjęcie profilowe na stronie internetowej</strong>
+                                <span style="color: #6b7280;">Twoje zdjęcie profilowe będzie widoczne na stronie internetowej partii w sekcji struktury organizacyjnej</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-custom btn-primary" id="submitBtn" disabled>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Akceptuję i kontynuuję</span>
+                    </button>
+
+                    <p class="info-text">
+                        <i class="fas fa-info-circle"></i>
+                        Akceptacja zgody jest wymagana do korzystania z systemu
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const checkbox1 = document.getElementById('accept_rodo');
+        const checkbox2 = document.getElementById('accept_monitoring');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function updateButtonState() {
+            if (checkbox1.checked && checkbox2.checked) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        }
+
+        checkbox1.addEventListener('change', updateButtonState);
+        checkbox2.addEventListener('change', updateButtonState);
+    </script>
+</body>
+</html>

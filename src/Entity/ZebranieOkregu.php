@@ -16,6 +16,8 @@ class ZebranieOkregu
     public const STATUS_WYZNACZANIE_PROWADZACEGO = 'wyznaczanie_prowadzacego';
     public const STATUS_WYBOR_PREZESA = 'wybor_prezesa';
     public const STATUS_WYBOR_WICEPREZESOW = 'wybor_wiceprezesow';
+    public const STATUS_WYBOR_SEKRETARZA = 'wybor_sekretarza';
+    public const STATUS_WYBOR_SKARBNIKA = 'wybor_skarbnika';
     public const STATUS_SKLADANIE_PODPISOW = 'skladanie_podpisow';
     public const STATUS_OCZEKUJE_NA_AKCEPTACJE = 'oczekuje_na_akceptacje';
     public const STATUS_ZAKONCZONE = 'zakonczone';
@@ -26,39 +28,39 @@ class ZebranieOkregu
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Okreg::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Okreg')]
     #[ORM\JoinColumn(nullable: false)]
     private Okreg $okreg;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: false)]
-    private User $obserwator;
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?User $obserwator = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[ORM\JoinColumn(nullable: true)]
     private ?User $protokolant = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[ORM\JoinColumn(nullable: true)]
     private ?User $prowadzacy = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[ORM\JoinColumn(nullable: true)]
     private ?User $prezesOkregu = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[ORM\JoinColumn(nullable: true)]
     private ?User $wiceprezes1 = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[ORM\JoinColumn(nullable: true)]
     private ?User $wiceprezes2 = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[ORM\JoinColumn(nullable: true)]
     private ?User $sekretarzOkregu = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[ORM\JoinColumn(nullable: true)]
     private ?User $skarbnikOkregu = null;
 
@@ -77,10 +79,16 @@ class ZebranieOkregu
     /**
      * @var Collection<int, Dokument>
      */
-    #[ORM\OneToMany(mappedBy: 'zebranieOkregu', targetEntity: Dokument::class)]
+    #[ORM\OneToMany(mappedBy: 'zebranieOkregu', targetEntity: 'App\Entity\Dokument')]
     private Collection $dokumenty;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    /**
+     * @var Collection<int, Protokol>
+     */
+    #[ORM\OneToMany(mappedBy: 'zebranieOkregu', targetEntity: 'App\Entity\Protokol', cascade: ['persist', 'remove'])]
+    private Collection $protokoly;
+
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[ORM\JoinColumn(nullable: false)]
     private User $utworzonePrzez;
 
@@ -102,36 +110,10 @@ class ZebranieOkregu
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $dataAkceptacjiProwadzacego = null;
 
-    #[ORM\Column(type: Types::BOOLEAN)]
-    private bool $obserwatorPodpisal = false;
-
-    #[ORM\Column(type: Types::BOOLEAN)]
-    private bool $protokolantPodpisal = false;
-
-    #[ORM\Column(type: Types::BOOLEAN)]
-    private bool $prowadzacyPodpisal = false;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $dataPodpisuObserwatora = null;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $dataPodpisuProtokolanta = null;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $dataPodpisuProwadzacego = null;
-
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $podpisObserwatora = null;
-
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $podpisProtokolanta = null;
-
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $podpisProwadzacego = null;
-
     public function __construct()
     {
         $this->dokumenty = new ArrayCollection();
+        $this->protokoly = new ArrayCollection();
         $this->dataUtworzenia = new \DateTime();
     }
 
@@ -151,12 +133,12 @@ class ZebranieOkregu
         return $this;
     }
 
-    public function getObserwator(): User
+    public function getObserwator(): ?User
     {
         return $this->obserwator;
     }
 
-    public function setObserwator(User $obserwator): self
+    public function setObserwator(?User $obserwator): self
     {
         $this->obserwator = $obserwator;
         return $this;
@@ -310,6 +292,33 @@ class ZebranieOkregu
         return $this;
     }
 
+    /**
+     * @return Collection<int, Protokol>
+     */
+    public function getProtokoly(): Collection
+    {
+        return $this->protokoly;
+    }
+
+    public function addProtokol(Protokol $protokol): self
+    {
+        if (!$this->protokoly->contains($protokol)) {
+            $this->protokoly->add($protokol);
+            $protokol->setZebranieOkregu($this);
+        }
+        return $this;
+    }
+
+    public function removeProtokol(Protokol $protokol): self
+    {
+        if ($this->protokoly->removeElement($protokol)) {
+            if ($protokol->getZebranieOkregu() === $this) {
+                $protokol->setZebranieOkregu(null);
+            }
+        }
+        return $this;
+    }
+
     public function getUtworzonyPrzez(): User
     {
         return $this->utworzonePrzez;
@@ -327,16 +336,15 @@ class ZebranieOkregu
     public function canUserPerformAction(User $user, string $action): bool
     {
         return match ($action) {
-            'wyznacz_protokolanta' => $this->status === self::STATUS_WYZNACZANIE_PROTOKOLANTA && $user === $this->obserwator,
-            'wyznacz_prowadzacego' => $this->status === self::STATUS_WYZNACZANIE_PROWADZACEGO && $user === $this->obserwator,
-            'wybor_prezesa' => $this->status === self::STATUS_WYBOR_PREZESA && ($user === $this->prowadzacy || $user === $this->protokolant),
-            'wybor_wiceprezesow' => $this->status === self::STATUS_WYBOR_WICEPREZESOW && ($user === $this->prowadzacy || $user === $this->protokolant),
-            'podpisz_obserwator' => $this->status === self::STATUS_SKLADANIE_PODPISOW && $user === $this->obserwator && !$this->obserwatorPodpisal,
-            'podpisz_protokolant' => $this->status === self::STATUS_SKLADANIE_PODPISOW && $user === $this->protokolant && !$this->protokolantPodpisal,
-            'podpisz_prowadzacy' => $this->status === self::STATUS_SKLADANIE_PODPISOW && $user === $this->prowadzacy && !$this->prowadzacyPodpisal,
-            'akceptuj_obserwator' => $this->status === self::STATUS_OCZEKUJE_NA_AKCEPTACJE && $user === $this->obserwator && !$this->obserwatorZaakceptowal,
-            'akceptuj_protokolant' => $this->status === self::STATUS_OCZEKUJE_NA_AKCEPTACJE && $user === $this->protokolant && !$this->protokolantZaakceptowal,
-            'akceptuj_prowadzacy' => $this->status === self::STATUS_OCZEKUJE_NA_AKCEPTACJE && $user === $this->prowadzacy && !$this->prowadzacyZaakceptowal,
+            'wyznacz_protokolanta' => $this->status === self::STATUS_WYZNACZANIE_PROTOKOLANTA && $this->obserwator && $this->obserwator->getId() === $user->getId(),
+            'wyznacz_prowadzacego' => $this->status === self::STATUS_WYZNACZANIE_PROWADZACEGO && $this->obserwator && $this->obserwator->getId() === $user->getId(),
+            'wybor_prezesa' => $this->status === self::STATUS_WYBOR_PREZESA && (($this->prowadzacy && $this->prowadzacy->getId() === $user->getId()) || ($this->protokolant && $this->protokolant->getId() === $user->getId())),
+            'wybor_wiceprezesow' => $this->status === self::STATUS_WYBOR_WICEPREZESOW && (($this->prowadzacy && $this->prowadzacy->getId() === $user->getId()) || ($this->protokolant && $this->protokolant->getId() === $user->getId())),
+            'wybor_sekretarza' => $this->status === self::STATUS_WYBOR_SEKRETARZA && (($this->prowadzacy && $this->prowadzacy->getId() === $user->getId()) || ($this->protokolant && $this->protokolant->getId() === $user->getId())),
+            'wybor_skarbnika' => $this->status === self::STATUS_WYBOR_SKARBNIKA && (($this->prowadzacy && $this->prowadzacy->getId() === $user->getId()) || ($this->protokolant && $this->protokolant->getId() === $user->getId())),
+            'akceptuj_obserwator' => $this->status === self::STATUS_OCZEKUJE_NA_AKCEPTACJE && $this->obserwator && $this->obserwator->getId() === $user->getId() && !$this->obserwatorZaakceptowal,
+            'akceptuj_protokolant' => $this->status === self::STATUS_OCZEKUJE_NA_AKCEPTACJE && $this->protokolant && $this->protokolant->getId() === $user->getId() && !$this->protokolantZaakceptowal,
+            'akceptuj_prowadzacy' => $this->status === self::STATUS_OCZEKUJE_NA_AKCEPTACJE && $this->prowadzacy && $this->prowadzacy->getId() === $user->getId() && !$this->prowadzacyZaakceptowal,
             default => false,
         };
     }
@@ -352,8 +360,10 @@ class ZebranieOkregu
             self::STATUS_WYZNACZANIE_PROWADZACEGO => 'Krok 3: Wyznaczanie prowadzącego',
             self::STATUS_WYBOR_PREZESA => 'Krok 4: Wybór Prezesa Okręgu',
             self::STATUS_WYBOR_WICEPREZESOW => 'Krok 5: Wybór Wiceprezesów Okręgu',
-            self::STATUS_SKLADANIE_PODPISOW => 'Krok 6: Składanie podpisów uczestników',
-            self::STATUS_OCZEKUJE_NA_AKCEPTACJE => 'Krok 7: Oczekuje na akceptację wszystkich uczestników',
+            self::STATUS_WYBOR_SEKRETARZA => 'Krok 6: Wybór Sekretarza Okręgu',
+            self::STATUS_WYBOR_SKARBNIKA => 'Krok 7: Wybór Skarbnika Okręgu',
+            self::STATUS_SKLADANIE_PODPISOW => 'Krok 8: Składanie podpisów uczestników',
+            self::STATUS_OCZEKUJE_NA_AKCEPTACJE => 'Krok 9: Oczekuje na akceptację wszystkich uczestników',
             self::STATUS_ZAKONCZONE => 'Zebranie zakończone',
             self::STATUS_ANULOWANE => 'Zebranie anulowane',
             default => 'Nieznany status',
@@ -466,53 +476,24 @@ class ZebranieOkregu
         return $this->dataAkceptacjiProwadzacego;
     }
 
-    public function getObserwatorPodpisal(): bool
-    {
-        return $this->obserwatorPodpisal;
-    }
-
-    public function setObserwatorPodpisal(bool $obserwatorPodpisal): self
-    {
-        $this->obserwatorPodpisal = $obserwatorPodpisal;
-        if ($obserwatorPodpisal) {
-            $this->dataPodpisuObserwatora = new \DateTime();
-        }
-        return $this;
-    }
-
-    public function getProtokolantPodpisal(): bool
-    {
-        return $this->protokolantPodpisal;
-    }
-
-    public function setProtokolantPodpisal(bool $protokolantPodpisal): self
-    {
-        $this->protokolantPodpisal = $protokolantPodpisal;
-        if ($protokolantPodpisal) {
-            $this->dataPodpisuProtokolanta = new \DateTime();
-        }
-        return $this;
-    }
-
-    public function getProwadzacyPodpisal(): bool
-    {
-        return $this->prowadzacyPodpisal;
-    }
-
-    public function setProwadzacyPodpisal(bool $prowadzacyPodpisal): self
-    {
-        $this->prowadzacyPodpisal = $prowadzacyPodpisal;
-        if ($prowadzacyPodpisal) {
-            $this->dataPodpisuProwadzacego = new \DateTime();
-        }
-        return $this;
-    }
-
+    /**
+     * Sprawdza czy wszystkie dokumenty zebrania zostały w pełni podpisane.
+     */
     public function czyWszyscyPodpisali(): bool
     {
-        return $this->obserwatorPodpisal && 
-               $this->protokolantPodpisal && 
-               $this->prowadzacyPodpisal;
+        // Sprawdź czy są jakiekolwiek dokumenty
+        if ($this->dokumenty->count() === 0) {
+            return false;
+        }
+
+        // Sprawdź czy wszystkie dokumenty mają status "podpisany"
+        foreach ($this->dokumenty as $dokument) {
+            if ($dokument->getStatus() !== Dokument::STATUS_PODPISANY) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -552,20 +533,6 @@ class ZebranieOkregu
         return array_unique($uczestnicy, SORT_REGULAR);
     }
 
-    public function getDataPodpisuObserwatora(): ?\DateTimeInterface
-    {
-        return $this->dataPodpisuObserwatora;
-    }
-
-    public function getDataPodpisuProtokolanta(): ?\DateTimeInterface
-    {
-        return $this->dataPodpisuProtokolanta;
-    }
-
-    public function getDataPodpisuProwadzacego(): ?\DateTimeInterface
-    {
-        return $this->dataPodpisuProwadzacego;
-    }
 
     public function getCurrentStepNumber(): int
     {
@@ -575,9 +542,11 @@ class ZebranieOkregu
             self::STATUS_WYZNACZANIE_PROWADZACEGO => 3,
             self::STATUS_WYBOR_PREZESA => 4,
             self::STATUS_WYBOR_WICEPREZESOW => 5,
-            self::STATUS_SKLADANIE_PODPISOW => 6,
-            self::STATUS_OCZEKUJE_NA_AKCEPTACJE => 7,
-            self::STATUS_ZAKONCZONE => 8,
+            self::STATUS_WYBOR_SEKRETARZA => 6,
+            self::STATUS_WYBOR_SKARBNIKA => 7,
+            self::STATUS_SKLADANIE_PODPISOW => 8,
+            self::STATUS_OCZEKUJE_NA_AKCEPTACJE => 9,
+            self::STATUS_ZAKONCZONE => 10,
             default => 0,
         };
     }
@@ -589,7 +558,9 @@ class ZebranieOkregu
             self::STATUS_WYZNACZANIE_PROTOKOLANTA => 'Obserwator musi wyznaczyć prowadzącego spośród członków okręgu',
             self::STATUS_WYZNACZANIE_PROWADZACEGO => 'Prowadzący i Protokolant wspólnie wybierają Prezesa Okręgu',
             self::STATUS_WYBOR_PREZESA => 'Prowadzący i Protokolant wspólnie wybierają do dwóch Wiceprezesów',
-            self::STATUS_WYBOR_WICEPREZESOW => 'Wszyscy uczestnicy muszą złożyć swoje podpisy przed generowaniem dokumentów',
+            self::STATUS_WYBOR_WICEPREZESOW => 'Prowadzący i Protokolant wspólnie wybierają Sekretarza Okręgu',
+            self::STATUS_WYBOR_SEKRETARZA => 'Prowadzący i Protokolant wspólnie wybierają Skarbnika Okręgu',
+            self::STATUS_WYBOR_SKARBNIKA => 'Wszyscy uczestnicy muszą złożyć swoje podpisy przed generowaniem dokumentów',
             self::STATUS_SKLADANIE_PODPISOW => 'Po złożeniu wszystkich podpisów system wygeneruje dokumenty do akceptacji',
             self::STATUS_OCZEKUJE_NA_AKCEPTACJE => 'Zebranie zostanie automatycznie zamknięte po otrzymaniu wszystkich akceptacji',
             default => null,
@@ -604,42 +575,12 @@ class ZebranieOkregu
             self::STATUS_WYZNACZANIE_PROWADZACEGO => $this->prowadzacy !== null,
             self::STATUS_WYBOR_PREZESA => $this->prezesOkregu !== null,
             self::STATUS_WYBOR_WICEPREZESOW => $this->wiceprezes1 !== null && $this->wiceprezes2 !== null,
+            self::STATUS_WYBOR_SEKRETARZA => $this->sekretarzOkregu !== null,
+            self::STATUS_WYBOR_SKARBNIKA => $this->skarbnikOkregu !== null,
             self::STATUS_SKLADANIE_PODPISOW => $this->czyWszyscyPodpisali(),
             self::STATUS_OCZEKUJE_NA_AKCEPTACJE => $this->czyWszyscyZaakceptowali(),
             default => false,
         };
     }
 
-    public function getPodpisObserwatora(): ?string
-    {
-        return $this->podpisObserwatora;
-    }
-
-    public function setPodpisObserwatora(?string $podpisObserwatora): self
-    {
-        $this->podpisObserwatora = $podpisObserwatora;
-        return $this;
-    }
-
-    public function getPodpisProtokolanta(): ?string
-    {
-        return $this->podpisProtokolanta;
-    }
-
-    public function setPodpisProtokolanta(?string $podpisProtokolanta): self
-    {
-        $this->podpisProtokolanta = $podpisProtokolanta;
-        return $this;
-    }
-
-    public function getPodpisProwadzacego(): ?string
-    {
-        return $this->podpisProwadzacego;
-    }
-
-    public function setPodpisProwadzacego(?string $podpisProwadzacego): self
-    {
-        $this->podpisProwadzacego = $podpisProwadzacego;
-        return $this;
-    }
 }

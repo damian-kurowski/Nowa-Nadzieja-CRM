@@ -1,13 +1,7 @@
-# Production security settings
+# Production security settings - updated for Symfony 7.3
 security:
     firewalls:
         main:
-            # Force HTTPS in production
-            requires_channel: https
-            
-            # Session fixation protection
-            session_fixation_strategy: migrate
-            
             # CSRF protection
             form_login:
                 enable_csrf: true
@@ -19,7 +13,6 @@ security:
                 secure: true  # Force secure cookies
                 httponly: true
                 samesite: strict
-                token_provider: 'Symfony\Bridge\Doctrine\Security\RememberMe\DoctrineTokenProvider'
 
 # Additional security headers
 framework:

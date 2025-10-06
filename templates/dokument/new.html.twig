@@ -2,10 +2,13 @@
 
 {% block title %}Nowy dokument - CRM Nowa Nadzieja{% endblock %}
 
+{% block body_class %}doc-container{% endblock %}
+
 {% block page_title %}Nowy dokument{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/documents-theme.css') }}">
     <style>
         /* Enhanced Document Creation Header */
         .document-creation-header {

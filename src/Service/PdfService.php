@@ -46,7 +46,9 @@ class PdfService
         $logoBase64 = '';
         if (file_exists($logoPath)) {
             $logoData = file_get_contents($logoPath);
-            $logoBase64 = base64_encode($logoData ?: '');
+            if ($logoData !== false && !empty($logoData)) {
+                $logoBase64 = base64_encode($logoData);
+            }
         }
 
         // Generate document content with signatures
@@ -166,20 +168,96 @@ class PdfService
      */
     private function generateDocumentContentWithSignatures(Dokument $dokument): string
     {
+        // Sprawdź czy dokument ma szablon Twig
+        $documentType = $dokument->getTyp();
+
         try {
-            // Użyj DocumentFactory do wygenerowania treści z podpisami
-            $documentContent = \App\Document\DocumentFactory::generateContent(
-                $dokument->getTyp(), 
-                $dokument, 
-                $dokument->getDaneDodatkowe() ?? []
-            );
-            
-            // Formatuj jak w getFormattedContent()
-            return $this->formatContentForPdf($documentContent);
+            // Spróbuj pobrać klasę dokumentu i jego szablon
+            $documentClass = \App\Document\DocumentFactory::create($documentType);
+            $templateName = $documentClass->getTemplateName();
+
+            // Przygotuj dane do szablonu
+            $templateData = $documentClass->prepareTemplateData($dokument, $dokument->getDaneDodatkowe() ?? []);
+
+            // Dodaj podpisy do danych
+            $templateData['podpisy'] = $dokument->getPodpisy();
+            $templateData['dokument'] = $dokument;
+
+            // Renderuj szablon Twig
+            $content = $this->twig->render($templateName, $templateData);
+
+            return $content;
         } catch (\Exception $e) {
-            // Fallback do standardowej treści
-            return $dokument->getFormattedContent();
+            // Fallback do starej metody jeśli szablon nie istnieje
+            // Ten fallback będzie używany tylko dla starych dokumentów
         }
+
+        // Stara metoda - dodawanie podpisów na końcu (fallback dla starych dokumentów)
+        $content = $dokument->getFormattedContent();
+
+        // Jeśli dokument ma podpisy, dodaj sekcję z podpisami
+        if (!$dokument->getPodpisy()->isEmpty()) {
+            $content .= '<div style="margin-top: 50px; border-top: 2px solid #000; padding-top: 30px; page-break-inside: avoid;">';
+            $content .= '<h3 style="text-align: center; margin-bottom: 30px; font-size: 12pt;">Podpisy elektroniczne</h3>';
+
+            foreach ($dokument->getPodpisy() as $podpis) {
+                // Kontener dla podpisu
+                $content .= '<div style="margin-bottom: 30px; page-break-inside: avoid;">';
+
+                // Informacje o podpisującym
+                $content .= '<div style="font-weight: bold; margin-bottom: 5px; font-size: 11pt;">';
+                $content .= htmlspecialchars($podpis->getPodpisujacyFullInfo());
+                $content .= '</div>';
+
+                // Status podpisu
+                if ($podpis->isSigned()) {
+                    $content .= '<div style="color: #28a745; margin-bottom: 10px; font-size: 10pt;">✓ Podpisany';
+                    if ($podpis->getDataPodpisania()) {
+                        $content .= ' – ' . $podpis->getDataPodpisania()->format('d.m.Y H:i');
+                    }
+                    $content .= '</div>';
+
+                    // Wizualny podpis elektroniczny
+                    if ($podpis->getPodpisElektroniczny()) {
+                        $content .= '<div style="border: 1px solid #ccc; padding: 10px; background: #fff; min-height: 60px; margin-bottom: 10px;">';
+                        $content .= '<img src="' . htmlspecialchars($podpis->getPodpisElektroniczny()) . '" ';
+                        $content .= 'alt="Podpis elektroniczny" style="max-width: 300px; max-height: 80px; display: block;" />';
+                        $content .= '</div>';
+                    }
+
+                    if ($podpis->getKomentarz()) {
+                        $content .= '<div style="font-size: 9pt; color: #666; margin-top: 5px; font-style: italic;">Komentarz: ' .
+                                   htmlspecialchars($podpis->getKomentarz()) . '</div>';
+                    }
+
+                    // Hash podpisu (skrócony)
+                    if ($podpis->getHashPodpisu()) {
+                        $content .= '<div style="font-size: 8pt; color: #999; margin-top: 5px; font-family: monospace;">';
+                        $content .= 'Hash weryfikacyjny: ' . substr($podpis->getHashPodpisu(), 0, 32) . '...';
+                        $content .= '</div>';
+                    }
+                } elseif ($podpis->isRejected()) {
+                    $content .= '<div style="color: #dc3545; margin-bottom: 5px; font-size: 10pt;">✗ Odrzucony';
+                    if ($podpis->getDataPodpisania()) {
+                        $content .= ' – ' . $podpis->getDataPodpisania()->format('d.m.Y H:i');
+                    }
+                    $content .= '</div>';
+
+                    if ($podpis->getKomentarz()) {
+                        $content .= '<div style="font-size: 9pt; color: #666; margin-top: 5px; background: #f8d7da; padding: 8px; border-left: 3px solid #dc3545;">Powód odrzucenia: ' .
+                                   htmlspecialchars($podpis->getKomentarz()) . '</div>';
+                    }
+                } else {
+                    $content .= '<div style="color: #ffc107; font-size: 10pt;">⏳ Oczekuje na podpis</div>';
+                }
+
+                $content .= '</div>'; // Koniec kontenera podpisu
+            }
+
+            $content .= '</div>';
+        }
+
+        return $content;
     }
     
     /**

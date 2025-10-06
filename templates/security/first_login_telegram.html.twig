@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Połącz z Telegramem - Krok 5/5 - Nowa Nadzieja CRM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --text-light: #1f2937;
+            --text-muted: #6b7280;
+            --card-bg: #ffffff;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-light);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .card-custom {
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px var(--shadow);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, var(--info) 0%, var(--primary) 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header-custom::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .card-header-custom h3 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header-custom p {
+            font-size: 1rem;
+            opacity: 0.95;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-body-custom {
+            padding: 3rem 2.5rem;
+        }
+
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-step {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            background: white;
+            color: #0088cc;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .progress-step.completed {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .progress-line {
+            width: 3rem;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .progress-line.completed {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .verification-code {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: 0.5rem;
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            margin: 2rem 0;
+            user-select: all;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .verification-code:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.5);
+        }
+
+        .verification-code:active {
+            transform: scale(0.98);
+        }
+
+        .code-hint {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .instruction-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .instruction-number {
+            width: 32px;
+            height: 32px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+
+        .instruction-content h4 {
+            margin: 0 0 0.5rem 0;
+            color: #1f2937;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .instruction-content p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .bot-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #0088cc;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.3);
+        }
+
+        .bot-link:hover {
+            background: #0077b5;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 136, 204, 0.4);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .info-box h4 {
+            color: #667eea;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-box p {
+            color: #6b7280;
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .btn-skip {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-skip:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+
+        .timer {
+            text-align: center;
+            color: #ef4444;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h3><i class="fab fa-telegram-plane me-2"></i>Połącz konto z Telegramem</h3>
+                <p>Krok 5 z 5: Otrzymuj powiadomienia o przekazach medialnych</p>
+                <div class="progress-indicator">
+                    <div class="progress-step completed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="progress-line completed"></div>
+                    <div class="progress-step completed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="progress-line completed"></div>
+                    <div class="progress-step completed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="progress-line completed"></div>
+                    <div class="progress-step completed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="progress-line completed"></div>
+                    <div class="progress-step active">5</div>
+                </div>
+            </div>
+
+            <div class="card-body-custom">
+                <div class="text-center mb-4">
+                    <p style="font-size: 1.125rem; color: var(--text-muted); margin: 0;">
+                        Ostatni krok! Połącz swoje konto z Telegramem aby otrzymywać przekazy medialne partii.
+                    </p>
+                </div>
+
+                <!-- Verification Code -->
+                <div class="text-center">
+                    <h5 style="color: var(--text-light); margin-bottom: 1rem; font-weight: 600;">
+                        Twój kod weryfikacyjny:
+                    </h5>
+                    <div class="verification-code" id="verificationCode" onclick="copyCode()" title="Kliknij aby skopiować">
+                        {{ code }}
+                    </div>
+                    <div class="code-hint">
+                        <i class="fas fa-copy"></i> Kliknij na kod aby skopiować
+                    </div>
+
+                    <!-- Timer -->
+                    <div class="timer" id="timer">
+                        Kod wygasa za: <span id="timeLeft">{{ expires_in }} minut</span>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="mt-4">
+                    <h5 style="margin-bottom: 1.5rem; font-weight: 700;">
+                        <i class="fas fa-list-ol me-2"></i>Jak połączyć konto:
+                    </h5>
+
+                    <div class="instruction-step">
+                        <div class="instruction-number">1</div>
+                        <div class="instruction-content">
+                            <h4>Otwórz bota w Telegramie</h4>
+                            <p>Kliknij poniższy przycisk lub wyszukaj <code>@nowa_nadzieja_przekazy_bot</code></p>
+                            <div class="mt-2">
+                                <a href="https://t.me/nowa_nadzieja_przekazy_bot" target="_blank" class="bot-link">
+                                    <i class="fab fa-telegram"></i>
+                                    Otwórz bota
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div class="instruction-number">2</div>
+                        <div class="instruction-content">
+                            <h4>Kliknij "Start"</h4>
+                            <p>W oknie bota kliknij przycisk <strong>"Start"</strong> lub wyślij komendę <code>/start</code></p>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div class="instruction-number">3</div>
+                        <div class="instruction-content">
+                            <h4>Wyślij kod weryfikacyjny</h4>
+                            <p>Skopiuj powyższy kod i wyślij do bota wiadomość:</p>
+                            <code>/start {{ code }}</code>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div class="instruction-number">4</div>
+                        <div class="instruction-content">
+                            <h4>Poczekaj na potwierdzenie</h4>
+                            <p>Bot potwierdzi połączenie i zostaniesz automatycznie przekierowany do systemu.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="info-box">
+                    <h4>
+                        <i class="fas fa-info-circle"></i>
+                        Po co to jest?
+                    </h4>
+                    <p>
+                        Telegram pozwala nam szybko wysyłać Ci przekazy medialne partii.
+                        Będziesz mógł je udostępniać dalej na swoich social media (Twitter, Facebook)
+                        i wysyłać nam linki. System automatycznie policzy Twoje zaangażowanie.
+                    </p>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-between mt-4">
+                    <form method="post" action="{{ path('first_login_skip_telegram') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('skip_telegram') }}">
+                        <input type="hidden" name="from_profile" value="{{ app.request.get('reconnect') == '1' ? '1' : '0' }}">
+                        <button type="submit" class="btn-skip">
+                            <i class="fas fa-forward"></i>
+                            Pomiń na razie
+                        </button>
+                    </form>
+
+                    <button type="button" class="btn btn-primary" onclick="checkConnection()" id="checkBtn">
+                        <i class="fas fa-sync"></i>
+                        Sprawdź połączenie
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// Copy code to clipboard
+function copyCode() {
+    const code = '{{ code }}';
+    navigator.clipboard.writeText('/start ' + code).then(() => {
+        const codeElement = document.getElementById('verificationCode');
+        codeElement.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+        setTimeout(() => {
+            codeElement.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        }, 1000);
+
+        // Show toast notification
+        alert('✅ Skopiowano: /start ' + code);
+    });
+}
+
+// Timer countdown
+let timeLeft = {{ expires_in }} * 60; // Convert minutes to seconds
+
+function updateTimer() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    document.getElementById('timeLeft').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+    if (timeLeft <= 0) {
+        document.getElementById('timer').innerHTML = '<span style="color: #ef4444;">⚠️ Kod wygasł - odśwież stronę aby wygenerować nowy</span>';
+        return;
+    }
+
+    if (timeLeft <= 60) {
+        document.getElementById('timer').style.color = '#ef4444';
+    }
+
+    timeLeft--;
+    setTimeout(updateTimer, 1000);
+}
+
+updateTimer();
+
+// Check connection status
+let checkInterval;
+
+function checkConnection() {
+    const btn = document.getElementById('checkBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sprawdzam...';
+
+    fetch('{{ path('first_login_check_telegram') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.connected) {
+            btn.innerHTML = '<i class="fas fa-check"></i> Połączono!';
+            btn.style.background = '#10b981';
+
+            // Sprawdź czy użytkownik przyszedł z profilu
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromProfile = urlParams.get('reconnect') === '1';
+
+            setTimeout(() => {
+                window.location.href = fromProfile ? '{{ path('profil_index') }}' : '{{ path('dashboard') }}';
+            }, 1000);
+        } else {
+            btn.innerHTML = '<i class="fas fa-times"></i> Jeszcze nie połączono';
+            btn.style.background = '#ef4444';
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-sync"></i> Sprawdź połączenie';
+                btn.style.background = '';
+            }, 2000);
+        }
+    })
+    .catch(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sync"></i> Sprawdź połączenie';
+    });
+}
+
+// Auto-check every 5 seconds
+checkInterval = setInterval(() => {
+    fetch('{{ path('first_login_check_telegram') }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.connected) {
+            clearInterval(checkInterval);
+
+            // Sprawdź czy użytkownik przyszedł z profilu
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromProfile = urlParams.get('reconnect') === '1';
+
+            window.location.href = fromProfile ? '{{ path('profil_index') }}' : '{{ path('dashboard') }}';
+        }
+    });
+}, 5000);
+</script>
+</body>
+</html>

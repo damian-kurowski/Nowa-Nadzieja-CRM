@@ -7,6 +7,7 @@ use App\Entity\Oddzial;
 use App\Entity\PodpisDokumentu;
 use App\Entity\User;
 use App\Entity\ZebranieOddzialu;
+use Doctrine\DBAL\LockMode;
 use App\Repository\DokumentRepository;
 use App\Repository\ZebranieOddzialuRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -32,31 +33,45 @@ class ZebranieOddzialuService
      */
     public function rozpocznijZebranie(Oddzial $oddzial, User $obserwator): ZebranieOddzialu
     {
-        // Sprawdź czy obserwator może prowadzić zebranie dla tego oddziału
-        if (!$this->zebranieRepository->canUserBeObserver($obserwator, $oddzial)) {
-            throw new AccessDeniedException('Nie możesz być obserwatorem zebrania dla tego oddziału');
-        }
+        return $this->entityManager->wrapInTransaction(function() use ($oddzial, $obserwator) {
+            // Sprawdź czy obserwator może prowadzić zebranie dla tego oddziału
+            if (!$this->zebranieRepository->canUserBeObserver($obserwator, $oddzial)) {
+                throw new AccessDeniedException('Nie możesz być obserwatorem zebrania dla tego oddziału');
+            }
 
-        // Sprawdź czy nie ma już aktywnego zebrania dla tego oddziału
-        $activeZebranie = $this->zebranieRepository->findActiveByOddzial($oddzial);
-        if ($activeZebranie) {
-            throw new \RuntimeException('Oddział ma już aktywne zebranie');
-        }
+            // Sprawdź czy nie ma już aktywnego zebrania dla tego oddziału (z FOR UPDATE)
+            $activeZebranie = $this->entityManager->createQueryBuilder()
+                ->select('z')
+                ->from(ZebranieOddzialu::class, 'z')
+                ->where('z.oddzial = :oddzial')
+                ->andWhere('z.status NOT IN (:statuses)')
+                ->setParameter('oddzial', $oddzial)
+                ->setParameter('statuses', [ZebranieOddzialu::STATUS_ZAKONCZONE, ZebranieOddzialu::STATUS_ANULOWANE])
+                ->getQuery()
+                ->setLockMode(LockMode::PESSIMISTIC_WRITE)
+                ->getOneOrNullResult();
 
-        $zebranie = new ZebranieOddzialu();
-        $zebranie->setOddzial($oddzial);
-        $zebranie->setObserwator($obserwator);
+            if ($activeZebranie) {
+                throw new \RuntimeException('Oddział ma już aktywne zebranie');
+            }
 
-        $this->entityManager->persist($zebranie);
-        $this->entityManager->flush();
+            $zebranie = new ZebranieOddzialu();
+            $zebranie->setOddzial($oddzial);
+            $zebranie->setObserwator($obserwator);
 
-        $this->logMeetingActivity($zebranie, 'meeting_started', [
-            'oddzial' => $oddzial->getNazwa(),
-            'obserwator' => $obserwator->getFullName(),
-            'obserwator_id' => $obserwator->getId(),
-        ]);
+            $this->entityManager->persist($zebranie);
+            $this->entityManager->flush();
 
-        return $zebranie;
+            // Dokument wyznaczenia obserwatora jest tworzony w Controller przed rozpoczęciem zebrania
+
+            $this->logMeetingActivity($zebranie, 'meeting_started', [
+                'oddzial' => $oddzial->getNazwa(),
+                'obserwator' => $obserwator->getFullName(),
+                'obserwator_id' => $obserwator->getId(),
+            ]);
+
+            return $zebranie;
+        });
     }
 
     /**
@@ -64,47 +79,51 @@ class ZebranieOddzialuService
      */
     public function wyznaczProtokolanta(ZebranieOddzialu $zebranie, User $protokolant, User $wyznaczajacy): void
     {
-        // Sprawdź czy zebranie jest w odpowiednim stanie
-        if (!$zebranie->canAssignProtokolant($wyznaczajacy)) {
-            throw new AccessDeniedException('Nie można teraz wyznaczyć protokolanta');
-        }
+        $this->entityManager->wrapInTransaction(function() use ($zebranie, $protokolant, $wyznaczajacy) {
+            // Sprawdź czy zebranie jest w odpowiednim stanie
+            if (!$zebranie->canAssignProtokolant($wyznaczajacy)) {
+                throw new AccessDeniedException('Nie można teraz wyznaczyć protokolanta');
+            }
 
-        // Sprawdź czy protokolant należy do oddziału
-        if (!$this->zebranieRepository->canUserBeMeetingRole($protokolant, $zebranie->getOddzial())) {
-            throw new \InvalidArgumentException('Protokolant musi należeć do oddziału');
-        }
+            // Sprawdź czy protokolant należy do oddziału
+            if (!$this->zebranieRepository->canUserBeMeetingRole($protokolant, $zebranie->getOddzial())) {
+                throw new \InvalidArgumentException('Protokolant musi należeć do oddziału');
+            }
 
-        // Utworz dokument wyznaczenia protokolanta
-        $dokumentData = [
-            'protokolant' => $protokolant,
-            'data_wejscia_w_zycie' => new \DateTime(),
-            'uzasadnienie' => 'Wyznaczenie protokolanta na zebranie członków oddziału '.$zebranie->getOddzial()->getNazwa(),
-        ];
+            // Utworz dokument wyznaczenia protokolanta
+            $dokumentData = [
+                'protokolant' => $protokolant,
+                'oddzial' => $zebranie->getOddzial(),
+                'data_zebrania' => $zebranie->getDataRozpoczecia() ?: new \DateTime(),
+                'data_wejscia_w_zycie' => new \DateTime(),
+                'uzasadnienie' => 'Wyznaczenie protokolanta na zebranie członków oddziału '.$zebranie->getOddzial()->getNazwa(),
+            ];
 
-        $dokument = $this->dokumentService->createDocument(
-            Dokument::TYP_WYZNACZENIE_PROTOKOLANTA,
-            $dokumentData,
-            $wyznaczajacy
-        );
+            $dokument = $this->dokumentService->createDocument(
+                Dokument::TYP_WYZNACZENIE_PROTOKOLANTA,
+                $dokumentData,
+                $wyznaczajacy
+            );
 
-        // Powiąż dokument z zebraniem
-        $dokument->setZebranieOddzialu($zebranie);
-        $zebranie->setProtokolant($protokolant);
-        
-        // Zmień status zebrania
-        $zebranie->setStatus(ZebranieOddzialu::STATUS_OCZEKUJE_NA_PROWADZACEGO);
+            // Powiąż dokument z zebraniem
+            $dokument->setZebranieOddzialu($zebranie);
+            $zebranie->setProtokolant($protokolant);
+            
+            // Zmień status zebrania
+            $zebranie->setStatus(ZebranieOddzialu::STATUS_OCZEKUJE_NA_PROWADZACEGO);
 
-        $this->entityManager->flush();
+            $this->entityManager->flush();
 
-        // Automatycznie podpisz dokument (co spowoduje nadanie roli przez executeDocumentAction)
-        $this->dokumentService->signDocument($dokument, $wyznaczajacy);
+            // Automatycznie podpisz dokument (co spowoduje nadanie roli przez executeDocumentAction)
+            $this->dokumentService->signDocument($dokument, $wyznaczajacy);
 
-        $this->logMeetingActivity($zebranie, 'secretary_appointed', [
-            'protokolant' => $protokolant->getFullName(),
-            'protokolant_id' => $protokolant->getId(),
-            'wyznaczajacy' => $wyznaczajacy->getFullName(),
-            'wyznaczajacy_id' => $wyznaczajacy->getId(),
-        ]);
+            $this->logMeetingActivity($zebranie, 'secretary_appointed', [
+                'protokolant' => $protokolant->getFullName(),
+                'protokolant_id' => $protokolant->getId(),
+                'wyznaczajacy' => $wyznaczajacy->getFullName(),
+                'wyznaczajacy_id' => $wyznaczajacy->getId(),
+            ]);
+        });
     }
 
     /**
@@ -112,52 +131,55 @@ class ZebranieOddzialuService
      */
     public function wyznaczProwadzacego(ZebranieOddzialu $zebranie, User $prowadzacy, User $wyznaczajacy): void
     {
-        // Sprawdź czy zebranie jest w odpowiednim stanie
-        if (!$zebranie->canAssignProwadzacy($wyznaczajacy)) {
-            throw new AccessDeniedException('Nie można teraz wyznaczyć prowadzącego');
-        }
+        $this->entityManager->wrapInTransaction(function() use ($zebranie, $prowadzacy, $wyznaczajacy) {
+            // Sprawdź czy zebranie jest w odpowiednim stanie
+            if (!$zebranie->canAssignProwadzacy($wyznaczajacy)) {
+                throw new AccessDeniedException('Nie można teraz wyznaczyć prowadzącego');
+            }
 
-        // Sprawdź czy prowadzący należy do oddziału
-        if (!$this->zebranieRepository->canUserBeMeetingRole($prowadzacy, $zebranie->getOddzial())) {
-            throw new \InvalidArgumentException('Prowadzący musi należeć do oddziału');
-        }
+            // Sprawdź czy prowadzący należy do oddziału
+            if (!$this->zebranieRepository->canUserBeMeetingRole($prowadzacy, $zebranie->getOddzial())) {
+                throw new \InvalidArgumentException('Prowadzący musi należeć do oddziału');
+            }
 
-        // Sprawdź czy prowadzący nie jest protokolantem
-        if ($zebranie->getProtokolant() && $zebranie->getProtokolant()->getId() === $prowadzacy->getId()) {
-            throw new \InvalidArgumentException('Prowadzący nie może być jednocześnie protokolantem');
-        }
+            // Sprawdź czy prowadzący nie jest protokolantem
+            if ($zebranie->getProtokolant() && $zebranie->getProtokolant()->getId() === $prowadzacy->getId()) {
+                throw new \InvalidArgumentException('Prowadzący nie może być jednocześnie protokolantem');
+            }
 
-        // Utworz dokument wyznaczenia prowadzącego
-        $dokumentData = [
-            'prowadzacy' => $prowadzacy,
-            'data_wejscia_w_zycie' => new \DateTime(),
-            'uzasadnienie' => 'Wyznaczenie prowadzącego na zebranie członków oddziału '.$zebranie->getOddzial()->getNazwa(),
-        ];
+            // Utworz dokument wyznaczenia prowadzącego
+            $dokumentData = [
+                'prowadzacy' => $prowadzacy,
+                'oddzial' => $zebranie->getOddzial(),
+                'data_wejscia_w_zycie' => new \DateTime(),
+                'uzasadnienie' => 'Wyznaczenie prowadzącego na zebranie członków oddziału '.$zebranie->getOddzial()->getNazwa(),
+            ];
 
-        $dokument = $this->dokumentService->createDocument(
-            Dokument::TYP_WYZNACZENIE_PROWADZACEGO,
-            $dokumentData,
-            $wyznaczajacy
-        );
+            $dokument = $this->dokumentService->createDocument(
+                Dokument::TYP_WYZNACZENIE_PROWADZACEGO,
+                $dokumentData,
+                $wyznaczajacy
+            );
 
-        // Powiąż dokument z zebraniem
-        $dokument->setZebranieOddzialu($zebranie);
-        $zebranie->setProwadzacy($prowadzacy);
-        
-        // Zmień status zebrania - zgodnie z procedurą statutową protokolant i prowadzący wybierają przewodniczącego
-        $zebranie->setStatus(ZebranieOddzialu::STATUS_WYBOR_PRZEWODNICZACEGO);
+            // Powiąż dokument z zebraniem
+            $dokument->setZebranieOddzialu($zebranie);
+            $zebranie->setProwadzacy($prowadzacy);
+            
+            // Zmień status zebrania - zgodnie z procedurą statutową protokolant i prowadzący wybierają przewodniczącego
+            $zebranie->setStatus(ZebranieOddzialu::STATUS_WYBOR_PRZEWODNICZACEGO);
 
-        $this->entityManager->flush();
+            $this->entityManager->flush();
 
-        // Automatycznie podpisz dokument (co spowoduje nadanie roli przez executeDocumentAction)
-        $this->dokumentService->signDocument($dokument, $wyznaczajacy);
+            // Automatycznie podpisz dokument (co spowoduje nadanie roli przez executeDocumentAction)
+            $this->dokumentService->signDocument($dokument, $wyznaczajacy);
 
-        $this->logMeetingActivity($zebranie, 'chairman_appointed', [
-            'prowadzacy' => $prowadzacy->getFullName(),
-            'prowadzacy_id' => $prowadzacy->getId(),
-            'wyznaczajacy' => $wyznaczajacy->getFullName(),
-            'wyznaczajacy_id' => $wyznaczajacy->getId(),
-        ]);
+            $this->logMeetingActivity($zebranie, 'chairman_appointed', [
+                'prowadzacy' => $prowadzacy->getFullName(),
+                'prowadzacy_id' => $prowadzacy->getId(),
+                'wyznaczajacy' => $wyznaczajacy->getFullName(),
+                'wyznaczajacy_id' => $wyznaczajacy->getId(),
+            ]);
+        });
     }
 
     /**
@@ -171,13 +193,18 @@ class ZebranieOddzialuService
         User $sekretarz,
         User $wyznaczajacy
     ): void {
-        // Sprawdź czy zebranie jest w odpowiednim stanie
-        if (!$zebranie->canManagePositions($wyznaczajacy)) {
+        // Sprawdź czy zebranie jest w odpowiednim stanie - obsługuje wszystkie 3 kroki wyboru
+        $canManage = $zebranie->canSelectPrzewodniczacy($wyznaczajacy)
+                  || $zebranie->canSelectZastepcy($wyznaczajacy)
+                  || $zebranie->canManagePositions($wyznaczajacy);
+
+        if (!$canManage) {
             throw new AccessDeniedException('Nie można teraz wyznaczyć zarządu');
         }
 
         // Walidacja - wszyscy muszą być z tego samego oddziału
         $oddzial = $zebranie->getOddzial();
+
         foreach ([$przewodniczacy, $zastepca1, $zastepca2, $sekretarz] as $user) {
             if ($user && $user->getOddzial() !== $oddzial) {
                 throw new \InvalidArgumentException('Wszyscy członkowie zarządu muszą należeć do tego samego oddziału');
@@ -190,27 +217,72 @@ class ZebranieOddzialuService
             throw new \InvalidArgumentException('Ta sama osoba nie może pełnić wielu funkcji w zarządzie');
         }
 
-        // Zapisz zarząd w zebraniu
-        $zebranie->setPrzewodniczacy($przewodniczacy);
-        $zebranie->setZastepca1($zastepca1);
-        $zebranie->setZastepca2($zastepca2);
-        $zebranie->setSekretarz($sekretarz);
-        
-        // Zmień status zebrania
-        $zebranie->setStatus(ZebranieOddzialu::STATUS_OCZEKUJE_NA_PODPISY);
+        // Odwołaj poprzednie władze oddziału DOPIERO TUTAJ, po walidacji
+        $this->odwolajPoprzednieWladzeOddzialu($oddzial);
 
-        $this->entityManager->flush();
+        // Zapisz zarząd w zebraniu i zmień status
+        $currentStatus = $zebranie->getStatus();
 
-        // Teraz utwórz dokumenty powołania dla każdego stanowiska
-        $this->createBoardAppointmentDocuments($zebranie, $przewodniczacy, $zastepca1, $zastepca2, $sekretarz, $wyznaczajacy);
+        // Sprawdź czy to pełny wybór zarządu (wszystkie wymagane stanowiska naraz)
+        $isFullBoardSelection = $przewodniczacy && $sekretarz;
 
-        $this->logMeetingActivity($zebranie, 'board_appointed', [
-            'przewodniczacy' => $przewodniczacy->getFullName(),
-            'zastepca1' => $zastepca1 ? $zastepca1->getFullName() : null,
-            'zastepca2' => $zastepca2 ? $zastepca2->getFullName() : null,
-            'sekretarz' => $sekretarz->getFullName(),
-            'wyznaczajacy' => $wyznaczajacy->getFullName(),
-        ]);
+        if ($isFullBoardSelection) {
+            // TRYB 1: Pełny wybór zarządu naraz (formularz wysłał wszystkie dane)
+            $zebranie->setPrzewodniczacy($przewodniczacy);
+            $zebranie->setZastepca1($zastepca1);
+            $zebranie->setZastepca2($zastepca2);
+            $zebranie->setSekretarz($sekretarz);
+            $zebranie->setStatus(ZebranieOddzialu::STATUS_OCZEKUJE_NA_PODPISY);
+
+            $this->entityManager->flush();
+
+            // Utwórz wszystkie dokumenty naraz
+            $this->createAllBoardDocuments($zebranie, $przewodniczacy, $zastepca1, $zastepca2, $sekretarz, $wyznaczajacy);
+        } else {
+            // TRYB 2: Progresywny wybór zarządu (krok po kroku)
+            if ($currentStatus === ZebranieOddzialu::STATUS_WYBOR_PRZEWODNICZACEGO) {
+                // Krok 1: Tylko przewodniczący
+                $zebranie->setPrzewodniczacy($przewodniczacy);
+                $zebranie->setStatus(ZebranieOddzialu::STATUS_WYBOR_ZASTEPCOW);
+            } elseif ($currentStatus === ZebranieOddzialu::STATUS_WYBOR_ZASTEPCOW) {
+                // Krok 2: Tylko zastępcy
+                $zebranie->setZastepca1($zastepca1);
+                $zebranie->setZastepca2($zastepca2);
+                $zebranie->setStatus(ZebranieOddzialu::STATUS_WYBOR_ZARZADU);
+            } elseif ($currentStatus === ZebranieOddzialu::STATUS_WYBOR_ZARZADU) {
+                // Krok 3: Tylko sekretarz
+                $zebranie->setSekretarz($sekretarz);
+                $zebranie->setStatus(ZebranieOddzialu::STATUS_OCZEKUJE_NA_PODPISY);
+            } elseif ($currentStatus === ZebranieOddzialu::STATUS_OCZEKUJE_NA_PODPISY) {
+                // Sytuacja naprawcza: utwórz brakujące dokumenty
+                $zebranie->setPrzewodniczacy($przewodniczacy);
+                $zebranie->setZastepca1($zastepca1);
+                $zebranie->setZastepca2($zastepca2);
+                $zebranie->setSekretarz($sekretarz);
+            }
+
+            $this->entityManager->flush();
+
+            // Utwórz dokumenty progresywnie lub naprawczo
+            if ($currentStatus === ZebranieOddzialu::STATUS_OCZEKUJE_NA_PODPISY) {
+                $this->createAllMissingBoardDocuments($zebranie, $przewodniczacy, $zastepca1, $zastepca2, $sekretarz, $wyznaczajacy);
+            } else {
+                $this->createBoardAppointmentDocuments($zebranie, $currentStatus, $przewodniczacy, $zastepca1, $zastepca2, $sekretarz, $wyznaczajacy);
+            }
+        }
+
+        // Loguj tylko wybrane stanowisko w aktualnym kroku
+        $logData = ['wyznaczajacy' => $wyznaczajacy->getFullName()];
+        if ($currentStatus === ZebranieOddzialu::STATUS_WYBOR_PRZEWODNICZACEGO && $przewodniczacy) {
+            $logData['przewodniczacy'] = $przewodniczacy->getFullName();
+        } elseif ($currentStatus === ZebranieOddzialu::STATUS_WYBOR_ZASTEPCOW) {
+            $logData['zastepca1'] = $zastepca1 ? $zastepca1->getFullName() : null;
+            $logData['zastepca2'] = $zastepca2 ? $zastepca2->getFullName() : null;
+        } elseif ($currentStatus === ZebranieOddzialu::STATUS_WYBOR_ZARZADU && $sekretarz) {
+            $logData['sekretarz'] = $sekretarz->getFullName();
+        }
+
+        $this->logMeetingActivity($zebranie, 'board_appointed', $logData);
     }
 
     /**
@@ -218,13 +290,68 @@ class ZebranieOddzialuService
      */
     private function createBoardAppointmentDocuments(
         ZebranieOddzialu $zebranie,
+        string $currentStatus,
+        ?User $przewodniczacy,
+        ?User $zastepca1,
+        ?User $zastepca2,
+        ?User $sekretarz,
+        User $wyznaczajacy
+    ): void {
+        // Utwórz dokumenty tylko dla stanowisk wybranych w aktualnym kroku
+        if ($currentStatus === ZebranieOddzialu::STATUS_WYBOR_PRZEWODNICZACEGO && $przewodniczacy) {
+            // Krok 1: Tylko przewodniczący
+            $this->createBoardDocument(
+                $zebranie,
+                $przewodniczacy,
+                Dokument::TYP_POWOLANIE_PRZEWODNICZACEGO_ODDZIALU,
+                'przewodniczący oddziału',
+                $wyznaczajacy
+            );
+        } elseif ($currentStatus === ZebranieOddzialu::STATUS_WYBOR_ZASTEPCOW) {
+            // Krok 2: Tylko zastępcy (jeśli zostali wybrani)
+            if ($zastepca1) {
+                $this->createBoardDocument(
+                    $zebranie,
+                    $zastepca1,
+                    Dokument::TYP_POWOLANIE_ZASTEPCY_PRZEWODNICZACEGO,
+                    'zastępca przewodniczącego oddziału',
+                    $wyznaczajacy
+                );
+            }
+
+            if ($zastepca2) {
+                $this->createBoardDocument(
+                    $zebranie,
+                    $zastepca2,
+                    Dokument::TYP_POWOLANIE_ZASTEPCY_PRZEWODNICZACEGO,
+                    'zastępca przewodniczącego oddziału',
+                    $wyznaczajacy
+                );
+            }
+        } elseif ($currentStatus === ZebranieOddzialu::STATUS_WYBOR_ZARZADU && $sekretarz) {
+            // Krok 3: Tylko sekretarz
+            $this->createBoardDocument(
+                $zebranie,
+                $sekretarz,
+                Dokument::TYP_POWOLANIE_SEKRETARZA_ODDZIALU,
+                'sekretarz oddziału',
+                $wyznaczajacy
+            );
+        }
+    }
+
+    /**
+     * Tworzy wszystkie dokumenty powołania zarządu naraz (normalna sytuacja - pełny wybór).
+     */
+    private function createAllBoardDocuments(
+        ZebranieOddzialu $zebranie,
         User $przewodniczacy,
         ?User $zastepca1,
         ?User $zastepca2,
         User $sekretarz,
         User $wyznaczajacy
     ): void {
-        // Dokument powołania przewodniczącego
+        // Utwórz dokument przewodniczącego
         $this->createBoardDocument(
             $zebranie,
             $przewodniczacy,
@@ -233,16 +360,7 @@ class ZebranieOddzialuService
             $wyznaczajacy
         );
 
-        // Dokument powołania sekretarza
-        $this->createBoardDocument(
-            $zebranie,
-            $sekretarz,
-            Dokument::TYP_POWOLANIE_SEKRETARZA_ODDZIALU,
-            'sekretarz oddziału',
-            $wyznaczajacy
-        );
-
-        // Dokumenty powołania zastępców (jeśli zostali wybrani)
+        // Utwórz dokumenty zastępców (jeśli zostali wybrani)
         if ($zastepca1) {
             $this->createBoardDocument(
                 $zebranie,
@@ -262,6 +380,89 @@ class ZebranieOddzialuService
                 $wyznaczajacy
             );
         }
+
+        // Utwórz dokument sekretarza
+        $this->createBoardDocument(
+            $zebranie,
+            $sekretarz,
+            Dokument::TYP_POWOLANIE_SEKRETARZA_ODDZIALU,
+            'sekretarz oddziału',
+            $wyznaczajacy
+        );
+    }
+
+    /**
+     * Tworzy wszystkie brakujące dokumenty powołania zarządu (sytuacja naprawcza).
+     */
+    private function createAllMissingBoardDocuments(
+        ZebranieOddzialu $zebranie,
+        ?User $przewodniczacy,
+        ?User $zastepca1,
+        ?User $zastepca2,
+        ?User $sekretarz,
+        User $wyznaczajacy
+    ): void {
+        // Sprawdź jakie dokumenty już istnieją
+        $existingDocs = $zebranie->getDokumenty();
+        $existingTypes = [];
+        foreach ($existingDocs as $dok) {
+            $existingTypes[] = $dok->getTyp();
+        }
+
+        // Utwórz dokument przewodniczącego jeśli nie istnieje
+        if ($przewodniczacy && !in_array(Dokument::TYP_POWOLANIE_PRZEWODNICZACEGO_ODDZIALU, $existingTypes)) {
+            $this->createBoardDocument(
+                $zebranie,
+                $przewodniczacy,
+                Dokument::TYP_POWOLANIE_PRZEWODNICZACEGO_ODDZIALU,
+                'przewodniczący oddziału',
+                $wyznaczajacy
+            );
+        }
+
+        // Utwórz dokumenty zastępców jeśli nie istnieją
+        if ($zastepca1 && !in_array(Dokument::TYP_POWOLANIE_ZASTEPCY_PRZEWODNICZACEGO, $existingTypes, true)) {
+            $this->createBoardDocument(
+                $zebranie,
+                $zastepca1,
+                Dokument::TYP_POWOLANIE_ZASTEPCY_PRZEWODNICZACEGO,
+                'zastępca przewodniczącego oddziału',
+                $wyznaczajacy
+            );
+        }
+
+        if ($zastepca2) {
+            // Sprawdź czy jest już dokument zastępcy dla tego użytkownika
+            $hasZastepca2Doc = false;
+            foreach ($existingDocs as $dok) {
+                if ($dok->getTyp() === Dokument::TYP_POWOLANIE_ZASTEPCY_PRZEWODNICZACEGO
+                    && $dok->getCzlonek() && $dok->getCzlonek()->getId() === $zastepca2->getId()) {
+                    $hasZastepca2Doc = true;
+                    break;
+                }
+            }
+
+            if (!$hasZastepca2Doc) {
+                $this->createBoardDocument(
+                    $zebranie,
+                    $zastepca2,
+                    Dokument::TYP_POWOLANIE_ZASTEPCY_PRZEWODNICZACEGO,
+                    'zastępca przewodniczącego oddziału',
+                    $wyznaczajacy
+                );
+            }
+        }
+
+        // Utwórz dokument sekretarza jeśli nie istnieje
+        if ($sekretarz && !in_array(Dokument::TYP_POWOLANIE_SEKRETARZA_ODDZIALU, $existingTypes)) {
+            $this->createBoardDocument(
+                $zebranie,
+                $sekretarz,
+                Dokument::TYP_POWOLANIE_SEKRETARZA_ODDZIALU,
+                'sekretarz oddziału',
+                $wyznaczajacy
+            );
+        }
     }
 
 
@@ -277,6 +478,8 @@ class ZebranieOddzialuService
     ): void {
         $dokumentData = [
             'czlonek' => $czlonek,
+            'oddzial' => $zebranie->getOddzial(),
+            'data_zebrania' => $zebranie->getDataRozpoczecia() ?: new \DateTime(),
             'data_wejscia_w_zycie' => new \DateTime(),
             'uzasadnienie' => sprintf(
                 'Powołanie na stanowisko %s w oddziale %s na zebraniu członków oddziału',
@@ -303,34 +506,52 @@ class ZebranieOddzialuService
      */
     private function addMeetingSignersToDocument(Dokument $dokument, ZebranieOddzialu $zebranie): void
     {
-        // Znajdź największą kolejność już istniejących podpisów
+        // Zbierz już istniejących podpisujących (dla sprawdzenia duplikatów)
+        $existingSignerIds = [];
         $maxKolejnosc = 0;
+
         foreach ($dokument->getPodpisy() as $podpis) {
+            if ($podpis->getPodpisujacy()) {
+                $existingSignerIds[] = $podpis->getPodpisujacy()->getId();
+            }
             if ($podpis->getKolejnosc() > $maxKolejnosc) {
                 $maxKolejnosc = $podpis->getKolejnosc();
             }
         }
 
-        // Dodaj protokolanta jako podpisującego
-        if ($zebranie->getProtokolant()) {
-            $podpisProtokolant = new \App\Entity\PodpisDokumentu();
-            $podpisProtokolant->setDokument($dokument);
-            $podpisProtokolant->setPodpisujacy($zebranie->getProtokolant());
-            $podpisProtokolant->setStatus(\App\Entity\PodpisDokumentu::STATUS_OCZEKUJE);
-            $podpisProtokolant->setKolejnosc(++$maxKolejnosc);
-            $dokument->addPodpis($podpisProtokolant);
-            $this->entityManager->persist($podpisProtokolant);
-        }
-
-        // Dodaj prowadzącego jako podpisującego
-        if ($zebranie->getProwadzacy()) {
+        // Prowadzący - kolejność 1 (Prowadzący zebrania w szablonie)
+        if ($zebranie->getProwadzacy() && !in_array($zebranie->getProwadzacy()->getId(), $existingSignerIds, true)) {
             $podpisProwadzacy = new \App\Entity\PodpisDokumentu();
             $podpisProwadzacy->setDokument($dokument);
             $podpisProwadzacy->setPodpisujacy($zebranie->getProwadzacy());
             $podpisProwadzacy->setStatus(\App\Entity\PodpisDokumentu::STATUS_OCZEKUJE);
-            $podpisProwadzacy->setKolejnosc(++$maxKolejnosc);
+            $podpisProwadzacy->setKolejnosc(1);
             $dokument->addPodpis($podpisProwadzacy);
             $this->entityManager->persist($podpisProwadzacy);
+            $existingSignerIds[] = $zebranie->getProwadzacy()->getId();
+        }
+
+        // Protokolant - kolejność 2 (Protokolant w szablonie)
+        if ($zebranie->getProtokolant() && !in_array($zebranie->getProtokolant()->getId(), $existingSignerIds, true)) {
+            $podpisProtokolant = new \App\Entity\PodpisDokumentu();
+            $podpisProtokolant->setDokument($dokument);
+            $podpisProtokolant->setPodpisujacy($zebranie->getProtokolant());
+            $podpisProtokolant->setStatus(\App\Entity\PodpisDokumentu::STATUS_OCZEKUJE);
+            $podpisProtokolant->setKolejnosc(2);
+            $dokument->addPodpis($podpisProtokolant);
+            $this->entityManager->persist($podpisProtokolant);
+            $existingSignerIds[] = $zebranie->getProtokolant()->getId();
+        }
+
+        // Obserwator - kolejność 3 (profilaktyczny podpis)
+        if ($zebranie->getObserwator() && !in_array($zebranie->getObserwator()->getId(), $existingSignerIds, true)) {
+            $podpisObserwator = new \App\Entity\PodpisDokumentu();
+            $podpisObserwator->setDokument($dokument);
+            $podpisObserwator->setPodpisujacy($zebranie->getObserwator());
+            $podpisObserwator->setStatus(\App\Entity\PodpisDokumentu::STATUS_OCZEKUJE);
+            $podpisObserwator->setKolejnosc(3);
+            $dokument->addPodpis($podpisObserwator);
+            $this->entityManager->persist($podpisObserwator);
         }
     }
 
@@ -547,29 +768,8 @@ class ZebranieOddzialuService
             Dokument::TYP_POWOLANIE_SEKRETARZA_ODDZIALU,
             Dokument::TYP_ODWOLANIE_SEKRETARZA_ODDZIALU,
         ])) {
-            // Dodaj protokolanta jako podpisującego
-            if ($zebranie->getProtokolant()) {
-                $podpisProtokolant = new PodpisDokumentu();
-                $podpisProtokolant->setDokument($dokument);
-                $podpisProtokolant->setPodpisujacy($zebranie->getProtokolant());
-                $podpisProtokolant->setStatus(PodpisDokumentu::STATUS_OCZEKUJE);
-                // Protokolant zawsze ma kolejność 1 (pierwszy podpis)
-                $podpisProtokolant->setKolejnosc(1);
-                $dokument->addPodpis($podpisProtokolant);
-                $this->entityManager->persist($podpisProtokolant);
-            }
-
-            // Dodaj prowadzącego jako podpisującego
-            if ($zebranie->getProwadzacy()) {
-                $podpisProwadzacy = new PodpisDokumentu();
-                $podpisProwadzacy->setDokument($dokument);
-                $podpisProwadzacy->setPodpisujacy($zebranie->getProwadzacy());
-                $podpisProwadzacy->setStatus(PodpisDokumentu::STATUS_OCZEKUJE);
-                // Prowadzący zawsze ma kolejność 2 (drugi podpis)
-                $podpisProwadzacy->setKolejnosc(2);
-                $dokument->addPodpis($podpisProwadzacy);
-                $this->entityManager->persist($podpisProwadzacy);
-            }
+            // Użyj wspólnej metody dla spójności (protokolant i prowadzący mogą podpisywać równolegle)
+            $this->addMeetingSignersToDocument($dokument, $zebranie);
         }
 
         $this->entityManager->flush();
@@ -583,7 +783,7 @@ class ZebranieOddzialuService
     public function zakonczZebranie(ZebranieOddzialu $zebranie, User $user): void
     {
         // Sprawdź uprawnienia
-        if ($zebranie->getObserwator() !== $user) {
+        if (!$zebranie->getObserwator() || $zebranie->getObserwator()->getId() !== $user->getId()) {
             throw new AccessDeniedException('Tylko obserwator może zakończyć zebranie');
         }
 
@@ -605,7 +805,9 @@ class ZebranieOddzialuService
         $zebranie->zakonczZebranie();
 
         // Usuń tymczasowe role
-        $this->usunTymczasowaRole($zebranie->getObserwator(), 'ROLE_OBSERWATOR_ZEBRANIA');
+        if ($zebranie->getObserwator()) {
+            $this->usunTymczasowaRole($zebranie->getObserwator(), 'ROLE_OBSERWATOR_ZEBRANIA');
+        }
         if ($zebranie->getProtokolant()) {
             $this->usunTymczasowaRole($zebranie->getProtokolant(), 'ROLE_PROTOKOLANT_ZEBRANIA');
         }
@@ -616,7 +818,9 @@ class ZebranieOddzialuService
         $this->entityManager->flush();
 
         // Odśwież tokeny wszystkich uczestników zebrania
-        $this->refreshUserTokenIfNeeded($zebranie->getObserwator());
+        if ($zebranie->getObserwator()) {
+            $this->refreshUserTokenIfNeeded($zebranie->getObserwator());
+        }
         if ($zebranie->getProtokolant()) {
             $this->refreshUserTokenIfNeeded($zebranie->getProtokolant());
         }
@@ -638,9 +842,9 @@ class ZebranieOddzialuService
      */
     public function canUserManageMeeting(User $user, ZebranieOddzialu $zebranie): bool
     {
-        return $zebranie->getObserwator() === $user
-               || $zebranie->getProwadzacy() === $user
-               || $zebranie->getProtokolant() === $user;
+        return ($zebranie->getObserwator() && $zebranie->getObserwator()->getId() === $user->getId())
+               || ($zebranie->getProwadzacy() && $zebranie->getProwadzacy()->getId() === $user->getId())
+               || ($zebranie->getProtokolant() && $zebranie->getProtokolant()->getId() === $user->getId());
     }
 
     /**
@@ -725,7 +929,7 @@ class ZebranieOddzialuService
             'status' => $zebranie->getStatus(),
             'data_rozpoczecia' => $zebranie->getDataRozpoczecia(),
             'data_zakonczenia' => $zebranie->getDataZakonczenia(),
-            'obserwator' => $zebranie->getObserwator()->getFullName(),
+            'obserwator' => $zebranie->getObserwator()?->getFullName(),
             'protokolant' => $zebranie->getProtokolant()?->getFullName(),
             'prowadzacy' => $zebranie->getProwadzacy()?->getFullName(),
             'niepodpisane_dokumenty' => $niepodpisaneDokumenty,
@@ -776,15 +980,17 @@ class ZebranieOddzialuService
         $activities = [];
 
         // Log rozpoczęcia zebrania
-        $activities[] = [
-            'action' => 'meeting_started',
-            'timestamp' => $zebranie->getDataRozpoczecia(),
-            'user' => $zebranie->getObserwator()->getFullName(),
-            'description' => 'Rozpoczęto zebranie oddziału '.$zebranie->getOddzial()->getNazwa(),
-        ];
+        if ($zebranie->getObserwator()) {
+            $activities[] = [
+                'action' => 'meeting_started',
+                'timestamp' => $zebranie->getDataRozpoczecia(),
+                'user' => $zebranie->getObserwator()->getFullName(),
+                'description' => 'Rozpoczęto zebranie oddziału '.$zebranie->getOddzial()->getNazwa(),
+            ];
+        }
 
         // Log wyznaczenia protokolanta
-        if ($zebranie->getProtokolant()) {
+        if ($zebranie->getProtokolant() && $zebranie->getObserwator()) {
             $activities[] = [
                 'action' => 'secretary_appointed',
                 'timestamp' => $zebranie->getDataRozpoczecia(), // Przybliżony czas
@@ -794,7 +1000,7 @@ class ZebranieOddzialuService
         }
 
         // Log wyznaczenia prowadzącego
-        if ($zebranie->getProwadzacy()) {
+        if ($zebranie->getProwadzacy() && $zebranie->getObserwator()) {
             $activities[] = [
                 'action' => 'chairman_appointed',
                 'timestamp' => $zebranie->getDataRozpoczecia(), // Przybliżony czas
@@ -804,7 +1010,7 @@ class ZebranieOddzialuService
         }
 
         // Log zakończenia zebrania
-        if ($zebranie->getDataZakonczenia()) {
+        if ($zebranie->getDataZakonczenia() && $zebranie->getObserwator()) {
             $activities[] = [
                 'action' => 'meeting_ended',
                 'timestamp' => $zebranie->getDataZakonczenia(),
@@ -815,4 +1021,41 @@ class ZebranieOddzialuService
 
         return $activities;
     }
+
+    /**
+     * Odwołuje wszystkie poprzednie władze oddziału (poprzez usunięcie ról).
+     */
+    private function odwolajPoprzednieWladzeOddzialu(Oddzial $oddzial): void
+    {
+        $users = $this->entityManager->getRepository(User::class)->findBy(['oddzial' => $oddzial]);
+        
+        $roleToRemove = [
+            'ROLE_PRZEWODNICZACY_ODDZIALU',
+            'ROLE_ZASTEPCA_PRZEWODNICZACEGO_ODDZIALU', 
+            'ROLE_SEKRETARZ_ODDZIALU'
+        ];
+        
+        foreach ($users as $user) {
+            $roles = $user->getRoles();
+            $originalRoleCount = count($roles);
+            
+            // Usuń wszystkie role władz oddziału
+            foreach ($roleToRemove as $roleToDelete) {
+                $roles = array_filter($roles, fn($role) => $role !== $roleToDelete);
+            }
+            
+            // Jeśli usunięto jakieś role, zapisz zmiany i zaloguj
+            if (count($roles) < $originalRoleCount) {
+                $user->setRoles(array_values($roles));
+                
+                $this->logger->info('Odwołano poprzednie władze oddziału', [
+                    'user_id' => $user->getId(),
+                    'user_name' => $user->getFullName(),
+                    'oddzial_id' => $oddzial->getId(),
+                    'usunięte_role' => array_diff($user->getRoles(), $roles),
+                ]);
+            }
+        }
+    }
+
 }

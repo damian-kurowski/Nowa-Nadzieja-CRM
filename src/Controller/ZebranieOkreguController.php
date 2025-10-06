@@ -8,8 +8,10 @@ use App\Entity\Okreg;
 use App\Repository\ZebranieOkreguRepository;
 use App\Repository\UserRepository;
 use App\Repository\OkregRepository;
+use App\Repository\DokumentRepository;
 use App\Security\CsrfService;
 use App\Service\ZebranieOkreguService;
+use App\Service\DokumentService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -25,15 +27,14 @@ class ZebranieOkreguController extends AbstractController
         private ZebranieOkreguRepository $zebranieRepository,
         private UserRepository $userRepository,
         private OkregRepository $okregRepository,
+        private DokumentRepository $dokumentRepository,
         private EntityManagerInterface $entityManager,
         private CsrfService $csrfService,
         private ZebranieOkreguService $zebranieOkreguService,
+        private DokumentService $dokumentService,
     ) {
     }
 
-    /**
-     * Lista zebrań okręgu (głównie dla sekretarza partii i obserwatorów).
-     */
     #[Route('/', name: 'zebranie_okregu_index')]
     public function index(): Response
     {
@@ -57,13 +58,16 @@ class ZebranieOkreguController extends AbstractController
         ]);
     }
 
-    /**
-     * Nowe zebranie okręgu - tylko sekretarz partii może utworzyć.
-     */
     #[Route('/new', name: 'zebranie_okregu_new')]
-    #[IsGranted('ROLE_SEKRETARZ_PARTII')]
     public function new(Request $request): Response
     {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Tylko Sekretarz Partii lub Prezes Okręgu mogą tworzyć zebrania
+        if (!$user->hasRole('ROLE_SEKRETARZ_PARTII') && !$user->hasRole('ROLE_PREZES_OKREGU')) {
+            throw $this->createAccessDeniedException('Tylko Sekretarz Partii lub Prezes Okręgu może tworzyć zebrania okręgu.');
+        }
         if ($request->isMethod('POST')) {
             $okregId = $request->request->get('okreg_id');
             $obserwatorId = $request->request->get('obserwator_id');
@@ -73,6 +77,12 @@ class ZebranieOkreguController extends AbstractController
 
             if (!$okreg || !$obserwator) {
                 $this->addFlash('error', 'Nieprawidłowe dane okręgu lub obserwatora.');
+                return $this->redirectToRoute('zebranie_okregu_new');
+            }
+
+            // Sprawdź czy obserwator jest z INNEGO okręgu (neutralny obserwator)
+            if ($obserwator->getOkreg() && $obserwator->getOkreg()->getId() === $okreg->getId()) {
+                $this->addFlash('error', 'Obserwator zebrania musi być z innego okręgu (neutralny obserwator).');
                 return $this->redirectToRoute('zebranie_okregu_new');
             }
 
@@ -99,20 +109,18 @@ class ZebranieOkreguController extends AbstractController
         ]);
     }
 
-    /**
-     * Szczegóły zebrania okręgu.
-     */
-    #[Route('/{id}', name: 'zebranie_okregu_show')]
+    #[Route('/{id}', name: 'zebranie_okregu_show', requirements: ['id' => '\d+'])]
     public function show(ZebranieOkregu $zebranie): Response
     {
         /** @var User $user */
         $user = $this->getUser();
 
         // Sprawdź czy użytkownik ma dostęp do tego zebrania
-        $hasAccess = $user->hasRole('ROLE_SEKRETARZ_PARTII') || 
-                    $zebranie->getObserwator() === $user ||
-                    $zebranie->getProtokolant() === $user ||
-                    $zebranie->getProwadzacy() === $user;
+        $hasAccess = $user->hasRole('ROLE_SEKRETARZ_PARTII') ||
+                    $user->hasRole('ROLE_PREZES_OKREGU') ||
+                    ($zebranie->getObserwator() && $zebranie->getObserwator()->getId() === $user->getId()) ||
+                    ($zebranie->getProtokolant() && $zebranie->getProtokolant()->getId() === $user->getId()) ||
+                    ($zebranie->getProwadzacy() && $zebranie->getProwadzacy()->getId() === $user->getId());
 
         if (!$hasAccess) {
             throw $this->createAccessDeniedException('Nie masz dostępu do tego zebrania.');
@@ -128,22 +136,27 @@ class ZebranieOkreguController extends AbstractController
         ]);
     }
 
-    /**
-     * Wyznacz protokolanta - tylko obserwator może.
-     */
-    #[Route('/{id}/wyznacz-protokolanta', name: 'zebranie_okregu_wyznacz_protokolanta', methods: ['POST'])]
+    #[Route('/{id}/wyznacz-protokolanta', name: 'zebranie_okregu_wyznacz_protokolanta', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function wyznaczProtokolanta(ZebranieOkregu $zebranie, Request $request): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
+
+        // Sprawdź token CSRF
+        if (!$this->csrfService->validateToken('wyznacz_protokolanta_' . $zebranie->getId(), $request->request->get('_token'))) {
+            return new JsonResponse(['error' => 'Nieprawidłowy token bezpieczeństwa.'], 403);
+        }
 
         if (!$zebranie->canUserPerformAction($user, 'wyznacz_protokolanta')) {
             return new JsonResponse(['error' => 'Nie możesz wykonać tej akcji.'], 403);
         }
 
         $protokolantId = $request->request->get('protokolant_id');
-        $protokolant = $this->userRepository->find($protokolantId);
+        if (!$protokolantId || !is_numeric($protokolantId)) {
+            return new JsonResponse(['error' => 'Nieprawidłowy identyfikator protokolanta.'], 400);
+        }
 
+        $protokolant = $this->userRepository->find($protokolantId);
         if (!$protokolant) {
             return new JsonResponse(['error' => 'Protokolant nie znaleziony.'], 400);
         }
@@ -159,14 +172,16 @@ class ZebranieOkreguController extends AbstractController
         return new JsonResponse(['success' => true, 'message' => 'Protokolant został wyznaczony.']);
     }
 
-    /**
-     * Wyznacz prowadzącego - tylko obserwator może.
-     */
-    #[Route('/{id}/wyznacz-prowadzacego', name: 'zebranie_okregu_wyznacz_prowadzacego', methods: ['POST'])]
+    #[Route('/{id}/wyznacz-prowadzacego', name: 'zebranie_okregu_wyznacz_prowadzacego', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function wyznaczProwadzacego(ZebranieOkregu $zebranie, Request $request): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
+
+        // Sprawdź token CSRF
+        if (!$this->csrfService->validateToken('wyznacz_prowadzacego_' . $zebranie->getId(), $request->request->get('_token'))) {
+            return new JsonResponse(['error' => 'Nieprawidłowy token bezpieczeństwa.'], 403);
+        }
 
         if (!$zebranie->canUserPerformAction($user, 'wyznacz_prowadzacego')) {
             return new JsonResponse(['error' => 'Nie możesz wykonać tej akcji.'], 403);
@@ -190,14 +205,16 @@ class ZebranieOkreguController extends AbstractController
         return new JsonResponse(['success' => true, 'message' => 'Prowadzący został wyznaczony. Może rozpocząć wybór zarządu okręgu.']);
     }
 
-    /**
-     * Wybór Prezesa Okręgu - krok 4.
-     */
-    #[Route('/{id}/wybor-prezesa', name: 'zebranie_okregu_wybor_prezesa', methods: ['POST'])]
+    #[Route('/{id}/wybor-prezesa', name: 'zebranie_okregu_wybor_prezesa', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function wyborPrezesa(ZebranieOkregu $zebranie, Request $request): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
+
+        // Sprawdź token CSRF
+        if (!$this->csrfService->validateToken('wybor_prezesa_' . $zebranie->getId(), $request->request->get('_token'))) {
+            return new JsonResponse(['error' => 'Nieprawidłowy token bezpieczeństwa.'], 403);
+        }
 
         if (!$zebranie->canUserPerformAction($user, 'wybor_prezesa')) {
             return new JsonResponse(['error' => 'Nie możesz wykonać tej akcji.'], 403);
@@ -226,14 +243,16 @@ class ZebranieOkreguController extends AbstractController
         ]);
     }
 
-    /**
-     * Wybór Wiceprezesów Okręgu - krok 5.
-     */
-    #[Route('/{id}/wybor-wiceprezesow', name: 'zebranie_okregu_wybor_wiceprezesow', methods: ['POST'])]
+    #[Route('/{id}/wybor-wiceprezesow', name: 'zebranie_okregu_wybor_wiceprezesow', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function wyborWiceprezesow(ZebranieOkregu $zebranie, Request $request): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
+
+        // Sprawdź token CSRF
+        if (!$this->csrfService->validateToken('wybor_wiceprezesow_' . $zebranie->getId(), $request->request->get('_token'))) {
+            return new JsonResponse(['error' => 'Nieprawidłowy token bezpieczeństwa.'], 403);
+        }
 
         if (!$zebranie->canUserPerformAction($user, 'wybor_wiceprezesow')) {
             return new JsonResponse(['error' => 'Nie możesz wykonać tej akcji.'], 403);
@@ -261,83 +280,219 @@ class ZebranieOkreguController extends AbstractController
         $this->zebranieOkreguService->wyborWiceprezesow($zebranie, $wiceprezes1, $wiceprezes2);
 
         return new JsonResponse([
-            'success' => true, 
-            'message' => 'Wiceprezesi Okręgu zostali wybrani. Oczekuje na akceptację wszystkich uczestników.',
+            'success' => true,
+            'message' => 'Wiceprezesi Okręgu zostali wybrani. Przejdź do wyboru Sekretarza Okręgu.',
             'next_step' => $zebranie->getCurrentStepNumber()
         ]);
     }
 
-    /**
-     * Składa podpis uczestnika zebrania - krok 6.
-     */
-    #[Route('/{id}/zloz-podpis', name: 'zebranie_okregu_zloz_podpis', methods: ['POST'])]
-    public function zlozPodpis(Request $request, ZebranieOkregu $zebranie): JsonResponse
+    #[Route('/{id}/wybor-sekretarza', name: 'zebranie_okregu_wybor_sekretarza', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function wyborSekretarza(ZebranieOkregu $zebranie, Request $request): JsonResponse|Response
     {
-        // Sprawdź CSRF token
-        if (!$this->csrfService->validateAjaxToken($request, 'sign_' . $zebranie->getId())) {
-            return $this->json(['error' => 'Invalid CSRF token'], 400);
+        // Redirect GET requests to show page
+        if ($request->isMethod('GET')) {
+            return $this->redirectToRoute('zebranie_okregu_show', ['id' => $zebranie->getId()]);
         }
-        
+
         /** @var User $user */
         $user = $this->getUser();
-        
-        // Sprawdź czy user może składać podpis w tym zebraniu
-        $canSign = ($zebranie->getObserwator()->getId() === $user->getId()) ||
-                   ($zebranie->getProtokolant() && $zebranie->getProtokolant()->getId() === $user->getId()) ||
-                   ($zebranie->getProwadzacy() && $zebranie->getProwadzacy()->getId() === $user->getId());
-        
-        if (!$canSign) {
-            return $this->json(['error' => 'Nie masz uprawnień do składania podpisu w tym zebraniu'], 403);
+
+        // Sprawdź token CSRF
+        if (!$this->csrfService->validateToken('wybor_sekretarza_' . $zebranie->getId(), $request->request->get('_token'))) {
+            return new JsonResponse(['error' => 'Nieprawidłowy token bezpieczeństwa.'], 403);
         }
-        
-        // Sprawdź czy zebranie jest w stanie składania podpisów
-        if ($zebranie->getStatus() !== ZebranieOkregu::STATUS_SKLADANIE_PODPISOW) {
-            return $this->json(['error' => 'Zebranie nie jest w stanie umożliwiającym składanie podpisów'], 400);
+
+        if (!$zebranie->canUserPerformAction($user, 'wybor_sekretarza')) {
+            return new JsonResponse(['error' => 'Nie możesz wykonać tej akcji.'], 403);
         }
-        
-        // Sprawdź czy user już podpisał
-        $juzPodpisal = false;
-        if ($user === $zebranie->getObserwator() && $zebranie->getObserwatorPodpisal()) {
-            $juzPodpisal = true;
-        } elseif ($user === $zebranie->getProtokolant() && $zebranie->getProtokolantPodpisal()) {
-            $juzPodpisal = true;
-        } elseif ($user === $zebranie->getProwadzacy() && $zebranie->getProwadzacyPodpisal()) {
-            $juzPodpisal = true;
+
+        $sekretarzId = $request->request->get('sekretarz_id');
+
+        if (!$sekretarzId) {
+            return new JsonResponse(['error' => 'Sekretarz musi być wybrany.'], 400);
         }
-        
-        if ($juzPodpisal) {
-            return $this->json(['error' => 'Już złożyłeś podpis w tym zebraniu'], 400);
+
+        $sekretarz = $this->userRepository->find($sekretarzId);
+
+        if (!$sekretarz) {
+            return new JsonResponse(['error' => 'Nie znaleziono wybranej osoby.'], 400);
         }
-        
-        // Pobierz dane podpisu
+
+        $expectedOkreg = $zebranie->getOkreg();
+        if ($sekretarz->getOkreg() !== $expectedOkreg) {
+            return new JsonResponse(['error' => 'Sekretarz musi być z okręgu, którego dotyczy zebranie.'], 400);
+        }
+
+        $this->zebranieOkreguService->wyborSekretarza($zebranie, $sekretarz);
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'Sekretarz Okręgu został wybrany. Przejdź do wyboru Skarbnika Okręgu.',
+            'next_step' => $zebranie->getCurrentStepNumber()
+        ]);
+    }
+
+    #[Route('/{id}/wybor-skarbnika', name: 'zebranie_okregu_wybor_skarbnika', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    public function wyborSkarbnika(ZebranieOkregu $zebranie, Request $request): JsonResponse|Response
+    {
+        // Redirect GET requests to show page
+        if ($request->isMethod('GET')) {
+            return $this->redirectToRoute('zebranie_okregu_show', ['id' => $zebranie->getId()]);
+        }
+
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Sprawdź token CSRF
+        if (!$this->csrfService->validateToken('wybor_skarbnika_' . $zebranie->getId(), $request->request->get('_token'))) {
+            return new JsonResponse(['error' => 'Nieprawidłowy token bezpieczeństwa.'], 403);
+        }
+
+        if (!$zebranie->canUserPerformAction($user, 'wybor_skarbnika')) {
+            return new JsonResponse(['error' => 'Nie możesz wykonać tej akcji.'], 403);
+        }
+
+        $skarbnikId = $request->request->get('skarbnik_id');
+
+        if (!$skarbnikId) {
+            return new JsonResponse(['error' => 'Skarbnik musi być wybrany.'], 400);
+        }
+
+        $skarbnik = $this->userRepository->find($skarbnikId);
+
+        if (!$skarbnik) {
+            return new JsonResponse(['error' => 'Nie znaleziono wybranej osoby.'], 400);
+        }
+
+        $expectedOkreg = $zebranie->getOkreg();
+        if ($skarbnik->getOkreg() !== $expectedOkreg) {
+            return new JsonResponse(['error' => 'Skarbnik musi być z okręgu, którego dotyczy zebranie.'], 400);
+        }
+
+        $this->zebranieOkreguService->wyborSkarbnika($zebranie, $skarbnik);
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'Skarbnik Okręgu został wybrany. Przejdź do składania podpisów.',
+            'next_step' => $zebranie->getCurrentStepNumber()
+        ]);
+    }
+
+    #[Route('/{id}/zloz-podpis', name: 'zebranie_okregu_zloz_podpis', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function zlozPodpis(Request $request, ZebranieOkregu $zebranie): JsonResponse
+    {
+        return $this->json([
+            'error' => 'Endpoint /zloz-podpis jest przestarzały. Dokumenty są teraz podpisywane osobno przez /sign-document/{documentId}',
+            'help' => 'Użyj /zebranie-okregu/' . $zebranie->getId() . '/api/pending-documents aby zobaczyć dokumenty do podpisania.'
+        ], 410);
+    }
+
+    #[Route('/{id}/api/pending-documents', name: 'zebranie_okregu_api_pending_documents', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function apiPendingDocuments(ZebranieOkregu $zebranie): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Sprawdź czy użytkownik ma dostęp do tego zebrania
+        $hasAccess = $user->hasRole('ROLE_SEKRETARZ_PARTII') ||
+                    $user->hasRole('ROLE_PREZES_OKREGU') ||
+                    ($zebranie->getObserwator() && $zebranie->getObserwator()->getId() === $user->getId()) ||
+                    ($zebranie->getProtokolant() && $zebranie->getProtokolant()->getId() === $user->getId()) ||
+                    ($zebranie->getProwadzacy() && $zebranie->getProwadzacy()->getId() === $user->getId());
+
+        if (!$hasAccess) {
+            return $this->json(['error' => 'Nie masz dostępu do tego zebrania'], 403);
+        }
+
+        // Znajdź dokumenty tego zebrania oczekujące na podpis przez tego użytkownika
+        $awaitingDocuments = $this->dokumentRepository->createQueryBuilder('d')
+            ->leftJoin('d.podpisy', 'p')
+            ->where('d.zebranieOkregu = :zebranie')
+            ->andWhere('p.podpisujacy = :user')
+            ->andWhere('p.status = :status')
+            ->setParameter('zebranie', $zebranie)
+            ->setParameter('user', $user)
+            ->setParameter('status', \App\Entity\PodpisDokumentu::STATUS_OCZEKUJE)
+            ->getQuery()
+            ->getResult();
+
+        $documents = array_map(fn($doc) => [
+            'id' => $doc->getId(),
+            'title' => $doc->getTytul(),
+            'type' => $doc->getTyp(),
+            'created_at' => $doc->getDataUtworzenia()->format('Y-m-d H:i:s'),
+            'status' => $doc->getStatus(),
+        ], $awaitingDocuments);
+
+        return $this->json([
+            'success' => true,
+            'documents' => $documents,
+        ]);
+    }
+
+    #[Route('/{id}/sign-document/{documentId}', name: 'zebranie_okregu_sign_document', requirements: ['id' => '\d+', 'documentId' => '\d+'], methods: ['POST'])]
+    public function signDocument(ZebranieOkregu $zebranie, int $documentId, Request $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // Sprawdź token CSRF
+        if (!$this->csrfService->validateToken('sign_doc_' . $documentId, $request->request->get('_token'))) {
+            return $this->json(['success' => false, 'error' => 'Nieprawidłowy token bezpieczeństwa.'], 403);
+        }
+
+        // Sprawdź dostęp do zebrania
+        $hasAccess = $user->hasRole('ROLE_SEKRETARZ_PARTII') ||
+                    ($zebranie->getObserwator() && $zebranie->getObserwator()->getId() === $user->getId()) ||
+                    ($zebranie->getProtokolant() && $zebranie->getProtokolant()->getId() === $user->getId()) ||
+                    ($zebranie->getProwadzacy() && $zebranie->getProwadzacy()->getId() === $user->getId());
+
+        if (!$hasAccess) {
+            return $this->json(['success' => false, 'error' => 'Nie masz uprawnień do tego zebrania.'], 403);
+        }
+
+        // Znajdź dokument
+        $dokument = $this->dokumentRepository->find($documentId);
+        if (!$dokument || $dokument->getZebranieOkregu() !== $zebranie) {
+            return $this->json(['success' => false, 'error' => 'Dokument nie znaleziony lub nie należy do tego zebrania.'], 404);
+        }
+
+        // Pobierz dane podpisu z walidacją
         $signatureData = $request->request->get('signature');
-        if (!$signatureData) {
-            return $this->json(['error' => 'Brak danych podpisu'], 400);
-        }
-        
-        // Waliduj format podpisu (sprawdź czy to prawidłowy base64 image)
-        if (!str_starts_with($signatureData, 'data:image/png;base64,')) {
-            return $this->json(['error' => 'Nieprawidłowy format podpisu'], 400);
-        }
-        
-        try {
-            $this->zebranieOkreguService->zlozPodpis($zebranie, $user, $signatureData);
+        if ($signatureData) {
+            $signatureData = trim(strip_tags($signatureData));
+            if (empty($signatureData) || strlen($signatureData) < 10) {
+                return $this->json(['success' => false, 'error' => 'Nieprawidłowe dane podpisu.'], 400);
+            }
             
+            if (!preg_match('/^data:image\/(png|jpeg|jpg);base64,/', $signatureData)) {
+                return $this->json(['success' => false, 'error' => 'Nieprawidłowy format podpisu elektronicznego.'], 400);
+            }
+        }
+
+        try {
+            // Podpisz dokument używając DokumentService
+            $this->dokumentService->signDocument($dokument, $user, null, $signatureData);
+
+            // Sprawdź czy wszystkie dokumenty zostały w pełni podpisane
+            if ($this->areAllDistrictDocumentsFullySigned($zebranie)) {
+                $zebranie->setStatus(ZebranieOkregu::STATUS_ZAKONCZONE);
+                $zebranie->setDataZakonczenia(new \DateTime());
+                $this->entityManager->flush();
+            }
+
             return $this->json([
                 'success' => true,
-                'message' => 'Podpis został pomyślnie złożony',
-                'wszystcy_podpisali' => $zebranie->czyWszyscyPodpisali(),
-                'status' => $zebranie->getStatus(),
+                'message' => 'Dokument został podpisany pomyślnie.',
+                'meeting_completed' => $zebranie->getStatus() === ZebranieOkregu::STATUS_ZAKONCZONE
             ]);
+
         } catch (\Exception $e) {
-            return $this->json(['error' => 'Wystąpił błąd podczas składania podpisu: ' . $e->getMessage()], 500);
+            return $this->json(['success' => false, 'error' => 'Wystąpił błąd podczas podpisywania dokumentu: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Akceptacja zebrania przez uczestnika - krok 7.
-     */
-    #[Route('/{id}/akceptuj', name: 'zebranie_okregu_akceptuj', methods: ['POST'])]
+    #[Route('/{id}/akceptuj', name: 'zebranie_okregu_akceptuj', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function akceptujZebranie(ZebranieOkregu $zebranie): JsonResponse
     {
         /** @var User $user */
@@ -379,10 +534,7 @@ class ZebranieOkreguController extends AbstractController
         ]);
     }
 
-    /**
-     * Zakończ zebranie.
-     */
-    #[Route('/{id}/zakoncz', name: 'zebranie_okregu_zakoncz', methods: ['POST'])]
+    #[Route('/{id}/zakoncz', name: 'zebranie_okregu_zakoncz', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function zakonczZebranie(ZebranieOkregu $zebranie): JsonResponse
     {
         /** @var User $user */
@@ -399,11 +551,8 @@ class ZebranieOkreguController extends AbstractController
         return new JsonResponse(['success' => true, 'message' => 'Zebranie zostało zakończone.']);
     }
 
-    /**
-     * Anuluj zebranie.
-     */
-    #[Route('/{id}/anuluj', name: 'zebranie_okregu_anuluj', methods: ['POST'])]
-    #[IsGranted('ROLE_SEKRETARZ_PARTII')]
+    #[Route('/{id}/anuluj', name: 'zebranie_okregu_anuluj', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_PREZES_OKREGU')]
     public function anulujZebranie(ZebranieOkregu $zebranie): JsonResponse
     {
         $zebranie->setStatus(ZebranieOkregu::STATUS_ANULOWANE);
@@ -414,9 +563,6 @@ class ZebranieOkreguController extends AbstractController
         return new JsonResponse(['success' => true, 'message' => 'Zebranie zostało anulowane.']);
     }
 
-    /**
-     * Historia zebrań dla okręgu - widoczna dla członków danego okręgu.
-     */
     #[Route('/historia/{okregId}', name: 'zebranie_okregu_historia')]
     public function historiaZebran(int $okregId): Response
     {
@@ -449,9 +595,6 @@ class ZebranieOkreguController extends AbstractController
         ]);
     }
 
-    /**
-     * Szczegóły historycznego zebrania.
-     */
     #[Route('/historia/{okregId}/{zebranieId}', name: 'zebranie_okregu_historia_szczegoly')]
     public function historiaZebraniaSzczegoly(int $okregId, int $zebranieId): Response
     {
@@ -480,10 +623,37 @@ class ZebranieOkreguController extends AbstractController
         ]);
     }
 
-    /**
-     * Podpisuje dokument przez protokolanta lub prowadzącego.
-     */
-    #[Route('/{id}/podpisz-dokument', name: 'zebranie_okregu_podpisz_dokument', methods: ['POST'])]
+    private function areAllDistrictDocumentsFullySigned(ZebranieOkregu $zebranie): bool
+    {
+        $dokumenty = $this->dokumentRepository->createQueryBuilder('d')
+            ->where('d.zebranieOkregu = :zebranie')
+            ->setParameter('zebranie', $zebranie)
+            ->getQuery()
+            ->getResult();
+
+        if (empty($dokumenty)) {
+            return false; // Brak dokumentów - zebranie nie może być zakończone
+        }
+
+        foreach ($dokumenty as $dokument) {
+            // Sprawdź czy dokument ma wszystkie wymagane podpisy
+            $allSignaturesCompleted = true;
+            foreach ($dokument->getPodpisy() as $podpis) {
+                if ($podpis->getStatus() !== \App\Entity\PodpisDokumentu::STATUS_PODPISANY) {
+                    $allSignaturesCompleted = false;
+                    break;
+                }
+            }
+            
+            if (!$allSignaturesCompleted) {
+                return false; // Przynajmniej jeden dokument nie jest w pełni podpisany
+            }
+        }
+
+        return true; // Wszystkie dokumenty są w pełni podpisane
+    }
+
+    #[Route('/{id}/podpisz-dokument', name: 'zebranie_okregu_podpisz_dokument', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function podpiszDokument(Request $request, ZebranieOkregu $zebranie): JsonResponse
     {
         // Sprawdź CSRF token
@@ -535,13 +705,18 @@ class ZebranieOkreguController extends AbstractController
         // Sprawdź czy wszystkie dokumenty są podpisane
         $allDocumentsSigned = $this->zebranieOkreguService->czyWszystkieDokumentyPodpisane($zebranie);
 
+        // Jeśli wszystkie dokumenty są podpisane, zakończ zebranie
+        if ($allDocumentsSigned && $zebranie->getStatus() !== ZebranieOkregu::STATUS_ZAKONCZONE) {
+            $this->zebranieOkreguService->zakonczZebranie($zebranie);
+        }
+
         return $this->json([
             'success' => true,
             'message' => 'Dokument został podpisany',
             'document_status' => $dokument->getStatus(),
-            'protokolant_signed' => $dokument->getProtokolantPodpisal() ? $dokument->getProtokolantPodpisal()->format('Y-m-d H:i:s') : null,
-            'prowadzacy_signed' => $dokument->getProwadzacyPodpisal() ? $dokument->getProwadzacyPodpisal()->format('Y-m-d H:i:s') : null,
             'all_documents_signed' => $allDocumentsSigned,
+            'meeting_status' => $zebranie->getStatus(),
+            'meeting_completed' => $zebranie->getStatus() === ZebranieOkregu::STATUS_ZAKONCZONE,
         ]);
     }
 }

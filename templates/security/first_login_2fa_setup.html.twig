@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Konfiguracja 2FA - Nowa Nadzieja CRM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --success-dark: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --text-light: #1f2937;
+            --text-muted-light: #6b7280;
+            --text-dark: #f3f4f6;
+            --text-muted-dark: #9ca3af;
+            --card-light: #ffffff;
+            --card-dark: #242836;
+            --bg-light: #f9fafb;
+            --bg-dark: #1a1d2e;
+            --border-light: #e5e7eb;
+            --border-dark: #374151;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-light);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .card-custom {
+            background: var(--card-light);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px var(--shadow-light);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header-custom::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .card-header-custom h3 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header-custom p {
+            font-size: 1rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-step {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            background: white;
+            color: var(--success);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .progress-step.completed {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .progress-line {
+            width: 3rem;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .progress-line.completed {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .card-body-custom {
+            padding: 3rem 2.5rem;
+        }
+
+        .alert-custom {
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: none;
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+            color: #1e40af;
+            border-left: 4px solid var(--info);
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+        }
+
+        .setup-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+
+        .setup-section h5 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .step-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateX(5px);
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .step-card strong {
+            display: block;
+            color: var(--primary);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-card p {
+            margin: 0;
+            color: var(--text-muted-light);
+            font-size: 0.95rem;
+        }
+
+        .app-links {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+
+        .app-links li {
+            padding: 0.75rem 1rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .app-links li:hover {
+            background: var(--primary);
+            transform: translateX(5px);
+        }
+
+        .app-links li:hover a {
+            color: white;
+        }
+
+        .app-links a {
+            color: var(--text-light);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .qr-container:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .qr-container img {
+            display: block;
+            border-radius: 8px;
+        }
+
+        .secret-code-container {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .secret-code {
+            font-family: 'Courier New', Monaco, monospace;
+            font-size: 1rem;
+            background: var(--bg-light);
+            border: 2px dashed var(--border-light);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            word-break: break-all;
+            margin-top: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .secret-code:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .divider {
+            height: 2px;
+            background: linear-gradient(to right, transparent, var(--border-light), transparent);
+            margin: 2.5rem 0;
+        }
+
+        .form-section {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .code-input {
+            width: 100%;
+            padding: 1.25rem;
+            font-size: 2rem;
+            font-family: 'Courier New', Monaco, monospace;
+            letter-spacing: 0.75rem;
+            text-align: center;
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: var(--bg-light);
+            color: var(--text-light);
+        }
+
+        .code-input:focus {
+            outline: none;
+            border-color: var(--success);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+            background: white;
+        }
+
+        .code-input::placeholder {
+            opacity: 0.3;
+        }
+
+        .form-hint {
+            display: block;
+            margin-top: 0.75rem;
+            color: var(--text-muted-light);
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .btn-custom {
+            padding: 1rem 2.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-success:active {
+            transform: translateY(0);
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+                color: var(--text-dark);
+            }
+
+            .card-custom {
+                background: var(--card-dark);
+                box-shadow: 0 20px 60px var(--shadow-dark);
+            }
+
+            .step-card {
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.1) 100%);
+                border-color: var(--border-dark);
+            }
+
+            .step-card:hover {
+                border-color: var(--primary);
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            }
+
+            .setup-section h5,
+            .form-label {
+                color: var(--text-dark);
+            }
+
+            .step-card p,
+            .form-hint {
+                color: var(--text-muted-dark);
+            }
+
+            .app-links li {
+                background: var(--bg-dark);
+            }
+
+            .app-links a {
+                color: var(--text-dark);
+            }
+
+            .qr-container {
+                background: white;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            }
+
+            .secret-code {
+                background: var(--bg-dark);
+                border-color: var(--border-dark);
+                color: var(--primary);
+            }
+
+            .code-input {
+                background: var(--bg-dark);
+                border-color: var(--border-dark);
+                color: var(--text-dark);
+            }
+
+            .code-input:focus {
+                background: var(--card-dark);
+            }
+
+            .alert-info {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+                color: #93c5fd;
+            }
+
+            .alert-danger {
+                background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+                color: #fca5a5;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 992px) {
+            .setup-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .card-body-custom {
+                padding: 2rem 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .card-header-custom {
+                padding: 2rem 1.5rem;
+            }
+
+            .card-header-custom h3 {
+                font-size: 1.5rem;
+            }
+
+            .progress-indicator {
+                gap: 0.5rem;
+            }
+
+            .progress-step {
+                width: 2rem;
+                height: 2rem;
+                font-size: 0.875rem;
+            }
+
+            .progress-line {
+                width: 2rem;
+            }
+
+            .code-input {
+                font-size: 1.5rem;
+                letter-spacing: 0.5rem;
+                padding: 1rem;
+            }
+
+            .btn-custom {
+                padding: 0.875rem 2rem;
+                font-size: 1rem;
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding: 10px;
+            }
+
+            .card-custom {
+                border-radius: 16px;
+            }
+
+            .card-header-custom {
+                padding: 1.5rem 1rem;
+            }
+
+            .card-header-custom h3 {
+                font-size: 1.25rem;
+            }
+
+            .card-header-custom p {
+                font-size: 0.875rem;
+            }
+
+            .card-body-custom {
+                padding: 1.5rem 1rem;
+            }
+
+            .step-card {
+                padding: 1rem;
+            }
+
+            .code-input {
+                font-size: 1.25rem;
+                letter-spacing: 0.25rem;
+            }
+
+            .qr-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h3><i class="fas fa-mobile-alt me-2"></i>Konfiguracja 2FA</h3>
+                <p>Krok 2 z 3: Zabezpiecz swoje konto</p>
+                <div class="progress-indicator">
+                    <div class="progress-step completed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="progress-line completed"></div>
+                    <div class="progress-step active">2</div>
+                    <div class="progress-line"></div>
+                    <div class="progress-step">3</div>
+                </div>
+            </div>
+
+            <div class="card-body-custom">
+                {% for message in app.flashes('error') %}
+                    <div class="alert-custom alert-danger">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 1.25rem;"></i>
+                        <div>
+                            <strong>Błąd weryfikacji</strong><br>
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <div class="alert-custom alert-info">
+                    <i class="fas fa-shield-alt" style="font-size: 1.25rem;"></i>
+                    <div>
+                        <strong>Uwierzytelnianie dwuskładnikowe (2FA)</strong><br>
+                        Dla bezpieczeństwa Twojego konta wymagamy skonfigurowania uwierzytelniania dwuskładnikowego. To dodatkowo zabezpiecza Twoje konto przed nieautoryzowanym dostępem.
+                    </div>
+                </div>
+
+                <div class="setup-container">
+                    <div class="setup-section">
+                        <h5><i class="fas fa-list-ol"></i> Instrukcja konfiguracji</h5>
+
+                        <div class="step-card">
+                            <strong>Krok 1: Zainstaluj aplikację</strong>
+                            <p>Pobierz Google Authenticator na swój telefon</p>
+                        </div>
+
+                        <div class="app-links">
+                            <li>
+                                <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank" rel="noopener noreferrer">
+                                    <i class="fab fa-android" style="font-size: 1.25rem;"></i>
+                                    <span>Pobierz dla Android</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://apps.apple.com/app/google-authenticator/id388497605" target="_blank" rel="noopener noreferrer">
+                                    <i class="fab fa-apple" style="font-size: 1.25rem;"></i>
+                                    <span>Pobierz dla iOS</span>
+                                </a>
+                            </li>
+                        </div>
+
+                        <div class="step-card">
+                            <strong>Krok 2: Zeskanuj kod QR</strong>
+                            <p>Otwórz aplikację i zeskanuj kod po prawej stronie</p>
+                        </div>
+
+                        <div class="step-card">
+                            <strong>Krok 3: Wpisz kod weryfikacyjny</strong>
+                            <p>Wprowadź 6-cyfrowy kod z aplikacji poniżej</p>
+                        </div>
+                    </div>
+
+                    <div class="setup-section qr-section">
+                        <h5><i class="fas fa-qrcode"></i> Kod QR</h5>
+
+                        <div class="qr-container">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data={{ qrCodeContent|url_encode }}"
+                                 alt="Kod QR dla 2FA"
+                                 width="220"
+                                 height="220">
+                        </div>
+
+                        <div class="secret-code-container">
+                            <small style="color: var(--text-muted-light);">Nie możesz zeskanować? Wprowadź kod ręcznie:</small>
+                            <div class="secret-code" title="Kliknij aby skopiować">
+                                {{ secret }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="divider"></div>
+
+                <form method="post" action="{{ path('first_login_verify_2fa') }}">
+                    <div class="form-section">
+                        <label for="code" class="form-label">
+                            <i class="fas fa-key me-2"></i>Kod weryfikacyjny z aplikacji
+                        </label>
+                        <input type="text"
+                               class="code-input"
+                               id="code"
+                               name="code"
+                               pattern="[0-9]{6}"
+                               maxlength="6"
+                               placeholder="000000"
+                               required
+                               autofocus
+                               autocomplete="one-time-code">
+                        <small class="form-hint">Wpisz 6-cyfrowy kod z aplikacji Google Authenticator</small>
+                    </div>
+
+                    <div class="text-center" style="margin-top: 2.5rem;">
+                        <button type="submit" class="btn-custom btn-success">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Aktywuj 2FA i zakończ konfigurację</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const codeInput = document.getElementById('code');
+
+        // Only allow numbers
+        codeInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+
+            // Auto-submit when 6 digits entered
+            if (this.value.length === 6) {
+                // Add brief delay for better UX
+                setTimeout(() => {
+                    this.form.submit();
+                }, 300);
+            }
+        });
+
+        // Copy secret code on click
+        const secretCode = document.querySelector('.secret-code');
+        if (secretCode) {
+            secretCode.addEventListener('click', function() {
+                const text = this.textContent.trim();
+                navigator.clipboard.writeText(text).then(() => {
+                    const originalText = this.textContent;
+                    this.textContent = 'Skopiowano!';
+                    this.style.background = 'var(--success)';
+                    this.style.color = 'white';
+
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                        this.style.background = '';
+                        this.style.color = '';
+                    }, 2000);
+                });
+            });
+        }
+
+        // Prevent form submission on Enter if code incomplete
+        codeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && this.value.length !== 6) {
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

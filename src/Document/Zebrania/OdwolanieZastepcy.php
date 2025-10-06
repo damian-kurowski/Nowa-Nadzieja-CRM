@@ -39,7 +39,12 @@ class OdwolanieZastepcy extends AbstractDocument
             'protokolant' => true,  // Protokolant zebrania
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/odwolanie_zastepcy.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

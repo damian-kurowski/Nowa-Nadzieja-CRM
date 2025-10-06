@@ -12,7 +12,7 @@ use Doctrine\Persistence\ManagerRegistry;
  * @extends ServiceEntityRepository<Dokument>
  *
  * @method Dokument|null find($id, $lockMode = null, $lockVersion = null)
- * @method Dokument|null findOneBy(array<string, mixed> $criteriafinal , ?array<string, string> $orderBy = null)
+ * @method Dokument|null findOneBy(array<string, mixed> $criteria, ?array<string, string> $orderBy = null)
  * @method Dokument[]    findAll()
  * @method Dokument[]    findBy(array<string, mixed> $criteria, ?array<string, string> $orderBy = null, $limit = null, $offset = null)
  */
@@ -161,13 +161,15 @@ class DokumentRepository extends ServiceEntityRepository
 
         $okregSkrot = $okreg ? $okreg->getSkrot() : 'XX';
 
-        // Znajdź ostatni numer dla tego dnia
+        // Znajdź ostatni numer dla tego dnia (wyklucz anulowane dokumenty)
         $queryBuilder = $this->createQueryBuilder('d')
             ->select('d.numerDokumentu')
             ->where('d.numerDokumentu LIKE :pattern')
             ->andWhere('d.typ = :typ')
+            ->andWhere('d.status != :statusAnulowany')
             ->setParameter('pattern', "DOK/{$rok}/{$miesiac}/{$dzien}/%/{$okregSkrot}/{$typSkrot}")
-            ->setParameter('typ', $typ);
+            ->setParameter('typ', $typ)
+            ->setParameter('statusAnulowany', Dokument::STATUS_ANULOWANY);
 
         if ($okreg) {
             $queryBuilder->andWhere('d.okreg = :okreg')
@@ -190,9 +192,62 @@ class DokumentRepository extends ServiceEntityRepository
             }
         }
 
+        // Znajdź pierwszy dostępny numer (w przypadku luk po anulowanych dokumentach)
         $sequence = str_pad((string) $nextSequence, 3, '0', STR_PAD_LEFT);
+        $candidateNumber = "DOK/{$rok}/{$miesiac}/{$dzien}/{$sequence}/{$okregSkrot}/{$typSkrot}";
 
-        return "DOK/{$rok}/{$miesiac}/{$dzien}/{$sequence}/{$okregSkrot}/{$typSkrot}";
+        // Sprawdź czy ten numer już istnieje (może być anulowany dokument)
+        $existingDoc = $this->findOneBy(['numerDokumentu' => $candidateNumber]);
+
+        // Jeśli numer już istnieje, znajdź następny wolny
+        while ($existingDoc !== null) {
+            $nextSequence++;
+            $sequence = str_pad((string) $nextSequence, 3, '0', STR_PAD_LEFT);
+            $candidateNumber = "DOK/{$rok}/{$miesiac}/{$dzien}/{$sequence}/{$okregSkrot}/{$typSkrot}";
+            $existingDoc = $this->findOneBy(['numerDokumentu' => $candidateNumber]);
+        }
+
+        return $candidateNumber;
+    }
+
+    /**
+     * Znajduje dokumenty dla zwykłego członka partii - dokumenty dotyczące jego członkostwa lub które może podpisywać
+     *
+     * @return array<int, Dokument>
+     */
+    public function findForMember(User $user, ?string $status = null): array
+    {
+        $qb = $this->createQueryBuilder('d')
+            ->leftJoin('d.tworca', 'tworca')
+            ->leftJoin('d.kandydat', 'kandydat')
+            ->leftJoin('d.czlonek', 'czlonek')
+            ->leftJoin('d.okreg', 'okreg')
+            ->leftJoin('d.podpisy', 'podpisy')
+            ->leftJoin('podpisy.podpisujacy', 'podpisujacy')
+            ->addSelect('tworca', 'kandydat', 'czlonek', 'okreg', 'podpisy', 'podpisujacy');
+
+        $qb->where(
+            $qb->expr()->orX(
+                // Dokumenty których jest kandydatem (dokument przyjęcia)
+                'd.kandydat = :user',
+                // Dokumenty których jest członkiem (może być rezygnacja)
+                'd.czlonek = :user',
+                // Dokumenty które stworzył (rezygnacja z członkostwa)
+                'd.tworca = :user',
+                // Dokumenty które może podpisywać
+                'podpisy.podpisujacy = :user'
+            )
+        )
+        ->setParameter('user', $user);
+
+        if ($status) {
+            $qb->andWhere('d.status = :status')
+               ->setParameter('status', $status);
+        }
+
+        $qb->orderBy('d.dataUtworzenia', 'DESC');
+
+        return $qb->getQuery()->getResult();
     }
 
     /**
@@ -415,43 +470,6 @@ class DokumentRepository extends ServiceEntityRepository
         ];
     }
 
-    /**
-     * Znajduje dokumenty dla zwykłego członka partii - tylko dokumenty dotyczące jego członkostwa.
-     *
-     * @return array<int, Dokument>
-     */
-    public function findForMember(User $user, ?string $status = null): array
-    {
-        $qb = $this->createQueryBuilder('d')
-            ->leftJoin('d.tworca', 'tworca')
-            ->leftJoin('d.kandydat', 'kandydat')
-            ->leftJoin('d.czlonek', 'czlonek')
-            ->leftJoin('d.okreg', 'okreg')
-            ->leftJoin('d.podpisy', 'podpisy')
-            ->leftJoin('podpisy.podpisujacy', 'podpisujacy')
-            ->addSelect('tworca', 'kandydat', 'czlonek', 'okreg', 'podpisy', 'podpisujacy');
-
-        $qb->where(
-            $qb->expr()->orX(
-                // Dokumenty których jest kandydatem (dokument przyjęcia)
-                'd.kandydat = :user',
-                // Dokumenty których jest członkiem (może być rezygnacja)
-                'd.czlonek = :user',
-                // Dokumenty które stworzył (rezygnacja z członkostwa)
-                'd.tworca = :user'
-            )
-        )
-        ->setParameter('user', $user);
-
-        if ($status) {
-            $qb->andWhere('d.status = :status')
-               ->setParameter('status', $status);
-        }
-
-        $qb->orderBy('d.dataUtworzenia', 'DESC');
-
-        return $qb->getQuery()->getResult();
-    }
 
     public function save(Dokument $entity, bool $flush = false): void
     {
@@ -531,5 +549,27 @@ class DokumentRepository extends ServiceEntityRepository
             ->orderBy('d.dataUtworzenia', 'DESC')
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Znajduje dokument z wszystkimi powiązanymi danymi w jednym zapytaniu.
+     * Zapobiega problemom z memory exhaustion przez lazy loading.
+     */
+    public function findWithAllRelations(int $id): ?Dokument
+    {
+        return $this->createQueryBuilder('d')
+            ->leftJoin('d.tworca', 'tworca')
+            ->leftJoin('d.kandydat', 'kandydat')
+            ->leftJoin('d.okreg', 'okreg')
+            ->leftJoin('d.podpisy', 'podpisy')
+            ->leftJoin('podpisy.podpisujacy', 'podpisujacy')
+            ->leftJoin('podpisujacy.funkcje', 'funkcje')
+            ->leftJoin('d.zebranieOddzialu', 'zebranieOddzialu')
+            ->leftJoin('d.zebranieOkregu', 'zebranieOkregu')
+            ->addSelect('tworca', 'kandydat', 'okreg', 'podpisy', 'podpisujacy', 'funkcje', 'zebranieOddzialu', 'zebranieOkregu')
+            ->where('d.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 }

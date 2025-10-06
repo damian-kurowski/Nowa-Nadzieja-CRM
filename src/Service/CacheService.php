@@ -75,6 +75,7 @@ class CacheService
      */
     public function clearAll(): void
     {
+        $this->cache->clear();
     }
 
     /**

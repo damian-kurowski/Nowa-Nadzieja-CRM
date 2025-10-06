@@ -38,7 +38,12 @@ class OdwolanieSkarbnikOkregu extends AbstractDocument
             'creator' => true,  // Prezes Okręgu
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/odwolania/odwolanie_skarbnik_okregu.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

@@ -11,6 +11,15 @@ use App\Repository\WystepMedialnyRepository;
 
 class StatisticsService
 {
+    private const NATIONAL_ROLES = [
+        'ROLE_ADMIN',
+        'ROLE_PREZES_PARTII',
+        'ROLE_WICEPREZES_PARTII',
+        'ROLE_SEKRETARZ_PARTII',
+        'ROLE_SKARBNIK_PARTII',
+        'ROLE_RZECZNIK_PRASOWY',
+    ];
+
     public function __construct(
         private UserRepository $userRepository,
         private WystepMedialnyRepository $wystepMedialnyRepository,
@@ -18,6 +27,11 @@ class StatisticsService
         private DokumentRepository $dokumentRepository,
         private DarczycaRepository $darczycaRepository,
     ) {
+    }
+
+    private function hasNationalLevelAccess(User $user): bool
+    {
+        return !empty(array_intersect($user->getRoles(), self::NATIONAL_ROLES));
     }
 
     /**
@@ -142,12 +156,7 @@ class StatisticsService
         }
 
         // Pozostali (włącznie z ROLE_ADMIN dla kompatybilności)
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_SKARBNIK_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->userRepository->countByType('czlonek');
         } elseif ($user->getOkreg()) {
             return $this->userRepository->countByTypeAndOkreg('czlonek', $user->getOkreg());
@@ -160,12 +169,7 @@ class StatisticsService
 
     private function getCandidatesCount(User $user): int
     {
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_SKARBNIK_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->userRepository->countByType('kandydat');
         } elseif ($user->getOkreg()) {
             return $this->userRepository->countByTypeAndOkreg('kandydat', $user->getOkreg());
@@ -178,12 +182,7 @@ class StatisticsService
 
     private function getSupportersCount(User $user): int
     {
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_SKARBNIK_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->userRepository->countByType('sympatyk');
         } elseif ($user->getOkreg()) {
             return $this->userRepository->countByTypeAndOkreg('sympatyk', $user->getOkreg());
@@ -197,12 +196,7 @@ class StatisticsService
     private function getDonorsCount(User $user): int
     {
         // Darczyńcy są w osobnej tabeli, nie w user
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_SKARBNIK_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             // Zwracamy rzeczywistą liczbę darczyńców z właściwej tabeli
             return $this->darczycaRepository->count([]);
         }
@@ -213,12 +207,7 @@ class StatisticsService
 
     private function getYouthMembersCount(User $user): int
     {
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_SKARBNIK_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->userRepository->countByType('mlodziezowka');
         } elseif ($user->getOkreg()) {
             return $this->userRepository->countByTypeAndOkreg('mlodziezowka', $user->getOkreg());
@@ -232,11 +221,7 @@ class StatisticsService
     private function getMediaAppearancesCount(User $user): int
     {
         // Admin i najwyższe role widzą wszystkie wystąpienia
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->wystepMedialnyRepository->count([]);
         }
 
@@ -287,11 +272,7 @@ class StatisticsService
     private function getPressConferencesCount(User $user): int
     {
         // Admin i najwyższe role widzą wszystkie konferencje
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->konferencjaPrasowaRepository->count([]);
         }
 
@@ -342,12 +323,7 @@ class StatisticsService
     private function getDocumentsCount(User $user): int
     {
         // Admin i zarząd krajowy widzą wszystkie dokumenty
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_SKARBNIK_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->dokumentRepository->count([]);
         }
 
@@ -370,12 +346,7 @@ class StatisticsService
     // Historical counting methods - rzeczywiste zliczanie na podstawie dat
     private function getMembersCountAsOf(User $user, \DateTimeInterface $date): int
     {
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_SKARBNIK_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->userRepository->createQueryBuilder('u')
                 ->select('COUNT(u.id)')
                 ->where('u.typUzytkownika = :type')
@@ -391,12 +362,7 @@ class StatisticsService
 
     private function getCandidatesCountAsOf(User $user, \DateTimeInterface $date): int
     {
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_SKARBNIK_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->userRepository->createQueryBuilder('u')
                 ->select('COUNT(u.id)')
                 ->where('u.typUzytkownika = :type')
@@ -412,12 +378,7 @@ class StatisticsService
 
     private function getSupportersCountAsOf(User $user, \DateTimeInterface $date): int
     {
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_SKARBNIK_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->userRepository->createQueryBuilder('u')
                 ->select('COUNT(u.id)')
                 ->where('u.typUzytkownika = :type')
@@ -439,12 +400,7 @@ class StatisticsService
 
     private function getYouthMembersCountAsOf(User $user, \DateTimeInterface $date): int
     {
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_SKARBNIK_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->userRepository->createQueryBuilder('u')
                 ->select('COUNT(u.id)')
                 ->where('u.typUzytkownika = :type')
@@ -460,11 +416,7 @@ class StatisticsService
 
     private function getMediaAppearancesCountAsOf(User $user, \DateTimeInterface $date): int
     {
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->wystepMedialnyRepository->createQueryBuilder('w')
                 ->select('COUNT(w.id)')
                 ->where('w.dataIGodzina <= :date')
@@ -478,11 +430,7 @@ class StatisticsService
 
     private function getPressConferencesCountAsOf(User $user, \DateTimeInterface $date): int
     {
-        if (in_array('ROLE_ADMIN', $user->getRoles())
-            || in_array('ROLE_PREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_WICEPREZES_PARTII', $user->getRoles())
-            || in_array('ROLE_SEKRETARZ_PARTII', $user->getRoles())
-            || in_array('ROLE_RZECZNIK_PRASOWY', $user->getRoles())) {
+        if ($this->hasNationalLevelAccess($user)) {
             return $this->konferencjaPrasowaRepository->createQueryBuilder('k')
                 ->select('COUNT(k.id)')
                 ->where('k.dataIGodzina <= :date')
@@ -557,8 +505,15 @@ class StatisticsService
 
     private function getSystemUptime(): int
     {
-        // Simple uptime simulation - in production you might check server uptime
-        return rand(1800, 86400); // Between 30 minutes and 24 hours in seconds
+        // Get real system uptime
+        if (file_exists('/proc/uptime')) {
+            $uptime = file_get_contents('/proc/uptime');
+            $uptimeSeconds = (int) explode(' ', $uptime)[0];
+            return $uptimeSeconds;
+        }
+
+        // Fallback for Windows or systems without /proc/uptime
+        return 0;
     }
 
     private function formatUptime(int $seconds): string

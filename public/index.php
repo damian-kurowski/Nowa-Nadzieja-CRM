@@ -1,5 +1,8 @@
 <?php
 
+// Set memory limit to prevent exhaustion
+ini_set('memory_limit', '512M');
+
 use App\Kernel;
 
 require_once dirname(__DIR__).'/vendor/autoload_runtime.php';

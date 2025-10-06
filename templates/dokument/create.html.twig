@@ -301,6 +301,475 @@
                 transform: translateX(0);
             }
         }
+
+        /* Special styling for candidate selection */
+        select[name*="kandydat"] option {
+            padding: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* Styling for different progress levels */
+        select[name*="kandydat"] option[data-progress="100"] {
+            background: linear-gradient(to right, #d4f3e6 0%, #ffffff 100%);
+            color: #065f46;
+            font-weight: 600;
+        }
+
+        select[name*="kandydat"] option[data-progress="75"] {
+            background: linear-gradient(to right, #fef3c7 0%, #ffffff 100%);
+            color: #92400e;
+            font-weight: 500;
+        }
+
+        select[name*="kandydat"] option[data-progress="50"] {
+            background: linear-gradient(to right, #fce7f3 0%, #ffffff 100%);
+            color: #9d174d;
+            font-weight: 400;
+        }
+
+        select[name*="kandydat"] option[data-progress="low"] {
+            background: linear-gradient(to right, #fee2e2 0%, #ffffff 100%);
+            color: #991b1b;
+            font-weight: 300;
+        }
+
+        /* Disabled options styling */
+        select[name*="kandydat"] option:disabled {
+            color: #9ca3af !important;
+            background: #f3f4f6 !important;
+            font-style: italic;
+        }
+
+        /* Candidate info badge */
+        .candidate-info-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            display: inline-block;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .candidate-info-badge i {
+            margin-right: 0.5rem;
+        }
+
+        /* Enhanced Candidate Selection Styles */
+        .enhanced-candidate-selection {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .candidate-controls {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .candidate-search {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .selected-candidate {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .selected-candidate-display {
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selected-candidate-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .candidate-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .candidate-avatar.ready {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .candidate-avatar.almost {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .candidate-avatar.progress {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .candidate-avatar.start {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .candidate-info {
+            flex: 1;
+        }
+
+        .candidate-card-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .candidate-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .candidate-progress-info {
+            margin: 0.5rem 0;
+        }
+
+        .candidate-status {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .candidate-status.ready {
+            color: #059669;
+        }
+
+        .candidate-status.almost {
+            color: #d97706;
+        }
+
+        .candidate-status.progress {
+            color: #7c3aed;
+        }
+
+        .candidate-status.start {
+            color: #dc2626;
+        }
+
+        .candidates-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1rem;
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .candidate-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .candidate-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .candidate-card.selectable {
+            border-color: #10b981;
+        }
+
+        .candidate-card.selectable:hover {
+            border-color: #059669;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .candidate-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f9fafb;
+        }
+
+        .candidate-card.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .candidate-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+        }
+
+        .candidate-card-content {
+            flex: 1;
+        }
+
+        .candidate-card-actions {
+            display: flex;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+
+        .candidate-card.selectable .candidate-card-actions {
+            color: #10b981;
+        }
+
+        .candidate-card.disabled .candidate-card-actions {
+            color: #9ca3af;
+        }
+
+        .candidate-card.selected .candidate-card-actions {
+            color: #667eea;
+        }
+
+        .progress-legend {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .progress-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.25rem;
+        }
+
+        .progress-dot.ready {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .progress-dot.almost {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .progress-dot.progress {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        }
+
+        .progress-dot.start {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .no-candidates-found {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .no-candidates-found i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        /* Board Member Selection Styles */
+        .enhanced-board-selection {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .board-controls {
+            margin-bottom: 1.5rem;
+        }
+
+        .selected-board-member {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .selected-board-member-header {
+            margin-bottom: 0.75rem;
+        }
+
+        .selected-board-member-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .board-member-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .board-member-avatar.prezes {
+            background: linear-gradient(135deg, #dc2626, #991b1b);
+        }
+
+        .board-member-avatar.wiceprezes {
+            background: linear-gradient(135deg, #ea580c, #c2410c);
+        }
+
+        .board-member-avatar.sekretarz {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        }
+
+        .board-member-avatar.skarbnik {
+            background: linear-gradient(135deg, #059669, #047857);
+        }
+
+        .board-member-avatar.default {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+        }
+
+        .board-member-info {
+            flex: 1;
+        }
+
+        .board-member-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .board-member-role {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .board-member-district {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .board-members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 0.5rem;
+        }
+
+        .board-member-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .board-member-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .board-member-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+        }
+
+        .board-member-card-content {
+            flex: 1;
+        }
+
+        .board-member-card-actions {
+            display: flex;
+            align-items: center;
+            font-size: 1.2rem;
+            color: #10b981;
+        }
+
+        .board-member-card.selected .board-member-card-actions {
+            color: #667eea;
+        }
+
+        .available-board-members-header {
+            padding: 0.5rem 0;
+        }
+
+        .no-board-members-found {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .no-board-members-found i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .candidates-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .candidate-card {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .progress-legend {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .board-members-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .board-member-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
     </style>
 {% endblock %}
 
@@ -349,7 +818,7 @@
                                             <span class="input-group-text">
                                                 <i class="fas fa-search"></i>
                                             </span>
-                                            <input type="text" class="member-search" id="memberSearch" 
+                                            <input type="text" class="member-search" id="memberSearch"
                                                    placeholder="Szukaj członków po nazwisku lub imieniu...">
                                         </div>
                                     </div>
@@ -363,7 +832,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Selected Members -->
                             <div class="selected-members" id="selectedMembers">
                                 <div class="selected-members-header">
@@ -378,7 +847,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Available Members -->
                             <div class="available-members">
                                 <div class="available-members-header mb-2">
@@ -396,14 +865,101 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Hidden original select for form submission -->
                             {{ form_widget(child, {'attr': {'style': 'display: none;'}}) }}
                         </div>
-                        
+
                         <div class="form-text">
                             <i class="fas fa-info-circle me-1"></i>
                             Kliknij na osobę aby dodać/usunąć ją z oddziału. Minimum 2 członków jest wymagane. Każdy użytkownik może być tylko w jednym oddziale.
+                        </div>
+                        {{ form_errors(child) }}
+                    {% elseif child.vars.name == 'drugi_podpisujacy' %}
+                        <!-- Fallback: Regular select for now -->
+                        {{ form_widget(child) }}
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Wybierz członka zarządu krajowego jako drugiego podpisującego dokumentu.
+                        </div>
+                        {{ form_errors(child) }}
+                    {% elseif child.vars.name == 'kandydat' %}
+                        <!-- Enhanced Candidate Selection Panel -->
+                        <div class="enhanced-candidate-selection">
+                            <!-- Search and Filter Controls -->
+                            <div class="candidate-controls">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-8">
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-search"></i>
+                                            </span>
+                                            <input type="text" class="candidate-search" id="candidateSearch"
+                                                   placeholder="Szukaj kandydatów po nazwisku lub imieniu...">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select class="form-select" id="progressFilter">
+                                            <option value="">Wszystkie poziomy postępu</option>
+                                            <option value="100">Gotowi do przyjęcia (100%)</option>
+                                            <option value="75">Prawie gotowi (75%+)</option>
+                                            <option value="50">W trakcie (50%+)</option>
+                                            <option value="low">Początek procesu (<50%)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Selected Candidate -->
+                            <div class="selected-candidate" id="selectedCandidate">
+                                <div class="selected-candidate-header">
+                                    <small class="text-muted">
+                                        <i class="fas fa-user-check me-1"></i>
+                                        Wybrany kandydat:
+                                    </small>
+                                </div>
+                                <div class="selected-candidate-display" id="selectedCandidateDisplay">
+                                    <div class="no-selection text-muted text-center py-3">
+                                        <i class="fas fa-user-plus fa-2x mb-2"></i>
+                                        <p class="mb-0">Nie wybrano kandydata</p>
+                                        <small>Wybierz kandydata z listy poniżej</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Available Candidates -->
+                            <div class="available-candidates">
+                                <div class="available-candidates-header mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-users me-1"></i>
+                                            Dostępni kandydaci (<span id="candidateCount">0</span>):
+                                        </small>
+                                        <div class="progress-legend">
+                                            <small class="me-2"><span class="progress-dot ready"></span> Gotowy</small>
+                                            <small class="me-2"><span class="progress-dot almost"></span> Prawie</small>
+                                            <small class="me-2"><span class="progress-dot progress"></span> W trakcie</small>
+                                            <small><span class="progress-dot start"></span> Początek</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="candidates-grid" id="candidatesGrid">
+                                    <div class="loading-message text-center py-4">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Ładowanie...</span>
+                                        </div>
+                                        <p class="mt-2 text-muted">Ładowanie listy kandydatów...</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Hidden original select for form submission -->
+                            {{ form_widget(child, {'attr': {'style': 'display: none;'}}) }}
+                        </div>
+
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Można wybrać tylko kandydatów z postępem 100%. Kliknij na kandydata aby go wybrać.
                         </div>
                         {{ form_errors(child) }}
                     {% else %}
@@ -463,8 +1019,27 @@
                 form.classList.add('was-validated');
             });
             
-            // Initialize enhanced member selection
-            initializeEnhancedMemberSelection();
+            // Initialize enhanced member selection only if there's a multi-select field
+            if (document.querySelector('select[multiple][name*="czlonkowie_oddzialu"]')) {
+                initializeEnhancedMemberSelection();
+            }
+
+            // Initialize enhanced candidate selection
+            if (document.querySelector('.enhanced-candidate-selection')) {
+                initializeEnhancedCandidateSelection();
+            }
+
+            // Initialize enhanced board selection - temporarily disabled for debugging
+            console.log('Board selection initialization temporarily disabled');
+            /*
+            console.log('Checking for .enhanced-board-selection...');
+            const boardSelectionElement = document.querySelector('.enhanced-board-selection');
+            console.log('Board selection element found:', !!boardSelectionElement);
+            if (boardSelectionElement) {
+                console.log('Initializing board selection...');
+                initializeEnhancedBoardSelection();
+            }
+            */
         });
         
         // Enhanced Member Selection System (podobny do konferencji prasowej)
@@ -719,6 +1294,554 @@
             setTimeout(function() {
                 memberSelection = new window.EnhancedMemberSelection();
             }, 100);
+        }
+
+        // Enhanced Candidate Selection System
+        if (typeof window.EnhancedCandidateSelection === 'undefined') {
+            window.EnhancedCandidateSelection = class EnhancedCandidateSelection {
+                constructor() {
+                    this.selectedCandidate = null;
+                    this.allCandidates = [];
+                    this.filteredCandidates = [];
+
+                    // Znajdź oryginalny select dla kandydatów
+                    this.originalSelect = document.querySelector('select[name*="kandydat"]:not([multiple])');
+                    if (!this.originalSelect) {
+                        console.error('Original candidate select not found');
+                        this.showFallbackMessage();
+                        return;
+                    }
+
+                    this.candidatesGrid = document.getElementById('candidatesGrid');
+                    this.selectedCandidateDisplay = document.getElementById('selectedCandidateDisplay');
+                    this.candidateCount = document.getElementById('candidateCount');
+                    this.searchInput = document.getElementById('candidateSearch');
+                    this.progressFilter = document.getElementById('progressFilter');
+
+                    if (!this.candidatesGrid || !this.selectedCandidateDisplay) {
+                        console.error('Required candidate elements not found');
+                        this.showFallbackMessage();
+                        return;
+                    }
+
+                    this.init();
+                }
+
+                init() {
+                    this.extractCandidatesFromSelect();
+                    this.setupEventListeners();
+                    this.renderCandidates();
+                    this.updateSelectedDisplay();
+                }
+
+                extractCandidatesFromSelect() {
+                    const options = this.originalSelect.querySelectorAll('option');
+                    if (options.length <= 1) { // Only empty option
+                        this.showNoCandidatesMessage();
+                        return;
+                    }
+
+                    this.allCandidates = Array.from(options).map(option => {
+                        if (option.value === '') return null;
+
+                        const fullText = option.textContent.trim();
+                        const progressMatch = fullText.match(/Postęp: (\d+)%/);
+                        const statusMatch = fullText.match(/- ([^)]+)\)/);
+
+                        let progress = 0;
+                        let progressClass = 'start';
+                        let selectable = false;
+
+                        if (progressMatch) {
+                            progress = parseInt(progressMatch[1]);
+                            if (progress === 100) {
+                                progressClass = 'ready';
+                                selectable = true;
+                            } else if (progress >= 75) {
+                                progressClass = 'almost';
+                            } else if (progress >= 50) {
+                                progressClass = 'progress';
+                            } else {
+                                progressClass = 'start';
+                            }
+                        } else {
+                            // If no progress match, check for status indicators
+                            if (fullText.includes('GOTOWY DO PRZYJĘCIA')) {
+                                progress = 100;
+                                progressClass = 'ready';
+                                selectable = true;
+                            } else if (fullText.includes('PRAWIE GOTOWY')) {
+                                progress = 87;
+                                progressClass = 'almost';
+                            } else if (fullText.includes('W TRAKCIE')) {
+                                progress = 62;
+                                progressClass = 'progress';
+                            } else if (fullText.includes('POCZĄTEK')) {
+                                progress = 25;
+                                progressClass = 'start';
+                            }
+                        }
+
+
+                        let status = 'BRAK POSTĘPU';
+                        if (statusMatch) {
+                            status = statusMatch[1];
+                        }
+
+                        // Extract clean name (remove progress info)
+                        const name = fullText.replace(/\s*\(Postęp:.*\)/, '').trim();
+
+                        return {
+                            id: option.value,
+                            name: name,
+                            progress: progress,
+                            status: status,
+                            progressClass: progressClass,
+                            selectable: selectable,
+                            initials: this.getInitials(name)
+                        };
+                    }).filter(candidate => candidate !== null);
+
+                    this.filteredCandidates = [...this.allCandidates];
+                }
+
+                getInitials(name) {
+                    return name.split(' ')
+                        .map(word => word.charAt(0))
+                        .join('')
+                        .toUpperCase()
+                        .substring(0, 2);
+                }
+
+                setupEventListeners() {
+                    if (this.searchInput) {
+                        this.searchInput.addEventListener('input', () => this.applyFilters());
+                    }
+                    if (this.progressFilter) {
+                        this.progressFilter.addEventListener('change', () => this.applyFilters());
+                    }
+                }
+
+                applyFilters() {
+                    const searchTerm = this.searchInput ? this.searchInput.value.toLowerCase() : '';
+                    const progressFilter = this.progressFilter ? this.progressFilter.value : '';
+
+                    this.filteredCandidates = this.allCandidates.filter(candidate => {
+                        const matchesSearch = !searchTerm ||
+                            candidate.name.toLowerCase().includes(searchTerm);
+
+                        let matchesProgress = true;
+                        if (progressFilter) {
+                            if (progressFilter === '100') {
+                                matchesProgress = candidate.progress === 100;
+                            } else if (progressFilter === '75') {
+                                matchesProgress = candidate.progress >= 75;
+                            } else if (progressFilter === '50') {
+                                matchesProgress = candidate.progress >= 50;
+                            } else if (progressFilter === 'low') {
+                                matchesProgress = candidate.progress < 50;
+                            }
+                        }
+
+                        return matchesSearch && matchesProgress;
+                    });
+
+                    this.renderCandidates();
+                }
+
+                renderCandidates() {
+                    if (this.candidateCount) {
+                        this.candidateCount.textContent = this.filteredCandidates.length;
+                    }
+
+                    if (this.filteredCandidates.length === 0) {
+                        this.candidatesGrid.innerHTML = `
+                            <div class="no-candidates-found">
+                                <i class="fas fa-search"></i>
+                                <h5>Nie znaleziono kandydatów</h5>
+                                <p class="text-muted">Spróbuj zmienić kryteria wyszukiwania</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    this.candidatesGrid.innerHTML = this.filteredCandidates
+                        .map(candidate => this.createCandidateCard(candidate))
+                        .join('');
+
+                    // Dodaj event listenery do kart
+                    this.candidatesGrid.querySelectorAll('.candidate-card').forEach(card => {
+                        card.addEventListener('click', (e) => {
+                            const candidateId = card.dataset.candidateId;
+                            this.selectCandidate(candidateId);
+                        });
+                    });
+                }
+
+                createCandidateCard(candidate) {
+                    const isSelected = this.selectedCandidate === candidate.id;
+                    const cardClass = candidate.selectable ? 'selectable' : 'disabled';
+                    const selectedClass = isSelected ? 'selected' : '';
+
+                    let actionIcon = '<i class="fas fa-times-circle"></i>';
+                    if (candidate.selectable) {
+                        actionIcon = isSelected ? '<i class="fas fa-check-circle"></i>' : '<i class="fas fa-plus-circle"></i>';
+                    }
+
+                    return `
+                        <div class="candidate-card ${cardClass} ${selectedClass}" data-candidate-id="${candidate.id}">
+                            <div class="candidate-avatar ${candidate.progressClass}">
+                                ${candidate.initials}
+                            </div>
+                            <div class="candidate-card-content">
+                                <div class="candidate-name">${candidate.name}</div>
+                                <div class="candidate-progress-info">
+                                    <div class="progress mb-2" style="height: 8px;">
+                                        <div class="progress-bar ${candidate.progressClass === 'ready' ? 'bg-success' :
+                                                                   candidate.progressClass === 'almost' ? 'bg-warning' :
+                                                                   candidate.progressClass === 'progress' ? 'bg-info' : 'bg-danger'}"
+                                             role="progressbar"
+                                             style="width: ${candidate.progress}%"
+                                             aria-valuenow="${candidate.progress}"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Postęp: ${candidate.progress}%</small>
+                                </div>
+                                <div class="candidate-status ${candidate.progressClass}">
+                                    ${candidate.status}
+                                </div>
+                            </div>
+                            <div class="candidate-card-actions">
+                                ${actionIcon}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                selectCandidate(candidateId) {
+                    const candidate = this.allCandidates.find(c => c.id === candidateId);
+
+                    if (!candidate || !candidate.selectable) {
+                        alert('Ten kandydat nie może zostać wybrany. Można wybierać tylko kandydatów z postępem 100%.');
+                        return;
+                    }
+
+                    this.selectedCandidate = candidateId;
+                    this.updateSelectedDisplay();
+                    this.updateOriginalSelect();
+                    this.renderCandidates(); // Re-render to update selected states
+                }
+
+                updateSelectedDisplay() {
+                    if (!this.selectedCandidate) {
+                        this.selectedCandidateDisplay.innerHTML = `
+                            <div class="no-selection text-muted text-center py-3">
+                                <i class="fas fa-user-plus fa-2x mb-2"></i>
+                                <p class="mb-0">Nie wybrano kandydata</p>
+                                <small>Wybierz kandydata z listy poniżej</small>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    const candidate = this.allCandidates.find(c => c.id === this.selectedCandidate);
+                    if (!candidate) return;
+
+                    this.selectedCandidateDisplay.innerHTML = `
+                        <div class="selected-candidate-card">
+                            <div class="candidate-avatar ${candidate.progressClass}">
+                                ${candidate.initials}
+                            </div>
+                            <div class="candidate-info">
+                                <div class="candidate-name">${candidate.name}</div>
+                                <div class="candidate-progress-info">
+                                    <div class="progress-bar-custom">
+                                        <div class="progress-fill ${candidate.progressClass}" style="width: ${candidate.progress}%"></div>
+                                    </div>
+                                    <div class="progress-percentage">${candidate.progress}%</div>
+                                </div>
+                                <div class="candidate-status ${candidate.progressClass}">
+                                    ${candidate.status}
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; color: #10b981; font-size: 1.5rem;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                updateOriginalSelect() {
+                    this.originalSelect.value = this.selectedCandidate || '';
+                    this.originalSelect.dispatchEvent(new Event('change'));
+                }
+
+                showFallbackMessage() {
+                    const candidatesGrid = document.getElementById('candidatesGrid');
+                    if (candidatesGrid) {
+                        candidatesGrid.innerHTML = `
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Problem z ładowaniem interfejsu</h6>
+                                <p class="mb-0">Nie można załadować ulepszonego interfejsu wyboru kandydatów.</p>
+                            </div>
+                        `;
+                    }
+                }
+
+                showNoCandidatesMessage() {
+                    const candidatesGrid = document.getElementById('candidatesGrid');
+                    if (candidatesGrid) {
+                        candidatesGrid.innerHTML = `
+                            <div class="no-candidates-found">
+                                <i class="fas fa-user-times"></i>
+                                <h5>Brak dostępnych kandydatów</h5>
+                                <p class="text-muted">W tym okręgu nie ma kandydatów do wyboru</p>
+                            </div>
+                        `;
+                    }
+                }
+            };
+        }
+
+        // Initialize candidate selection system
+        let candidateSelection;
+        function initializeEnhancedCandidateSelection() {
+            setTimeout(function() {
+                candidateSelection = new window.EnhancedCandidateSelection();
+            }, 100);
+        }
+
+        // Board Member Selection System
+        if (typeof window.EnhancedBoardSelection === 'undefined') {
+            window.EnhancedBoardSelection = class EnhancedBoardSelection {
+                constructor() {
+                    console.log('Initializing EnhancedBoardSelection...');
+                    this.selectedBoardMember = null;
+                    this.allBoardMembers = [];
+                    this.filteredBoardMembers = [];
+
+                    this.boardMembersGrid = document.getElementById('boardMembersGrid');
+                    this.selectedBoardMemberContent = document.getElementById('selectedBoardMemberContent');
+                    this.boardSearch = document.getElementById('boardSearch');
+                    this.roleFilter = document.getElementById('roleFilter');
+                    this.originalSelect = document.querySelector('select[name*="drugi_podpisujacy"]');
+
+                    console.log('Board elements found:', {
+                        grid: !!this.boardMembersGrid,
+                        content: !!this.selectedBoardMemberContent,
+                        search: !!this.boardSearch,
+                        filter: !!this.roleFilter,
+                        select: !!this.originalSelect
+                    });
+
+                    if (!this.boardMembersGrid || !this.originalSelect) {
+                        console.log('Board selection not available on this page');
+                        return; // Not on a page with board member selection
+                    }
+
+                    this.initializeEventListeners();
+                    this.loadBoardMembers();
+                }
+
+                initializeEventListeners() {
+                    console.log('Setting up event listeners...');
+                    if (this.boardSearch) {
+                        this.boardSearch.addEventListener('input', () => {
+                            console.log('Search input changed');
+                            this.filterBoardMembers();
+                        });
+                    }
+                    if (this.roleFilter) {
+                        this.roleFilter.addEventListener('change', () => {
+                            console.log('Role filter changed');
+                            this.filterBoardMembers();
+                        });
+                    }
+                }
+
+                loadBoardMembers() {
+                    try {
+                        console.log('Loading board members...');
+                        console.log('Original select:', this.originalSelect);
+
+                        // Get board members from the original select options
+                        const options = Array.from(this.originalSelect.options);
+                        console.log('Found options:', options.length);
+                        this.allBoardMembers = options.map(option => {
+                            if (!option.value) return null;
+
+                            const text = option.text;
+                            const parts = text.split(' - ');
+                            const namePart = parts[0] ? parts[0].replace(/^\d+\.\s*/, '') : '';
+                            const rolePart = parts[1] || '';
+                            const districtMatch = rolePart.match(/\(([^)]+)\)$/);
+                            const district = districtMatch ? districtMatch[1] : 'Zarząd Krajowy';
+                            const role = rolePart.replace(/\s*\([^)]+\)$/, '');
+
+                            // Determine role class for avatar
+                            let roleClass = 'default';
+                            if (role.includes('Prezes Partii')) roleClass = 'prezes';
+                            else if (role.includes('Wiceprezes Partii')) roleClass = 'wiceprezes';
+                            else if (role.includes('Sekretarz Partii')) roleClass = 'sekretarz';
+                            else if (role.includes('Skarbnik Partii')) roleClass = 'skarbnik';
+
+                            // Generate initials
+                            const nameWords = namePart.split(' ');
+                            const initials = nameWords.map(word => word.charAt(0).toUpperCase()).join('');
+
+                            return {
+                                id: option.value,
+                                name: namePart,
+                                role: role,
+                                district: district,
+                                roleClass: roleClass,
+                                initials: initials
+                            };
+                        }).filter(member => member !== null);
+
+                        this.filteredBoardMembers = [...this.allBoardMembers];
+                        this.renderBoardMembers();
+                    } catch (error) {
+                        console.error('Error loading board members:', error);
+                        this.showError('Błąd podczas ładowania listy członków zarządu');
+                    }
+                }
+
+                filterBoardMembers() {
+                    console.log('Filtering board members...');
+                    try {
+                        const searchTerm = this.boardSearch ? this.boardSearch.value.toLowerCase() : '';
+                        const roleFilter = this.roleFilter ? this.roleFilter.value : '';
+
+                        this.filteredBoardMembers = this.allBoardMembers.filter(member => {
+                            const matchesSearch = member.name.toLowerCase().includes(searchTerm);
+                            const matchesRole = !roleFilter || member.roleClass === roleFilter;
+                            return matchesSearch && matchesRole;
+                        });
+
+                        console.log('Filtered members:', this.filteredBoardMembers.length);
+                        this.renderBoardMembers();
+                    } catch (error) {
+                        console.error('Error filtering board members:', error);
+                    }
+                }
+
+                renderBoardMembers() {
+                    if (this.filteredBoardMembers.length === 0) {
+                        this.boardMembersGrid.innerHTML = `
+                            <div class="no-board-members-found">
+                                <i class="fas fa-users-slash"></i>
+                                <p>Nie znaleziono członków zarządu spełniających kryteria</p>
+                                <small class="text-muted">Spróbuj zmienić filtry wyszukiwania</small>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    this.boardMembersGrid.innerHTML = this.filteredBoardMembers
+                        .map(member => this.createBoardMemberCard(member))
+                        .join('');
+
+                    // Add event listeners
+                    this.boardMembersGrid.querySelectorAll('.board-member-card').forEach(card => {
+                        card.addEventListener('click', (e) => {
+                            const memberId = card.dataset.memberId;
+                            this.selectBoardMember(memberId);
+                        });
+                    });
+                }
+
+                createBoardMemberCard(member) {
+                    const isSelected = this.selectedBoardMember === member.id;
+
+                    return `
+                        <div class="board-member-card ${isSelected ? 'selected' : ''}" data-member-id="${member.id}">
+                            <div class="board-member-avatar ${member.roleClass}">
+                                ${member.initials}
+                            </div>
+                            <div class="board-member-card-content">
+                                <div class="board-member-name">${member.name}</div>
+                                <div class="board-member-role">${member.role}</div>
+                                <div class="board-member-district">${member.district}</div>
+                            </div>
+                            <div class="board-member-card-actions">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                selectBoardMember(memberId) {
+                    const member = this.allBoardMembers.find(m => m.id === memberId);
+
+                    if (!member) return;
+
+                    this.selectedBoardMember = member.id;
+                    this.originalSelect.value = member.id;
+
+                    // Trigger change event for form validation
+                    this.originalSelect.dispatchEvent(new Event('change'));
+
+                    this.updateSelectedBoardMemberDisplay(member);
+                    this.renderBoardMembers(); // Re-render to update selection state
+                }
+
+                updateSelectedBoardMemberDisplay(member) {
+                    this.selectedBoardMemberContent.innerHTML = `
+                        <div class="selected-board-member-card">
+                            <div class="board-member-avatar ${member.roleClass}">
+                                ${member.initials}
+                            </div>
+                            <div class="board-member-info">
+                                <div class="board-member-name">${member.name}</div>
+                                <div class="board-member-role">${member.role}</div>
+                                <div class="board-member-district">${member.district}</div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="boardSelection.clearSelection()">
+                                <i class="fas fa-times me-1"></i>Usuń
+                            </button>
+                        </div>
+                    `;
+                }
+
+                clearSelection() {
+                    this.selectedBoardMember = null;
+                    this.originalSelect.value = '';
+                    this.originalSelect.dispatchEvent(new Event('change'));
+
+                    this.selectedBoardMemberContent.innerHTML = `
+                        <div class="no-selection text-center py-3">
+                            <i class="fas fa-user-plus text-muted mb-2" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0">Nie wybrano drugiego podpisującego</p>
+                            <small class="text-muted">Wybierz członka zarządu krajowego z listy poniżej</small>
+                        </div>
+                    `;
+
+                    this.renderBoardMembers();
+                }
+
+                showError(message) {
+                    this.boardMembersGrid.innerHTML = `
+                        <div class="no-board-members-found">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>${message}</p>
+                        </div>
+                    `;
+                }
+            };
+        }
+
+        // Initialize board member selection system
+        let boardSelection;
+        function initializeEnhancedBoardSelection() {
+            console.log('initializeEnhancedBoardSelection called');
+            setTimeout(function() {
+                console.log('Creating EnhancedBoardSelection instance...');
+                boardSelection = new window.EnhancedBoardSelection();
+                console.log('Board selection initialized:', boardSelection);
+            }, 500); // Zwiększamy timeout
         }
     </script>
 {% endblock %}

@@ -38,7 +38,12 @@ class WyznaczenieObserwatora extends AbstractDocument
             'creator' => true,  // Sekretarz Okręgu
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/wyznaczenie_obserwatora.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

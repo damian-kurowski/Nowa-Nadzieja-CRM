@@ -24,6 +24,11 @@ security:
                 always_use_default_target_path: true
                 username_parameter: email
                 password_parameter: password
+            two_factor:
+                auth_form_path: 2fa_login
+                check_path: 2fa_login_check
+                prepare_on_login: true
+                prepare_on_access_denied: true
             logout:
                 path: logout
                 target: login
@@ -40,13 +45,17 @@ security:
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/password-reset-request, roles: PUBLIC_ACCESS }
+        - { path: ^/2fa/cancel, roles: PUBLIC_ACCESS }
+        - { path: ^/2fa, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS }
+        - { path: ^/first-login, roles: IS_AUTHENTICATED_FULLY }
         - { path: ^/test/qr, roles: PUBLIC_ACCESS }
         - { path: ^/test-mail, roles: ROLE_ADMIN }
         - { path: ^/api/struktura, roles: PUBLIC_ACCESS }
         - { path: ^/api/kandydat, roles: PUBLIC_ACCESS }
         - { path: ^/api/mlodziezowka, roles: PUBLIC_ACCESS }
         - { path: ^/\.well-known/, roles: PUBLIC_ACCESS }
-        - { path: ^/, roles: ROLE_USER }
+        - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
 
     role_hierarchy:
         # Role funkcyjne zarządu krajowego (dodatkowo do podstawowej roli użytkownika)
@@ -56,8 +65,19 @@ security:
         ROLE_SKARBNIK_PARTII: [ROLE_ZARZAD_KRAJOWY, ROLE_ADMIN]
         ROLE_RZECZNIK_PRASOWY: [ROLE_ZARZAD_KRAJOWY, ROLE_ADMIN]
 
+        # Role Rady Krajowej
+        ROLE_PRZEWODNICZACY_RADY: [ROLE_RADA_KRAJOWA, ROLE_FUNKCYJNY]
+        ROLE_ZASTEPCA_PRZEWODNICZACY_RADY: [ROLE_RADA_KRAJOWA, ROLE_FUNKCYJNY]
+
+        # Role Komisji Rewizyjnej
+        ROLE_PRZEWODNICZACY_KOMISJI_REW: [ROLE_KOMISJA_REWIZYJNA, ROLE_FUNKCYJNY]
+        ROLE_WICEPRZEWODNICZACY_KOMISJI_REW: [ROLE_KOMISJA_REWIZYJNA, ROLE_FUNKCYJNY]
+        ROLE_SEKRETARZ_KOMISJI_REW: [ROLE_KOMISJA_REWIZYJNA, ROLE_FUNKCYJNY]
+
         # Role funkcyjne zarządu regionu
-        ROLE_PREZES_REGIONU: [ROLE_ZARZAD_REGIONU]
+        ROLE_PREZES_REGIONU: [ROLE_ZARZAD_REGIONU, ROLE_FUNKCYJNY]
+        ROLE_SEKRETARZ_REGIONU: [ROLE_ZARZAD_REGIONU, ROLE_FUNKCYJNY]
+        ROLE_SKARBNIK_REGIONU: [ROLE_ZARZAD_REGIONU, ROLE_FUNKCYJNY]
 
         # Role funkcyjne zarządu okręgu
         ROLE_PREZES_OKREGU: [ROLE_ZARZAD_OKREGU]
@@ -65,11 +85,19 @@ security:
         ROLE_SEKRETARZ_OKREGU: [ROLE_ZARZAD_OKREGU]
         ROLE_SKARBNIK_OKREGU: [ROLE_ZARZAD_OKREGU]
         ROLE_PELNOMOCNIK_PRZYJMOWANIA: [ROLE_ZARZAD_OKREGU]
+        ROLE_PO_PREZES_OKREGU: [ROLE_ZARZAD_OKREGU]
 
         # Role funkcyjne zarządu oddziału
         ROLE_PRZEWODNICZACY_ODDZIALU: [ROLE_ZARZAD_ODDZIALU]
         ROLE_ZASTEPCA_PRZEWODNICZACEGO_ODDZIALU: [ROLE_ZARZAD_ODDZIALU]
         ROLE_SEKRETARZ_ODDZIALU: [ROLE_ZARZAD_ODDZIALU]
+
+        # Role struktur parlamentarnych
+        ROLE_PRZEWODNICZACY_KLUBU: [ROLE_FUNKCYJNY]
+        ROLE_PRZEWODNICZACY_DELEGACJI: [ROLE_FUNKCYJNY]
+
+        # Role pełnomocników
+        ROLE_PELNOMOCNIK_STRUKTUR: [ROLE_FUNKCYJNY]
 
         # Role tymczasowe dla zebrań oddziałów
         ROLE_OBSERWATOR_ZEBRANIA: [ROLE_CZLONEK_PARTII]          # tymczasowa rola obserwatora zebrania
@@ -78,11 +106,16 @@ security:
 
         # Hierarchie grupowe funkcyjnych
         ROLE_ZARZAD_KRAJOWY: [ROLE_FUNKCYJNY]
+        ROLE_RADA_KRAJOWA: [ROLE_FUNKCYJNY]
+        ROLE_KOMISJA_REWIZYJNA: [ROLE_FUNKCYJNY]
         ROLE_ZARZAD_REGIONU: [ROLE_FUNKCYJNY]
         ROLE_ZARZAD_OKREGU: [ROLE_FUNKCYJNY]
         ROLE_ZARZAD_ODDZIALU: [ROLE_FUNKCYJNY]
         ROLE_FUNKCYJNY: [ROLE_CZLONEK_PARTII]
         ROLE_ADMIN: [ROLE_USER]
+
+        # Rola przekazu medialnego
+        ROLE_PRZEKAZ: [ROLE_CZLONEK_PARTII]     # dostęp do wysyłania przekazów medialnych
 
         # Role podstawowe - każdy użytkownik ma jedną z tych ról jako podstawową
         ROLE_CZLONEK_PARTII: [ROLE_USER]        # członkowie partii

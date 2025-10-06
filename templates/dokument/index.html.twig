@@ -2,10 +2,13 @@
 
 {% block title %}Dokumenty - CRM Nowa Nadzieja{% endblock %}
 
+{% block body_class %}doc-container{% endblock %}
+
 {% block page_title %}Dokumenty{% if isGlobalView %} - Widok globalny{% endif %}{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('css/documents-theme.css') }}">
     <style>
         /* Enhanced Document Header Styles */
         .documents-header {
@@ -830,7 +833,7 @@
                             </div>
                             
                             <!-- Progress Bar for Signatures -->
-                            {% if dokument.status == 'pending' or dokument.status == 'signed' %}
+                            {% if dokument.status == constant('App\\Entity\\Dokument::STATUS_CZEKA_NA_PODPIS') or dokument.status == constant('App\\Entity\\Dokument::STATUS_PODPISANY') %}
                             <div class="signature-progress">
                                 {% set signedCount = 0 %}
                                 {% for podpis in dokument.podpisy %}

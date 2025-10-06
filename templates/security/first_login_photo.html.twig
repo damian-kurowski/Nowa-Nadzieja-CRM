@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Dodaj zdjęcie profilowe - Nowa Nadzieja CRM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5568d3;
+            --secondary: #764ba2;
+            --success: #10b981;
+            --success-dark: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --text-light: #1f2937;
+            --text-muted-light: #6b7280;
+            --text-dark: #f3f4f6;
+            --text-muted-dark: #9ca3af;
+            --card-light: #ffffff;
+            --card-dark: #242836;
+            --bg-light: #f9fafb;
+            --bg-dark: #1a1d2e;
+            --border-light: #e5e7eb;
+            --border-dark: #374151;
+            --shadow-light: rgba(0, 0, 0, 0.1);
+            --shadow-dark: rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text-light);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .card-custom {
+            background: var(--card-light);
+            border-radius: 24px;
+            box-shadow: 0 20px 60px var(--shadow-light);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, var(--info) 0%, var(--primary) 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header-custom::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .card-header-custom h3 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card-header-custom p {
+            font-size: 1rem;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-step {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            background: white;
+            color: var(--info);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .progress-step.completed {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .progress-line {
+            width: 3rem;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .progress-line.completed {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .card-body-custom {
+            padding: 3rem 2.5rem;
+        }
+
+        .alert-custom {
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: none;
+            display: flex;
+            align-items: start;
+            gap: 1rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+            color: #1e40af;
+            border-left: 4px solid var(--info);
+        }
+
+        .photo-preview-container {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .photo-preview {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, var(--bg-light) 0%, #e0e7ff 100%);
+            border: 4px solid white;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .photo-preview:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-placeholder {
+            font-size: 5rem;
+            color: var(--primary);
+            opacity: 0.3;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--border-light);
+            border-radius: 16px;
+            padding: 2.5rem;
+            text-align: center;
+            background: var(--bg-light);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--success);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+        }
+
+        .upload-icon {
+            font-size: 3.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .upload-text {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 0.75rem;
+        }
+
+        .upload-hint {
+            font-size: 0.875rem;
+            color: var(--text-muted-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .btn-custom {
+            padding: 1rem 2.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-light);
+            border: 2px solid var(--border-light);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .examples-section {
+            margin: 3rem 0;
+            padding: 2rem;
+            background: var(--bg-light);
+            border-radius: 16px;
+            border: 2px solid var(--border-light);
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .example-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .example-header {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .example-header.good {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            color: var(--success);
+            border: 2px solid var(--success);
+        }
+
+        .example-header.bad {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+            color: var(--danger);
+            border: 2px solid var(--danger);
+        }
+
+        .example-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .example-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .example-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .example-caption {
+            padding: 0.75rem 1rem;
+            background: white;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .example-column:first-child .example-caption {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .example-column:first-child .example-caption i {
+            color: var(--success);
+        }
+
+        .example-column:last-child .example-caption {
+            color: var(--danger);
+            font-weight: 600;
+        }
+
+        .example-column:last-child .example-caption i {
+            color: var(--danger);
+        }
+
+        .file-info {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+        }
+
+        .file-info.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .file-size {
+            font-size: 0.875rem;
+            color: var(--text-muted-light);
+            margin-top: 0.25rem;
+        }
+
+        /* Cropper Modal */
+        .modal-cropper {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            padding: 20px;
+        }
+
+        .modal-cropper.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content-cropper {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: auto;
+        }
+
+        .cropper-container-wrapper {
+            max-height: 500px;
+            margin: 1.5rem 0;
+        }
+
+        .cropper-container-wrapper img {
+            max-width: 100%;
+            display: block;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+                color: var(--text-dark);
+            }
+
+            .card-custom {
+                background: var(--card-dark);
+                box-shadow: 0 20px 60px var(--shadow-dark);
+            }
+
+            .upload-area {
+                background: var(--bg-dark);
+                border-color: var(--border-dark);
+            }
+
+            .upload-area:hover {
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.1) 100%);
+            }
+
+            .upload-text {
+                color: var(--text-dark);
+            }
+
+            .upload-hint {
+                color: var(--text-muted-dark);
+            }
+
+            .photo-preview {
+                background: linear-gradient(135deg, var(--bg-dark) 0%, #1e293b 100%);
+                border-color: var(--border-dark);
+            }
+
+            .file-info {
+                background: var(--bg-dark);
+                border-color: var(--border-dark);
+            }
+
+            .file-name {
+                color: var(--text-dark);
+            }
+
+            .file-size {
+                color: var(--text-muted-dark);
+            }
+
+            .btn-secondary {
+                background: var(--bg-dark);
+                color: var(--text-dark);
+                border-color: var(--border-dark);
+            }
+
+            .alert-danger {
+                background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+                color: #fca5a5;
+            }
+
+            .alert-info {
+                background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+                color: #93c5fd;
+            }
+
+            .examples-section {
+                background: var(--bg-dark);
+                border-color: var(--border-dark);
+            }
+
+            .examples-section h5 {
+                color: var(--text-dark);
+            }
+
+            .example-caption {
+                background: var(--bg-dark);
+                border-top: 1px solid var(--border-dark);
+            }
+
+            .modal-content-cropper {
+                background: var(--card-dark);
+                color: var(--text-dark);
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .card-header-custom {
+                padding: 2rem 1.5rem;
+            }
+
+            .card-header-custom h3 {
+                font-size: 1.5rem;
+            }
+
+            .card-body-custom {
+                padding: 2rem 1.5rem;
+            }
+
+            .photo-preview {
+                width: 160px;
+                height: 160px;
+            }
+
+            .upload-area {
+                padding: 2rem 1.5rem;
+            }
+
+            .upload-icon {
+                font-size: 3rem;
+            }
+
+            .examples-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .examples-section {
+                padding: 1.5rem;
+                margin: 2rem 0;
+            }
+
+            .example-item img {
+                height: 180px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            body {
+                padding: 10px;
+            }
+
+            .card-custom {
+                border-radius: 16px;
+            }
+
+            .card-header-custom {
+                padding: 1.5rem 1rem;
+            }
+
+            .card-header-custom h3 {
+                font-size: 1.25rem;
+            }
+
+            .card-header-custom p {
+                font-size: 0.875rem;
+            }
+
+            .card-body-custom {
+                padding: 1.5rem 1rem;
+            }
+
+            .photo-preview {
+                width: 140px;
+                height: 140px;
+            }
+
+            .btn-custom {
+                padding: 0.875rem 2rem;
+                font-size: 1rem;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .progress-step {
+                width: 2rem;
+                height: 2rem;
+                font-size: 0.875rem;
+            }
+
+            .progress-line {
+                width: 2rem;
+            }
+
+            .examples-section {
+                padding: 1rem;
+                margin: 1.5rem 0;
+            }
+
+            .examples-section h5 {
+                font-size: 1rem;
+            }
+
+            .example-item img {
+                height: 150px;
+            }
+
+            .example-caption {
+                font-size: 0.75rem;
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card-custom">
+            <div class="card-header-custom">
+                <h3><i class="fas fa-camera me-2"></i>Dodaj zdjęcie profilowe</h3>
+                <p>Krok 3 z 3: Uzupełnij swój profil</p>
+                <div class="progress-indicator">
+                    <div class="progress-step completed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="progress-line completed"></div>
+                    <div class="progress-step completed">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="progress-line completed"></div>
+                    <div class="progress-step active">3</div>
+                </div>
+            </div>
+
+            <div class="card-body-custom">
+                {% if error %}
+                    <div class="alert-custom alert-danger">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 1.25rem;"></i>
+                        <div>
+                            <strong>Błąd</strong><br>
+                            {{ error }}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="alert-custom alert-info">
+                    <i class="fas fa-info-circle" style="font-size: 1.25rem;"></i>
+                    <div>
+                        <strong>Wymagania dotyczące zdjęcia profilowego</strong><br>
+                        Jako osoba pełniąca funkcję w partii, Twoje zdjęcie będzie widoczne na stronie internetowej. Zdjęcie musi być:<br>
+                        <ul style="margin: 0.75rem 0 0 1.5rem; padding: 0;">
+                            <li><strong>Biznesowe i poważne</strong> - zdjęcie od piersi w górę, profesjonalne</li>
+                            <li><strong>Dobrze oświetlone</strong> - twarz wyraźnie widoczna, bez cieni</li>
+                            <li><strong>Bez przedmiotów</strong> - żadnych przedmiotów w dłoniach (telefon, kubek, itp.)</li>
+                            <li><strong>Odpowiednie</strong> - neutralne tło, bez okularów przeciwsłonecznych, czapek</li>
+                            <li><strong>Aktualne</strong> - aby członkowie mogli Cię łatwo rozpoznać</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="photo-preview-container">
+                    <div class="photo-preview" id="photoPreview">
+                        <i class="fas fa-user photo-placeholder"></i>
+                    </div>
+                </div>
+
+                <div class="examples-section">
+                    <h5 style="text-align: center; margin-bottom: 1.5rem; color: var(--text-light); font-weight: 700;">
+                        <i class="fas fa-images me-2"></i>Przykłady zdjęć
+                    </h5>
+
+                    <div class="examples-grid">
+                        <div class="example-column">
+                            <div class="example-header good">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Dobre przykłady</span>
+                            </div>
+                            <div class="example-item">
+                                <img src="/images/photo-examples/good-example-1.jpg" alt="Dobre zdjęcie - przykład 1">
+                                <div class="example-caption">
+                                    <i class="fas fa-check"></i>
+                                    Od piersi w górę, neutralne tło
+                                </div>
+                            </div>
+                            <div class="example-item">
+                                <img src="/images/photo-examples/good-example-2.jpg" alt="Dobre zdjęcie - przykład 2">
+                                <div class="example-caption">
+                                    <i class="fas fa-check"></i>
+                                    Profesjonalne, dobrze oświetlone
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="example-column">
+                            <div class="example-header bad">
+                                <i class="fas fa-times-circle"></i>
+                                <span>Złe przykłady</span>
+                            </div>
+                            <div class="example-item">
+                                <img src="/images/photo-examples/bad-example-1.jpg" alt="Złe zdjęcie - przykład 1">
+                                <div class="example-caption">
+                                    <i class="fas fa-times"></i>
+                                    Zła poza, twarz niewidoczna
+                                </div>
+                            </div>
+                            <div class="example-item">
+                                <img src="/images/photo-examples/bad-example-2.jpg" alt="Złe zdjęcie - przykład 2">
+                                <div class="example-caption">
+                                    <i class="fas fa-times"></i>
+                                    Zbyt ciemne, twarz niewidoczna
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" id="uploadForm">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <div class="upload-text">Przeciągnij zdjęcie tutaj</div>
+                        <div class="upload-hint">lub kliknij aby wybrać plik</div>
+                        <input type="file"
+                               name="photo"
+                               id="photoInput"
+                               class="file-input"
+                               accept="image/jpeg,image/jpg,image/png,image/gif"
+                               required>
+                        <button type="button" class="btn-custom btn-secondary" onclick="document.getElementById('photoInput').click()">
+                            <i class="fas fa-folder-open"></i>
+                            <span>Wybierz plik</span>
+                        </button>
+
+                        <div class="file-info" id="fileInfo">
+                            <div class="file-name">
+                                <i class="fas fa-file-image"></i>
+                                <span id="fileName"></span>
+                            </div>
+                            <div class="file-size" id="fileSize"></div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn-custom btn-primary" id="submitBtn" disabled>
+                            <i class="fas fa-check-circle"></i>
+                            <span>Zapisz i zakończ konfigurację</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cropper Modal -->
+    <div class="modal-cropper" id="cropperModal">
+        <div class="modal-content-cropper">
+            <h4 style="margin-bottom: 1rem; font-weight: 700;">
+                <i class="fas fa-crop-alt me-2"></i>Przytnij zdjęcie
+            </h4>
+            <p style="color: var(--text-muted-light); margin-bottom: 1.5rem;">
+                Dostosuj kadr zdjęcia. Zdjęcie zostanie przycięte do kwadratu.
+            </p>
+            <div class="cropper-container-wrapper">
+                <img id="cropperImage" src="" alt="Obraz do przycięcia">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-custom btn-secondary" onclick="closeCropper()">
+                    <i class="fas fa-times"></i>
+                    <span>Anuluj</span>
+                </button>
+                <button type="button" class="btn-custom btn-primary" onclick="cropAndSave()">
+                    <i class="fas fa-check"></i>
+                    <span>Przytnij i zapisz</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+    <script>
+        const photoInput = document.getElementById('photoInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const photoPreview = document.getElementById('photoPreview');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const submitBtn = document.getElementById('submitBtn');
+        const cropperModal = document.getElementById('cropperModal');
+        const cropperImage = document.getElementById('cropperImage');
+        const uploadForm = document.getElementById('uploadForm');
+
+        let cropper = null;
+        let croppedBlob = null;
+        let originalFileName = '';
+
+        // Handle file selection
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        });
+
+        // Drag and drop
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                // Create a new FileList-like object
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                photoInput.files = dataTransfer.files;
+                handleFile(file);
+            }
+        });
+
+        function handleFile(file) {
+            originalFileName = file.name;
+
+            // Show file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.classList.add('active');
+
+            // Open cropper modal
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                cropperImage.src = e.target.result;
+                cropperModal.classList.add('active');
+
+                // Destroy previous cropper if exists
+                if (cropper) {
+                    cropper.destroy();
+                }
+
+                // Initialize cropper with square aspect ratio
+                cropper = new Cropper(cropperImage, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    minCropBoxWidth: 200,
+                    minCropBoxHeight: 200,
+                    autoCropArea: 0.8,
+                    responsive: true,
+                    guides: true,
+                    center: true,
+                    highlight: true,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function closeCropper() {
+            cropperModal.classList.remove('active');
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            // Reset file input
+            photoInput.value = '';
+            croppedBlob = null;
+        }
+
+        function cropAndSave() {
+            if (!cropper) return;
+
+            // Get cropped canvas
+            const canvas = cropper.getCroppedCanvas({
+                width: 800,
+                height: 800,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            // Convert to blob
+            canvas.toBlob(function(blob) {
+                croppedBlob = blob;
+
+                // Show preview
+                const url = URL.createObjectURL(blob);
+                photoPreview.innerHTML = `<img src="${url}" alt="Preview">`;
+
+                // Update file info
+                fileSize.textContent = formatFileSize(blob.size);
+
+                // Enable submit button
+                submitBtn.disabled = false;
+
+                // Close modal
+                cropperModal.classList.remove('active');
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
+            }, 'image/jpeg', 0.95);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Form submission
+        uploadForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!croppedBlob) {
+                alert('Proszę wybrać i przyciąć zdjęcie');
+                return;
+            }
+
+            // Create FormData with cropped image
+            const formData = new FormData();
+            formData.append('photo', croppedBlob, originalFileName);
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Przesyłanie...</span>';
+
+            // Submit form
+            fetch(uploadForm.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = response.url;
+                } else {
+                    return response.text().then(text => {
+                        throw new Error('Upload failed');
+                    });
+                }
+            })
+            .catch(error => {
+                alert('Błąd podczas przesyłania zdjęcia. Spróbuj ponownie.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check-circle"></i> <span>Zapisz i zakończ konfigurację</span>';
+            });
+        });
+    </script>
+</body>
+</html>

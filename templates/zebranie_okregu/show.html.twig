@@ -36,7 +36,7 @@
                     <div class="status-dot status-{{ zebranie.status }}"></div>
                     <span class="status-text">{{ zebranie.statusDisplayName }}</span>
                     {% if zebranie.status != 'zakonczone' and zebranie.status != 'anulowane' %}
-                        <div class="step-counter">{{ zebranie.getCurrentStepNumber() }}/8</div>
+                        <div class="step-counter">{{ zebranie.getCurrentStepNumber() }}/10</div>
                     {% endif %}
                 </div>
             </div>
@@ -81,20 +81,34 @@
             </div>
         </div>
         <div class="step {% if zebranie.getCurrentStepNumber() >= 6 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 6 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-file-signature"></i></div>
+            <div class="step-info">
+                <div class="step-title">Sekretarz</div>
+                <div class="step-desc">Wybór Sekretarza Okręgu</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 7 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 7 %}active{% endif %}">
+            <div class="step-icon"><i class="fas fa-coins"></i></div>
+            <div class="step-info">
+                <div class="step-title">Skarbnik</div>
+                <div class="step-desc">Wybór Skarbnika Okręgu</div>
+            </div>
+        </div>
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 8 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 8 %}active{% endif %}">
             <div class="step-icon"><i class="fas fa-signature"></i></div>
             <div class="step-info">
                 <div class="step-title">Podpisy</div>
                 <div class="step-desc">Składanie podpisów</div>
             </div>
         </div>
-        <div class="step {% if zebranie.getCurrentStepNumber() >= 7 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 7 %}active{% endif %}">
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 9 %}completed{% endif %} {% if zebranie.getCurrentStepNumber() == 9 %}active{% endif %}">
             <div class="step-icon"><i class="fas fa-check-double"></i></div>
             <div class="step-info">
                 <div class="step-title">Akceptacja</div>
                 <div class="step-desc">Akceptacja uczestników</div>
             </div>
         </div>
-        <div class="step {% if zebranie.getCurrentStepNumber() >= 8 %}completed{% endif %}">
+        <div class="step {% if zebranie.getCurrentStepNumber() >= 10 %}completed{% endif %}">
             <div class="step-icon"><i class="fas fa-flag-checkered"></i></div>
             <div class="step-info">
                 <div class="step-title">Zakończenie</div>
@@ -237,91 +251,89 @@
                     </div>
                 {% endif %}
 
-                <!-- Signature Collection Section -->
+                <!-- Document Signing Section -->
                 {% if zebranie.status == 'skladanie_podpisow' %}
                     <div class="signatures-collection-section">
-                        <h5><i class="fas fa-signature"></i> Składanie Podpisów</h5>
-                        <p class="text-muted mb-3">Każdy uczestnik musi złożyć podpis przed wygenerowaniem dokumentów.</p>
-                        
-                        <div class="participant-signatures">
-                            <div class="signature-item {% if zebranie.obserwatorPodpisal %}signed{% else %}pending{% endif %}">
-                                <div class="signature-icon">
-                                    <i class="fas {% if zebranie.obserwatorPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
-                                </div>
-                                <div class="signature-info">
-                                    <div class="signature-role">Obserwator</div>
-                                    <div class="signature-person">{{ zebranie.obserwator.imie }} {{ zebranie.obserwator.nazwisko }}</div>
-                                    {% if zebranie.obserwatorPodpisal %}
-                                        <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuObserwatora|date('d.m.Y H:i') }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="signature-badge {% if zebranie.obserwatorPodpisal %}signed{% else %}pending{% endif %}">
-                                    {% if zebranie.obserwatorPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
-                                </div>
-                            </div>
+                        <h5><i class="fas fa-signature"></i> Podpisywanie Dokumentów</h5>
+                        <p class="text-muted mb-3">Dokumenty zostały wygenerowane i oczekują na podpisy uczestników zebrania.</p>
 
-                            <div class="signature-item {% if zebranie.protokolantPodpisal %}signed{% else %}pending{% endif %}">
-                                <div class="signature-icon">
-                                    <i class="fas {% if zebranie.protokolantPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
-                                </div>
-                                <div class="signature-info">
-                                    <div class="signature-role">Protokolant</div>
-                                    <div class="signature-person">{{ zebranie.protokolant.imie }} {{ zebranie.protokolant.nazwisko }}</div>
-                                    {% if zebranie.protokolantPodpisal %}
-                                        <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuProtokolanta|date('d.m.Y H:i') }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="signature-badge {% if zebranie.protokolantPodpisal %}signed{% else %}pending{% endif %}">
-                                    {% if zebranie.protokolantPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
-                                </div>
-                            </div>
+                        {# Wyświetl listę dokumentów z detalami podpisów #}
+                        {% if zebranie.dokumenty|length > 0 %}
+                            <div class="documents-to-sign">
+                                {% for dokument in zebranie.dokumenty %}
+                                    <div class="document-signing-card mb-3">
+                                        <div class="document-info mb-2">
+                                            <div class="document-icon">
+                                                <i class="fas fa-file-alt"></i>
+                                            </div>
+                                            <div style="flex: 1;">
+                                                <div class="document-title">{{ dokument.tytul }}</div>
+                                                <div class="document-type">{{ dokument.numerDokumentu }}</div>
+                                            </div>
+                                            <div class="document-status-badge">
+                                                {% set podpisane = 0 %}
+                                                {% set wymagane = dokument.podpisy|length %}
+                                                {% for podpis in dokument.podpisy %}
+                                                    {% if podpis.status == 'podpisany' %}
+                                                        {% set podpisane = podpisane + 1 %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <span class="badge {% if podpisane == wymagane %}bg-success{% else %}bg-warning{% endif %}">
+                                                    {{ podpisane }}/{{ wymagane }} podpisów
+                                                </span>
+                                            </div>
+                                        </div>
 
-                            <div class="signature-item {% if zebranie.prowadzacyPodpisal %}signed{% else %}pending{% endif %}">
-                                <div class="signature-icon">
-                                    <i class="fas {% if zebranie.prowadzacyPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
-                                </div>
-                                <div class="signature-info">
-                                    <div class="signature-role">Prowadzący</div>
-                                    <div class="signature-person">{{ zebranie.prowadzacy.imie }} {{ zebranie.prowadzacy.nazwisko }}</div>
-                                    {% if zebranie.prowadzacyPodpisal %}
-                                        <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuProwadzacego|date('d.m.Y H:i') }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="signature-badge {% if zebranie.prowadzacyPodpisal %}signed{% else %}pending{% endif %}">
-                                    {% if zebranie.prowadzacyPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
-                                </div>
-                            </div>
-                        </div>
+                                        <div class="signature-status">
+                                            {% for podpis in dokument.podpisy %}
+                                                <div class="signature-item {% if podpis.status == 'podpisany' %}signed{% else %}pending{% endif %}">
+                                                    <div class="signature-icon">
+                                                        <i class="fas {% if podpis.status == 'podpisany' %}fa-check{% else %}fa-clock{% endif %}"></i>
+                                                    </div>
+                                                    <div class="signature-info">
+                                                        <div class="signature-role">
+                                                            {% if podpis.kolejnosc == 1 %}
+                                                                Przewodniczący
+                                                            {% elseif podpis.kolejnosc == 2 %}
+                                                                Sekretarz
+                                                            {% elseif podpis.kolejnosc == 3 %}
+                                                                Obserwator
+                                                            {% else %}
+                                                                Podpis {{ podpis.kolejnosc }}
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="signature-person">{{ podpis.podpisujacy.imie }} {{ podpis.podpisujacy.nazwisko }}</div>
+                                                        {% if podpis.status == 'podpisany' and podpis.dataPodpisania %}
+                                                            <div class="signature-time">Podpisano: {{ podpis.dataPodpisania|date('d.m.Y H:i') }}</div>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="signature-badge {% if podpis.status == 'podpisany' %}signed{% else %}pending{% endif %}">
+                                                        {% if podpis.status == 'podpisany' %}
+                                                            Podpisany
+                                                        {% else %}
+                                                            Oczekuje
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
 
-                        {% if zebranie.canUserPerformAction(user, 'podpisz_obserwator') or 
-                              zebranie.canUserPerformAction(user, 'podpisz_protokolant') or 
-                              zebranie.canUserPerformAction(user, 'podpisz_prowadzacy') %}
-                            <div class="signature-pad-container">
-                                <h6><i class="fas fa-signature"></i> Twój podpis</h6>
-                                <p class="text-muted small mb-3">Narysuj swój podpis w polu poniżej, a następnie potwierdź.</p>
-                                
-                                <div class="signature-canvas-wrapper">
-                                    <canvas id="signatureCanvas" width="400" height="150"></canvas>
-                                    <div class="canvas-overlay">
-                                        <span class="canvas-instruction">Narysuj tutaj swój podpis</span>
+                                        {% if dokument.status != 'podpisany' %}
+                                            <div class="mt-2">
+                                                <a href="{{ path('dokument_show', {id: dokument.id}) }}" class="btn btn-sm btn-primary sign-btn">
+                                                    <i class="fas fa-file-signature"></i> Podpisz dokument
+                                                </a>
+                                            </div>
+                                        {% endif %}
                                     </div>
-                                </div>
-                                
-                                <div class="signature-controls mt-3">
-                                    <button id="clearSignature" class="btn btn-outline-secondary btn-sm">
-                                        <i class="fas fa-eraser"></i> Wyczyść
-                                    </button>
-                                    <button id="signBtn" class="btn btn-primary" disabled>
-                                        <i class="fas fa-check"></i> Potwierdź Podpis
-                                    </button>
-                                </div>
+                                {% endfor %}
                             </div>
                         {% endif %}
 
                         {% if zebranie.czyWszyscyPodpisali %}
-                            <div class="alert alert-success mt-3">
+                            <div class="alert alert-success mt-3" style="background: rgba(16,185,129,0.2); border-color: #10b981; color: white;">
                                 <i class="fas fa-check-circle"></i>
-                                Wszyscy uczestnicy złożyli podpisy. Dokumenty zostaną wygenerowane automatycznie.
+                                Wszystkie dokumenty zostały podpisane. Zebranie zostanie zakończone automatycznie.
                             </div>
                         {% endif %}
                     </div>
@@ -414,6 +426,48 @@
                             </div>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-medal"></i> Wybierz Wiceprezesów
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+
+                {% if zebranie.status == 'wybor_sekretarza' and zebranie.canUserPerformAction(user, 'wybor_sekretarza') %}
+                    <div class="action-section">
+                        <h4>Wybór Sekretarza Okręgu</h4>
+                        <p class="text-muted mb-3">Prowadzący i Protokolant wspólnie wskazują kandydata na Sekretarza Okręgu.</p>
+                        <form id="sekretarzForm">
+                            <div class="form-group mb-3">
+                                <label for="sekretarz_id" class="form-label">Wybierz Sekretarza Okręgu:</label>
+                                <select class="form-select" id="sekretarz_id" name="sekretarz_id" required>
+                                    <option value="">-- Wybierz sekretarza --</option>
+                                    {% for member in usersInOkreg %}
+                                        <option value="{{ member.id }}">{{ member.imie }} {{ member.nazwisko }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-file-signature"></i> Wybierz Sekretarza
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+
+                {% if zebranie.status == 'wybor_skarbnika' and zebranie.canUserPerformAction(user, 'wybor_skarbnika') %}
+                    <div class="action-section">
+                        <h4>Wybór Skarbnika Okręgu</h4>
+                        <p class="text-muted mb-3">Prowadzący i Protokolant wspólnie wskazują kandydata na Skarbnika Okręgu.</p>
+                        <form id="skarbnikForm">
+                            <div class="form-group mb-3">
+                                <label for="skarbnik_id" class="form-label">Wybierz Skarbnika Okręgu:</label>
+                                <select class="form-select" id="skarbnik_id" name="skarbnik_id" required>
+                                    <option value="">-- Wybierz skarbnika --</option>
+                                    {% for member in usersInOkreg %}
+                                        <option value="{{ member.id }}">{{ member.imie }} {{ member.nazwisko }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-coins"></i> Wybierz Skarbnika
                             </button>
                         </form>
                     </div>
@@ -515,12 +569,18 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const formData = new FormData();
             formData.append('protokolant_id', document.getElementById('protokolant_id').value);
+            formData.append('_token', '{{ csrf_token('wyznacz_protokolanta_' ~ zebranie.id) }}');
             
             fetch('{{ path('zebranie_okregu_wyznacz_protokolanta', {id: zebranie.id}) }}', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showAlert('success', data.message);
@@ -528,6 +588,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     showAlert('danger', data.error || 'Wystąpił błąd');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Wystąpił błąd sieciowy: ' + error.message);
             });
         });
     }
@@ -539,12 +603,18 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const formData = new FormData();
             formData.append('prowadzacy_id', document.getElementById('prowadzacy_id').value);
+            formData.append('_token', '{{ csrf_token('wyznacz_prowadzacego_' ~ zebranie.id) }}');
             
             fetch('{{ path('zebranie_okregu_wyznacz_prowadzacego', {id: zebranie.id}) }}', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showAlert('success', data.message);
@@ -552,6 +622,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     showAlert('danger', data.error || 'Wystąpił błąd');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Wystąpił błąd sieciowy: ' + error.message);
             });
         });
     }
@@ -563,12 +637,18 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const formData = new FormData();
             formData.append('prezes_okregu_id', document.getElementById('prezes_okregu_id').value);
+            formData.append('_token', '{{ csrf_token('wybor_prezesa_' ~ zebranie.id) }}');
             
             fetch('{{ path('zebranie_okregu_wybor_prezesa', {id: zebranie.id}) }}', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showAlert('success', data.message);
@@ -576,6 +656,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     showAlert('danger', data.error || 'Wystąpił błąd');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Wystąpił błąd sieciowy: ' + error.message);
             });
         });
     }
@@ -588,12 +672,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData();
             formData.append('wiceprezes1_id', document.getElementById('wiceprezes1_id').value);
             formData.append('wiceprezes2_id', document.getElementById('wiceprezes2_id').value);
-            
+            formData.append('_token', '{{ csrf_token('wybor_wiceprezesow_' ~ zebranie.id) }}');
+
             fetch('{{ path('zebranie_okregu_wybor_wiceprezesow', {id: zebranie.id}) }}', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     showAlert('success', data.message);
@@ -601,6 +691,78 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     showAlert('danger', data.error || 'Wystąpił błąd');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Wystąpił błąd sieciowy: ' + error.message);
+            });
+        });
+    }
+
+    // Sekretarz form
+    const sekretarzForm = document.getElementById('sekretarzForm');
+    if (sekretarzForm) {
+        sekretarzForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('sekretarz_id', document.getElementById('sekretarz_id').value);
+            formData.append('_token', '{{ csrf_token('wybor_sekretarza_' ~ zebranie.id) }}');
+
+            fetch('{{ path('zebranie_okregu_wybor_sekretarza', {id: zebranie.id}) }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.error || 'Wystąpił błąd');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Wystąpił błąd sieciowy: ' + error.message);
+            });
+        });
+    }
+
+    // Skarbnik form
+    const skarbnikForm = document.getElementById('skarbnikForm');
+    if (skarbnikForm) {
+        skarbnikForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('skarbnik_id', document.getElementById('skarbnik_id').value);
+            formData.append('_token', '{{ csrf_token('wybor_skarbnika_' ~ zebranie.id) }}');
+
+            fetch('{{ path('zebranie_okregu_wybor_skarbnika', {id: zebranie.id}) }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.error || 'Wystąpił błąd');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Wystąpił błąd sieciowy: ' + error.message);
             });
         });
     }

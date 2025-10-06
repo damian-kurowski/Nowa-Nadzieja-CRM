@@ -18,11 +18,11 @@ class PodpisDokumentu
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(targetEntity: Dokument::class, inversedBy: 'podpisy')]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Dokument', inversedBy: 'podpisy')]
     #[ORM\JoinColumn(nullable: true)]
     private ?Dokument $dokument = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     #[ORM\JoinColumn(nullable: false)]
     private User $podpisujacy;
 
@@ -310,11 +310,20 @@ class PodpisDokumentu
     {
         $name = $this->podpisujacy->getFullName();
 
-        // Dodaj informacje o funkcji jeśli istnieją
-        $funkcje = $this->podpisujacy->getFunkcje();
-        if (!$funkcje->isEmpty()) {
-            $funkcja = $funkcje->first();
-            $name .= ' ('.$funkcja->getNazwa().')';
+        // Dodaj informacje o funkcji jeśli istnieją - ale tylko jeśli nie spowoduje to nadmiernego ładowania
+        try {
+            $funkcje = $this->podpisujacy->getFunkcje();
+            if (!$funkcje->isEmpty()) {
+                $funkcja = $funkcje->first();
+                if ($funkcja && method_exists($funkcja, 'getNazwa')) {
+                    $nazwa = $funkcja->getNazwa();
+                    if ($nazwa) {
+                        $name .= ' (' . $nazwa . ')';
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // W przypadku problemu z ładowaniem funkcji, zwróć tylko imię i nazwisko
         }
 
         return $name;

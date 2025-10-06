@@ -39,7 +39,12 @@ class WyborPrzewodniczacegoKomisjiRewizyjnej extends AbstractDocument
             'sekretarz_zebrania' => true,  // Sekretarz zebrania Komisji
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/wybor_przewodniczacego_komisji_rewizyjnej.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

@@ -39,7 +39,12 @@ class PowolaniePrzewodniczacegoOddzialu extends AbstractDocument
             'protokolant' => true,  // Protokolant zebrania
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/powolanie_przewodniczacego_oddzialu.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

@@ -1,0 +1,299 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ przekaz.tytul }}{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('przekaz_medialny_index') }}">Przekazy Medialne</a></li>
+                    <li class="breadcrumb-item active">{{ przekaz.tytul }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>
+                    <i class="fas fa-bullhorn me-2"></i>{{ przekaz.tytul }}
+                </h1>
+                <div>
+                    {% if przekaz.isDraft %}
+                        <form method="post" action="{{ path('przekaz_medialny_send', {id: przekaz.id}) }}" class="d-inline">
+                            <button type="submit" class="btn btn-success" onclick="return confirm('Czy na pewno chcesz wysłać ten przekaz do wszystkich członków?')">
+                                <i class="fas fa-paper-plane me-2"></i>Wyślij Przekaz
+                            </button>
+                        </form>
+                        <form method="post" action="{{ path('przekaz_medialny_delete', {id: przekaz.id}) }}" class="d-inline">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć ten przekaz?')">
+                                <i class="fas fa-trash me-2"></i>Usuń
+                            </button>
+                        </form>
+                    {% endif %}
+                    <a href="{{ path('przekaz_medialny_index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Powrót
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status i statystyki -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="avatar-icon rounded-3 p-3 {% if przekaz.status == 'draft' %}bg-secondary{% elseif przekaz.status == 'sending' %}bg-warning{% elseif przekaz.status == 'sent' %}bg-success{% else %}bg-danger{% endif %} bg-opacity-10">
+                                <i class="fas {% if przekaz.status == 'draft' %}fa-file-alt{% elseif przekaz.status == 'sending' %}fa-spinner fa-spin{% elseif przekaz.status == 'sent' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} fa-2x {% if przekaz.status == 'draft' %}text-secondary{% elseif przekaz.status == 'sending' %}text-warning{% elseif przekaz.status == 'sent' %}text-success{% else %}text-danger{% endif %}"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1 fw-normal">Status</h6>
+                            <h4 class="mb-0">
+                                {% if przekaz.status == 'draft' %}
+                                    <span class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary">
+                                        <i class="fas fa-file-alt me-1"></i>Szkic
+                                    </span>
+                                {% elseif przekaz.status == 'sending' %}
+                                    <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning">
+                                        <i class="fas fa-spinner fa-spin me-1"></i>Wysyłanie
+                                    </span>
+                                {% elseif przekaz.status == 'sent' %}
+                                    <span class="badge rounded-pill bg-success bg-opacity-10 text-success">
+                                        <i class="fas fa-check-circle me-1"></i>Wysłane
+                                    </span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-danger bg-opacity-10 text-danger">
+                                        <i class="fas fa-exclamation-circle me-1"></i>Błąd
+                                    </span>
+                                {% endif %}
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="avatar-icon bg-primary bg-opacity-10 rounded-3 p-3">
+                                <i class="fas fa-users fa-2x text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1 fw-normal">Odbiorcy</h6>
+                            <h2 class="mb-0 fw-bold">{{ przekaz.liczbaOdbiorcow }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="avatar-icon bg-success bg-opacity-10 rounded-3 p-3">
+                                <i class="fas fa-reply fa-2x text-success"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1 fw-normal">Odpowiedzi</h6>
+                            <h2 class="mb-0 fw-bold">
+                                {{ przekaz.liczbaOdpowiedzi }}
+                                {% if przekaz.liczbaOdbiorcow > 0 %}
+                                    <small class="text-muted fs-6 fw-normal">({{ przekaz.procentOdpowiedzi }}%)</small>
+                                {% endif %}
+                            </h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Treść przekazu -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="fas fa-file-alt me-2 text-primary"></i>
+                        Treść Przekazu
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="przekaz-content mb-4" style="line-height: 1.8; font-size: 1.05rem;">
+                        {{ przekaz.tresc|nl2br }}
+                    </div>
+                    <hr class="my-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user text-primary"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Autor</small>
+                                    <strong>{{ przekaz.autor.imie }} {{ przekaz.autor.nazwisko }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm bg-info bg-opacity-10 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-calendar-plus text-info"></i>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Data utworzenia</small>
+                                    <strong>{{ przekaz.dataUtworzenia|date('d.m.Y H:i') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        {% if przekaz.dataWyslania %}
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-success bg-opacity-10 rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-paper-plane text-success"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">Data wysłania</small>
+                                        <strong>{{ przekaz.dataWyslania|date('d.m.Y H:i') }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista odpowiedzi -->
+            {% if przekaz.odpowiedzi|length > 0 %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0 fw-semibold">
+                            <i class="fas fa-reply-all me-2 text-success"></i>
+                            Odpowiedzi Użytkowników
+                            <span class="badge rounded-pill bg-success bg-opacity-10 text-success ms-2">{{ przekaz.odpowiedzi|length }}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="border-0 fw-semibold py-3">Użytkownik</th>
+                                        <th class="border-0 fw-semibold py-3">Platforma</th>
+                                        <th class="border-0 fw-semibold py-3">Link</th>
+                                        <th class="border-0 fw-semibold py-3">Data</th>
+                                        <th class="border-0 fw-semibold py-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for odpowiedz in przekaz.odpowiedzi %}
+                                        <tr>
+                                            <td class="py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                        <small class="text-primary fw-bold">{{ odpowiedz.odbiorca.imie|first }}{{ odpowiedz.odbiorca.nazwisko|first }}</small>
+                                                    </div>
+                                                    <span class="fw-semibold">{{ odpowiedz.odbiorca.imie }} {{ odpowiedz.odbiorca.nazwisko }}</span>
+                                                </div>
+                                            </td>
+                                            <td class="py-3">
+                                                <span class="badge rounded-pill bg-light text-dark border">
+                                                    <i class="{{ odpowiedz.typIcon }} me-1"></i>
+                                                    {{ odpowiedz.typNazwa }}
+                                                </span>
+                                            </td>
+                                            <td class="py-3">
+                                                <a href="{{ odpowiedz.linkUrl }}" target="_blank" class="text-decoration-none text-primary">
+                                                    <small>{{ odpowiedz.linkUrl|length > 50 ? odpowiedz.linkUrl|slice(0, 50) ~ '...' : odpowiedz.linkUrl }}</small>
+                                                    <i class="fas fa-external-link-alt small ms-1"></i>
+                                                </a>
+                                            </td>
+                                            <td class="py-3">
+                                                <small class="text-muted">{{ odpowiedz.dataDodania|date('d.m.Y') }}</small><br>
+                                                <small class="text-muted opacity-75">{{ odpowiedz.dataDodania|date('H:i') }}</small>
+                                            </td>
+                                            <td class="py-3">
+                                                <div class="d-flex align-items-center gap-2">
+                                                    {% if odpowiedz.zweryfikowany %}
+                                                        <span class="badge rounded-pill bg-success bg-opacity-10 text-success">
+                                                            <i class="fas fa-check-circle me-1"></i>Zweryfikowane
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge rounded-pill bg-warning bg-opacity-10 text-warning">
+                                                            <i class="fas fa-clock me-1"></i>Do weryfikacji
+                                                        </span>
+                                                    {% endif %}
+                                                    <form method="post" action="{{ path('przekaz_medialny_weryfikuj_odpowiedz', {id: odpowiedz.id}) }}" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-outline-{% if odpowiedz.zweryfikowany %}warning{% else %}success{% endif %} rounded-pill px-2 py-0" title="{% if odpowiedz.zweryfikowany %}Odznacz weryfikację{% else %}Zweryfikuj{% endif %}">
+                                                            <i class="fas fa-{% if odpowiedz.zweryfikowany %}times{% else %}check{% endif %}"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Panel boczny -->
+        <div class="col-md-4">
+            <!-- Wykres procentowy -->
+            {% if przekaz.isSent and przekaz.liczbaOdbiorcow > 0 %}
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0 fw-semibold">
+                            <i class="fas fa-chart-line me-2 text-success"></i>
+                            Zaangażowanie
+                        </h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-0">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="fw-semibold">Odpowiedzi z linkami</span>
+                                <span class="badge rounded-pill bg-success bg-opacity-10 text-success fs-6">{{ przekaz.procentOdpowiedzi }}%</span>
+                            </div>
+                            <div class="progress rounded-pill" style="height: 20px;">
+                                <div class="progress-bar bg-success rounded-pill"
+                                     role="progressbar"
+                                     style="width: {{ przekaz.procentOdpowiedzi }}%"
+                                     aria-valuenow="{{ przekaz.procentOdpowiedzi }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-reply text-success me-1"></i>
+                                    {{ przekaz.liczbaOdpowiedzi }} odpowiedzi
+                                </small>
+                                <small class="text-muted">
+                                    <i class="fas fa-users text-primary me-1"></i>
+                                    {{ przekaz.liczbaOdbiorcow }} odbiorców
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endblock %}

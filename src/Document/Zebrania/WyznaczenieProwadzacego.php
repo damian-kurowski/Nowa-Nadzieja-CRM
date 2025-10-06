@@ -39,7 +39,12 @@ class WyznaczenieProwadzacego extends AbstractDocument
             'drugi_podpisujacy' => true,  // Członek zebrania
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/wyznaczenie_prowadzacego.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

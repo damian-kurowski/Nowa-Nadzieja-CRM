@@ -38,7 +38,12 @@ class OdwolanieSkarbnikPartii extends AbstractDocument
             'creator' => true,  // Prezes Partii
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/odwolania/odwolanie_skarbnik_partii.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

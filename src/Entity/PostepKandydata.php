@@ -14,14 +14,14 @@ class PostepKandydata
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\OneToOne(targetEntity: User::class)]
+    #[ORM\OneToOne(targetEntity: 'App\Entity\User', inversedBy: 'postepKandydataEntity')]
     #[ORM\JoinColumn(nullable: false)]
     private User $kandydat;
 
     // Krok 1: Opłacenie składki
     #[ORM\Column]
     private bool $krok1OplacenieSkladki = false;
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $krok1OdznaczylUzytkownik = null;
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $krok1DataOdznaczenia = null;
@@ -29,7 +29,7 @@ class PostepKandydata
     // Krok 2: Wgranie zdjęcia
     #[ORM\Column]
     private bool $krok2WgranieZdjecia = false;
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $krok2OdznaczylUzytkownik = null;
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $krok2DataOdznaczenia = null;
@@ -37,7 +37,7 @@ class PostepKandydata
     // Krok 3: Wgranie CV
     #[ORM\Column]
     private bool $krok3WgranieCv = false;
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $krok3OdznaczylUzytkownik = null;
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $krok3DataOdznaczenia = null;
@@ -45,7 +45,7 @@ class PostepKandydata
     // Krok 4: Uzupełnienie profilu
     #[ORM\Column]
     private bool $krok4UzupelnienieProfilu = false;
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $krok4OdznaczylUzytkownik = null;
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $krok4DataOdznaczenia = null;
@@ -53,7 +53,7 @@ class PostepKandydata
     // Krok 5: Rozmowa prekwalifikacyjna
     #[ORM\Column]
     private bool $krok5RozmowaPrekwalifikacyjna = false;
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $krok5OdznaczylUzytkownik = null;
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $krok5DataOdznaczenia = null;
@@ -61,7 +61,7 @@ class PostepKandydata
     // Krok 6: Opinia Rady oddziału
     #[ORM\Column]
     private bool $krok6OpiniaRadyOddzialu = false;
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $krok6OdznaczylUzytkownik = null;
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $krok6DataOdznaczenia = null;
@@ -69,7 +69,7 @@ class PostepKandydata
     // Krok 7: Udział w zebraniach przez 3 miesiące
     #[ORM\Column]
     private bool $krok7UdzialWZebraniach = false;
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $krok7OdznaczylUzytkownik = null;
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $krok7DataOdznaczenia = null;
@@ -77,7 +77,7 @@ class PostepKandydata
     // Krok 8: Decyzja
     #[ORM\Column]
     private bool $krok8Decyzja = false;
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $krok8OdznaczylUzytkownik = null;
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $krok8DataOdznaczenia = null;
@@ -103,7 +103,7 @@ class PostepKandydata
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $uwagi = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\User')]
     private ?User $prezesOdpowiedzialny = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]

@@ -29,7 +29,7 @@ class OdwolaniePOPrezesOkregu extends AbstractDocument
     
     public function getRequiredFields(): array
     {
-        return ['czlonek', 'data_wejscia_w_zycie', 'drugi_podpisujacy'];
+        return ['czlonek', 'data_wejscia_w_zycie', 'powod_odwolania', 'drugi_podpisujacy'];
     }
     
     public function getSignersConfig(): array
@@ -39,7 +39,12 @@ class OdwolaniePOPrezesOkregu extends AbstractDocument
             'drugi_podpisujacy' => true,  // Drugi członek zarządu krajowego
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/odwolania/odwolanie_p_o_prezes_okregu.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

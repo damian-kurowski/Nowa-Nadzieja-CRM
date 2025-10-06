@@ -1,5 +1,1083 @@
 {% extends 'base.html.twig' %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <!-- Force absolute URL for documents-theme.css to ensure proper loading -->
+    <link rel="stylesheet" href="/css/documents-theme.css">
+    <style>
+        /* Critical document theme styles inline as fallback */
+        .doc-container {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        /* Enhanced Document Signing Header */
+        .document-signing-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .document-signing-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+        
+        .header-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1.5rem;
+        }
+        
+        .document-meta {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .doc-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .doc-number {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+
+        /* Document Preview Card */
+        .document-preview-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .preview-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        /* Signature pad styles */
+        .signature-pad {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .signature-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .btn-enhanced {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn-success-gradient {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Signature form card */
+        .signature-form-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .signature-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .signature-body {
+            padding: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h6 {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* Enhanced document preview */
+        .enhanced-document-preview {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 2rem;
+            font-family: Georgia, serif;
+            line-height: 1.8;
+            color: #374151;
+        }
+
+        /* Preview actions */
+        .preview-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .preview-body {
+            padding: 2rem;
+        }
+
+        /* Form elements */
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Signature canvas container */
+        .signature-canvas-container {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 1rem;
+            background: #fafafa;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .signature-canvas-container.has-signature {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        /* Alert styles */
+        .alert {
+            border: none;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        /* Button groups */
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* Enhanced form sections */
+        .enhanced-form-section {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            color: #111827;
+            font-weight: 600;
+            font-size: 1.125rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Action buttons area */
+        .action-buttons-area {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+        }
+
+        /* Document info sidebar */
+        .document-info-sidebar {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .info-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .info-body {
+            padding: 2rem;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #6b7280;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: #111827;
+        }
+
+        /* Status indicators */
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.375rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-indicator.pending {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+        }
+
+        .status-indicator.completed {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+        }
+
+        /* Loading states */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f4f6;
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Missing CSS classes */
+        .legal-warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .warning-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(245, 158, 11, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f59e0b;
+            font-size: 1.125rem;
+        }
+
+        .signature-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .signature-section-header h6 {
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .signature-controls {
+            margin-top: 1rem;
+        }
+
+        .signature-status .status-indicator {
+            font-size: 0.875rem;
+        }
+
+        .status-indicator.empty {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            color: #6b7280;
+        }
+
+        .status-indicator.filled {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+        }
+
+        .comment-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-group-enhanced .form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .confirmation-section {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #0284c7;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .confirmation-card {
+            background: transparent;
+        }
+
+        .confirmation-header h6 {
+            color: #0c4a6e;
+            margin-bottom: 1rem;
+        }
+
+        .enhanced-form-check {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .enhanced-form-check .form-check-input {
+            margin-top: 0.25rem;
+            flex-shrink: 0;
+        }
+
+        .confirmation-list {
+            margin: 0.5rem 0 0 0;
+            padding-left: 1.5rem;
+            list-style-type: disc;
+        }
+
+        .confirmation-list li {
+            margin-bottom: 0.25rem;
+            color: #374151;
+        }
+
+        .signature-actions-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.375rem 0.75rem;
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .signature-security-info {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        .progress-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .progress-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1.5rem;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .progress-counter {
+            margin-left: auto;
+        }
+
+        .count-badge {
+            background: #e5e7eb;
+            color: #374151;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .progress-body {
+            padding: 2rem;
+        }
+
+        .enhanced-progress {
+            margin-bottom: 2rem;
+        }
+
+        .progress-label {
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-percentage {
+            font-weight: 600;
+            color: #059669;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .signatures-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .enhanced-signature-item {
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .enhanced-signature-item.current-user {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .enhanced-signature-item.signed {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .enhanced-signature-item.rejected {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .signature-main {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .signature-step {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            background: #e5e7eb;
+            border: 2px solid #d1d5db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .signature-user {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .current-user-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .signature-status {
+            margin-left: auto;
+        }
+
+        .enhanced-status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.375rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .signature-meta {
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .meta-item {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .signature-comment {
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            background: rgba(59, 130, 246, 0.05);
+            border-radius: 6px;
+        }
+
+        .comment-content {
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .signature-divider {
+            height: 1px;
+            background: #e5e7eb;
+            margin: 0.5rem 0;
+        }
+
+        .type-badge {
+            background: #e5e7eb;
+            color: #374151;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .btn-secondary-gradient {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .btn-danger-gradient {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        /* Additional critical styles */
+        .signature-pad {
+            width: 100%;
+            height: 200px;
+            border: 2px dashed #d1d5db !important;
+            background-color: white !important;
+            cursor: crosshair;
+        }
+
+        .enhanced-signature-pad-container {
+            position: relative;
+            margin: 1rem 0;
+        }
+
+        .signature-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            color: #9ca3af;
+            font-size: 1.125rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 1;
+        }
+
+        .signature-overlay {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        .signature-line {
+            width: 300px;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 4px;
+        }
+
+        .signature-line-label {
+            color: #9ca3af;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Dark theme support */
+        [data-bs-theme="dark"] .doc-container,
+        body[data-bs-theme="dark"] .doc-container {
+            background-color: #0d1117;
+            color: #f0f6fc;
+        }
+
+        [data-bs-theme="dark"] .document-signing-header,
+        body[data-bs-theme="dark"] .document-signing-header {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            border: 1px solid #30363d;
+        }
+
+        [data-bs-theme="dark"] .document-preview-card,
+        [data-bs-theme="dark"] .signature-form-card,
+        [data-bs-theme="dark"] .info-card,
+        [data-bs-theme="dark"] .progress-card,
+        body[data-bs-theme="dark"] .document-preview-card,
+        body[data-bs-theme="dark"] .signature-form-card,
+        body[data-bs-theme="dark"] .info-card,
+        body[data-bs-theme="dark"] .progress-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            color: #f0f6fc;
+        }
+
+        [data-bs-theme="dark"] .preview-header,
+        [data-bs-theme="dark"] .signature-header,
+        [data-bs-theme="dark"] .info-header,
+        [data-bs-theme="dark"] .progress-header,
+        body[data-bs-theme="dark"] .preview-header,
+        body[data-bs-theme="dark"] .signature-header,
+        body[data-bs-theme="dark"] .info-header,
+        body[data-bs-theme="dark"] .progress-header {
+            background: #21262d;
+            border-bottom-color: #30363d;
+            color: #f0f6fc;
+        }
+
+        [data-bs-theme="dark"] .enhanced-document-preview,
+        body[data-bs-theme="dark"] .enhanced-document-preview {
+            background: #0d1117;
+            border-color: #30363d;
+            color: #f0f6fc;
+        }
+
+        [data-bs-theme="dark"] .signature-pad,
+        body[data-bs-theme="dark"] .signature-pad {
+            background-color: #161b22 !important;
+            border-color: #30363d !important;
+        }
+
+        [data-bs-theme="dark"] .signature-canvas-container,
+        body[data-bs-theme="dark"] .signature-canvas-container {
+            background: #0d1117;
+            border-color: #30363d;
+            color: #8b949e;
+            }
+
+        [data-bs-theme="dark"] .signature-canvas-container.has-signature,
+        body[data-bs-theme="dark"] .signature-canvas-container.has-signature {
+            border-color: #238636;
+            background: #0d1520;
+            }
+
+        [data-bs-theme="dark"] .form-control,
+        body[data-bs-theme="dark"] .form-control {
+            background-color: #0d1117;
+            border-color: #30363d;
+            color: #f0f6fc;
+            }
+
+        [data-bs-theme="dark"] .form-control:focus,
+        body[data-bs-theme="dark"] .form-control:focus {
+            background-color: #161b22;
+            border-color: #388bfd;
+            box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.1);
+            color: #f0f6fc;
+            }
+
+        [data-bs-theme="dark"] .btn-enhanced,
+        body[data-bs-theme="dark"] .btn-enhanced {
+            border-color: #30363d;
+            }
+
+        [data-bs-theme="dark"] .btn-secondary-gradient,
+        body[data-bs-theme="dark"] .btn-secondary-gradient {
+            background: linear-gradient(135deg, #21262d 0%, #30363d 100%);
+            color: #f0f6fc;
+            border-color: #30363d;
+            }
+
+        [data-bs-theme="dark"] .btn-danger-gradient,
+        body[data-bs-theme="dark"] .btn-danger-gradient {
+            background: linear-gradient(135deg, #da3633 0%, #b91c1c 100%);
+            color: #ffffff;
+            }
+
+        [data-bs-theme="dark"] .enhanced-signature-item,
+        body[data-bs-theme="dark"] .enhanced-signature-item {
+            background: #0d1117;
+            border-color: #30363d;
+            color: #f0f6fc;
+            }
+
+        [data-bs-theme="dark"] .enhanced-signature-item.signed,
+        body[data-bs-theme="dark"] .enhanced-signature-item.signed {
+            background: #0d1520;
+            border-color: #238636;
+            }
+
+        [data-bs-theme="dark"] .enhanced-signature-item.rejected,
+        body[data-bs-theme="dark"] .enhanced-signature-item.rejected {
+            background: #1c1012;
+            border-color: #da3633;
+            }
+
+        [data-bs-theme="dark"] .step-circle,
+        body[data-bs-theme="dark"] .step-circle {
+            background: #21262d;
+            border-color: #30363d;
+            color: #f0f6fc;
+            }
+
+        [data-bs-theme="dark"] .enhanced-signature-item.signed .step-circle,
+        body[data-bs-theme="dark"] .enhanced-signature-item.signed .step-circle {
+            background: #238636;
+            border-color: #2ea043;
+            color: #ffffff;
+            }
+
+        [data-bs-theme="dark"] .progress-bar-fill,
+        body[data-bs-theme="dark"] .progress-bar-fill {
+            background: linear-gradient(90deg, #238636 0%, #2ea043 100%);
+            }
+
+        [data-bs-theme="dark"] .signature-line,
+        body[data-bs-theme="dark"] .signature-line {
+            border-bottom-color: #30363d;
+            }
+
+        [data-bs-theme="dark"] .signature-placeholder,
+        body[data-bs-theme="dark"] .signature-placeholder {
+            color: #6e7681;
+            }
+
+        [data-bs-theme="dark"] .form-label,
+        [data-bs-theme="dark"] .section-title,
+        [data-bs-theme="dark"] .info-label,
+        body[data-bs-theme="dark"] .form-label,
+        body[data-bs-theme="dark"] .section-title,
+        body[data-bs-theme="dark"] .info-label {
+            color: #f0f6fc;
+            }
+
+        [data-bs-theme="dark"] .text-muted,
+        body[data-bs-theme="dark"] .text-muted {
+            color: #8b949e !important;
+            }
+
+        [data-bs-theme="dark"] .alert-info,
+        body[data-bs-theme="dark"] .alert-info {
+            background: linear-gradient(135deg, #0d1520 0%, #0c1116 100%);
+            color: #79c0ff;
+            border-left-color: #1f6feb;
+            }
+
+        [data-bs-theme="dark"] .alert-warning,
+        body[data-bs-theme="dark"] .alert-warning {
+            background: linear-gradient(135deg, #1c1700 0%, #161200 100%);
+            color: #f7cc48;
+            border-left-color: #d29922;
+            }
+
+        [data-bs-theme="dark"] .status-indicator.pending,
+        body[data-bs-theme="dark"] .status-indicator.pending {
+            background: linear-gradient(135deg, #1c1700 0%, #161200 100%);
+            color: #f7cc48;
+            }
+
+        [data-bs-theme="dark"] .status-indicator.completed,
+        body[data-bs-theme="dark"] .status-indicator.completed {
+            background: linear-gradient(135deg, #0d1520 0%, #0c1116 100%);
+            color: #2ea043;
+            }
+
+        [data-bs-theme="dark"] .enhanced-form-check .form-check-label,
+        body[data-bs-theme="dark"] .enhanced-form-check .form-check-label {
+            color: #f0f6fc;
+            }
+
+        [data-bs-theme="dark"] .confirmation-list li,
+        body[data-bs-theme="dark"] .confirmation-list li {
+            color: #8b949e;
+            }
+
+        [data-bs-theme="dark"] .signature-security-info,
+        body[data-bs-theme="dark"] .signature-security-info {
+            color: #8b949e;
+            }
+
+        [data-bs-theme="dark"] .current-user-badge,
+        body[data-bs-theme="dark"] .current-user-badge {
+            background: #1f6feb;
+            color: #ffffff;
+            }
+
+        [data-bs-theme="dark"] .type-badge,
+        [data-bs-theme="dark"] .count-badge,
+        body[data-bs-theme="dark"] .type-badge,
+        body[data-bs-theme="dark"] .count-badge {
+            background: #21262d;
+            color: #f0f6fc;
+            border: 1px solid #30363d;
+            }
+
+        [data-bs-theme="dark"] .enhanced-form-section,
+        body[data-bs-theme="dark"] .enhanced-form-section {
+            background: #161b22;
+            border-color: #30363d;
+            }
+
+        [data-bs-theme="dark"] .action-buttons-area,
+        body[data-bs-theme="dark"] .action-buttons-area {
+            background: linear-gradient(135deg, #21262d 0%, #30363d 100%);
+        }
+
+        /* Dark theme for additional CSS classes */
+        [data-bs-theme="dark"] .legal-warning,
+        body[data-bs-theme="dark"] .legal-warning {
+            background: linear-gradient(135deg, #1c1700 0%, #161200 100%);
+            border-color: #d29922;
+            color: #f7cc48;
+            }
+
+        [data-bs-theme="dark"] .warning-icon,
+        body[data-bs-theme="dark"] .warning-icon {
+            background: rgba(210, 153, 34, 0.2);
+            color: #d29922;
+            }
+
+        [data-bs-theme="dark"] .signature-section,
+        body[data-bs-theme="dark"] .signature-section {
+            background: #161b22;
+            border-color: #30363d;
+            color: #f0f6fc;
+            }
+
+        [data-bs-theme="dark"] .signature-section-header h6,
+        body[data-bs-theme="dark"] .signature-section-header h6 {
+            color: #f0f6fc;
+            }
+
+        [data-bs-theme="dark"] .confirmation-section,
+        body[data-bs-theme="dark"] .confirmation-section {
+            background: linear-gradient(135deg, #0c1116 0%, #0d1520 100%);
+            border-color: #1f6feb;
+            color: #79c0ff;
+            }
+
+        [data-bs-theme="dark"] .confirmation-header h6,
+        body[data-bs-theme="dark"] .confirmation-header h6 {
+            color: #79c0ff;
+            }
+
+        [data-bs-theme="dark"] .signature-actions-section,
+        body[data-bs-theme="dark"] .signature-actions-section {
+            background: linear-gradient(135deg, #21262d 0%, #30363d 100%);
+            }
+
+        [data-bs-theme="dark"] .security-badge,
+        body[data-bs-theme="dark"] .security-badge {
+            background: linear-gradient(135deg, #0d1520 0%, #0c1116 100%);
+            color: #2ea043;
+            }
+
+        [data-bs-theme="dark"] .signature-security-info,
+        body[data-bs-theme="dark"] .signature-security-info {
+            border-top-color: #30363d;
+            }
+
+        [data-bs-theme="dark"] .user-name,
+        body[data-bs-theme="dark"] .user-name {
+            color: #f0f6fc;
+            }
+
+        [data-bs-theme="dark"] .meta-item,
+        body[data-bs-theme="dark"] .meta-item {
+            color: #8b949e;
+            }
+
+        [data-bs-theme="dark"] .signature-comment,
+        body[data-bs-theme="dark"] .signature-comment {
+            background: rgba(56, 139, 253, 0.1);
+            }
+
+        [data-bs-theme="dark"] .comment-content,
+        body[data-bs-theme="dark"] .comment-content {
+            color: #f0f6fc;
+            }
+
+        [data-bs-theme="dark"] .signature-divider,
+        body[data-bs-theme="dark"] .signature-divider {
+            background: #30363d;
+            }
+
+        [data-bs-theme="dark"] .signature-meta,
+        body[data-bs-theme="dark"] .signature-meta {
+            border-top-color: #30363d;
+            }
+
+        [data-bs-theme="dark"] .progress-bar-container,
+        body[data-bs-theme="dark"] .progress-bar-container {
+            background: #30363d;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .document-signing-header {
+                padding: 2rem 1.5rem;
+            }
+
+            .header-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 2rem;
+            }
+
+            .signature-body, .info-body {
+                padding: 1.5rem;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .action-buttons-area {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body_class %}doc-container{% endblock %}
+
 {% block title %}Podpis dokumentu - {{ dokument.numerDokumentu }}{% endblock %}
 
 {% block page_title %}Podpis dokumentu{% endblock %}
@@ -39,7 +1117,8 @@
                 </div>
                 <div class="preview-body">
                     <div class="enhanced-document-preview">
-                        {{ dokument.tresc|nl2br }}
+                        {# NOWY WORKFLOW: Renderowanie przez Twig zamiast dokument.tresc #}
+                        {{ documentContent|raw }}
                     </div>
                 </div>
             </div>
@@ -327,810 +1406,6 @@
     </div>
 {% endblock %}
 
-{% block stylesheets %}
-    {{ parent() }}
-    <style>
-        /* Enhanced Document Signing Header */
-        .document-signing-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 16px;
-            padding: 3rem 2rem;
-            margin-bottom: 2rem;
-            color: white;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .document-signing-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: float 20s ease-in-out infinite;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            33% { transform: translate(-10px, -10px) rotate(120deg); }
-            66% { transform: translate(10px, -10px) rotate(240deg); }
-        }
-        
-        .header-icon {
-            width: 80px;
-            height: 80px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            backdrop-filter: blur(10px);
-            margin-bottom: 1.5rem;
-        }
-        
-        .document-meta {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-        
-        .doc-title {
-            font-weight: 600;
-            background: rgba(255,255,255,0.2);
-            padding: 0.25rem 0.75rem;
-            border-radius: 8px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .doc-number {
-            font-family: 'Courier New', monospace;
-            font-weight: 500;
-        }
-        
-        /* Enhanced Document Preview Card */
-        .document-preview-card {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            box-shadow: 0 4px 16px var(--shadow-light);
-            transition: all 0.3s ease;
-        }
-        
-        .document-preview-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px var(--shadow-medium);
-        }
-        
-        .preview-header {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
-            border-bottom: 1px solid var(--border-color);
-            padding: 1.5rem 2rem;
-            border-radius: 16px 16px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .preview-header h5 {
-            color: var(--text-primary);
-            font-weight: 600;
-            margin-bottom: 0;
-        }
-        
-        .preview-body {
-            padding: 2rem;
-        }
-        
-        .enhanced-document-preview {
-            background: var(--bg-secondary);
-            padding: 2.5rem;
-            border-radius: 12px;
-            font-family: 'Times New Roman', serif;
-            font-size: 1.1rem;
-            line-height: 1.8;
-            white-space: pre-line;
-            border: 2px solid var(--border-color);
-            box-shadow: inset 0 2px 8px var(--shadow-light);
-            color: var(--text-primary);
-            min-height: 300px;
-        }
-        
-        /* Enhanced Signature Form Card */
-        .signature-form-card {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            box-shadow: 0 4px 16px var(--shadow-light);
-            transition: all 0.3s ease;
-        }
-        
-        .signature-form-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px var(--shadow-medium);
-        }
-        
-        .signature-header {
-            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(33, 136, 56, 0.05));
-            border-bottom: 1px solid var(--border-color);
-            padding: 1.5rem 2rem;
-            border-radius: 16px 16px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .signature-header h5 {
-            color: #28a745;
-            font-weight: 600;
-            margin-bottom: 0;
-        }
-        
-        .security-badge {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-        }
-        
-        .signature-body {
-            padding: 2rem;
-        }
-        
-        /* Legal Warning */
-        .legal-warning {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(224, 168, 0, 0.05));
-            border: 1px solid rgba(255, 193, 7, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 8px var(--shadow-light);
-        }
-        
-        .warning-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #ffc107, #e0a800);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-size: 1.25rem;
-        }
-        
-        /* Enhanced Signature Pad */
-        .signature-section {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border-left: 4px solid #28a745;
-        }
-        
-        .signature-section-header h6 {
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-        
-        .enhanced-signature-pad-container {
-            position: relative;
-            background: #ffffff;
-            border: 3px solid #dee2e6;
-            border-radius: 12px;
-            overflow: hidden;
-            height: 220px;
-            transition: all 0.3s ease;
-            box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
-        }
-        
-        .enhanced-signature-pad-container:hover {
-            border-color: #28a745;
-        }
-        
-        .enhanced-signature-pad-container.has-signature {
-            border-color: #28a745;
-            box-shadow: 0 0 0 0.25rem rgba(40, 167, 69, 0.25);
-        }
-        
-        .signature-placeholder {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #6c757d;
-            text-align: center;
-            z-index: 1;
-            pointer-events: none;
-            transition: all 0.3s ease;
-        }
-        
-        .signature-placeholder i {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            display: block;
-        }
-        
-        .signature-pad {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            cursor: crosshair;
-            z-index: 2;
-        }
-        
-        .signature-overlay {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        .signature-line {
-            width: 200px;
-            height: 1px;
-            background: #dee2e6;
-            position: relative;
-        }
-        
-        .signature-line-label {
-            position: absolute;
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #6c757d;
-            font-size: 0.75rem;
-        }
-        
-        .signature-controls {
-            margin-top: 1rem;
-        }
-        
-        .signature-status .status-indicator {
-            display: flex;
-            align-items: center;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        
-        .signature-status .status-indicator.empty {
-            color: #6c757d;
-        }
-        
-        .signature-status .status-indicator.filled {
-            color: #28a745;
-        }
-        
-        .signature-status .status-indicator i {
-            margin-right: 0.5rem;
-            font-size: 0.75rem;
-        }
-        
-        /* Comment Section */
-        .comment-section {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 1.5rem;
-            border-left: 4px solid #667eea;
-        }
-        
-        .section-title {
-            color: var(--text-primary);
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-        }
-        
-        .section-title i {
-            color: #667eea;
-        }
-        
-        .form-group-enhanced .form-control {
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            transition: all 0.3s ease;
-            background: var(--bg-primary);
-        }
-        
-        .form-group-enhanced .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
-            background: var(--bg-primary);
-        }
-        
-        /* Enhanced Confirmation Section */
-        .confirmation-section {
-            margin-bottom: 2rem;
-        }
-        
-        .confirmation-card {
-            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(33, 136, 56, 0.05));
-            border: 1px solid rgba(40, 167, 69, 0.2);
-            border-radius: 12px;
-            padding: 1.5rem;
-        }
-        
-        .confirmation-header h6 {
-            color: #28a745;
-            font-weight: 600;
-        }
-        
-        .enhanced-form-check {
-            background: var(--bg-primary);
-            border-radius: 8px;
-            padding: 1rem;
-        }
-        
-        .enhanced-form-check .form-check-input {
-            width: 1.25rem;
-            height: 1.25rem;
-            margin-top: 0;
-        }
-        
-        .enhanced-form-check .form-check-label {
-            margin-left: 0.5rem;
-            color: var(--text-primary);
-        }
-        
-        .confirmation-list {
-            list-style: none;
-            padding-left: 0;
-            margin: 1rem 0 0 0;
-        }
-        
-        .confirmation-list li {
-            padding: 0.5rem 0;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            align-items: center;
-        }
-        
-        .confirmation-list li:last-child {
-            border-bottom: none;
-        }
-        
-        .confirmation-list li::before {
-            content: '✓';
-            color: #28a745;
-            font-weight: bold;
-            margin-right: 0.75rem;
-            width: 1rem;
-        }
-        
-        /* Signature Actions Section */
-        .signature-actions-section {
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 2rem;
-            margin-top: 2rem;
-            box-shadow: 0 2px 8px var(--shadow-light);
-        }
-        
-        .action-group {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .signature-security-info {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border-color);
-        }
-        
-        /* Enhanced Buttons */
-        .btn-enhanced {
-            padding: 0.75rem 1.5rem;
-            font-weight: 600;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .btn-enhanced:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-        }
-        
-        .btn-enhanced::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s ease;
-        }
-        
-        .btn-enhanced:hover::before {
-            left: 100%;
-        }
-        
-        .btn-secondary-gradient {
-            background: linear-gradient(135deg, #6c757d, #545b62);
-            border-color: #6c757d;
-            color: white;
-        }
-        
-        .btn-secondary-gradient:hover {
-            box-shadow: 0 4px 16px rgba(108, 117, 125, 0.3);
-            color: white;
-        }
-        
-        .btn-danger-gradient {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            border-color: #dc3545;
-            color: white;
-        }
-        
-        .btn-danger-gradient:hover {
-            box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
-            color: white;
-        }
-        
-        .btn-success-gradient {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            border-color: #28a745;
-            color: white;
-        }
-        
-        .btn-success-gradient:hover {
-            box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
-            color: white;
-        }
-        
-        /* Enhanced Cards */
-        .info-card, .progress-card {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            box-shadow: 0 4px 16px var(--shadow-light);
-            transition: all 0.3s ease;
-        }
-        
-        .info-card:hover, .progress-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px var(--shadow-medium);
-        }
-        
-        .info-header, .progress-header {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
-            border-bottom: 1px solid var(--border-color);
-            padding: 1.5rem;
-            border-radius: 16px 16px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .info-header h5, .progress-header h5 {
-            color: var(--text-primary);
-            font-weight: 600;
-            margin-bottom: 0;
-        }
-        
-        .progress-counter .count-badge {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.875rem;
-        }
-        
-        .info-body, .progress-body {
-            padding: 1.5rem;
-        }
-        
-        /* Info Grid */
-        .info-grid {
-            display: grid;
-            gap: 1.5rem;
-        }
-        
-        .info-item {
-            display: flex;
-            align-items: flex-start;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
-            transition: all 0.2s ease;
-        }
-        
-        .info-item:hover {
-            transform: translateX(4px);
-            box-shadow: 0 2px 8px var(--shadow-light);
-        }
-        
-        .info-label {
-            flex: 0 0 40%;
-            font-weight: 600;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-        }
-        
-        .info-value {
-            flex: 1;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-        
-        .type-badge {
-            background: linear-gradient(135deg, #06b6d4, #0891b2);
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-        
-        .status-badge {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            display: inline-flex;
-            align-items: center;
-        }
-        
-        /* Enhanced Progress */
-        .enhanced-progress {
-            margin-bottom: 2rem;
-        }
-        
-        .progress-label {
-            font-size: 0.875rem;
-            font-weight: 600;
-        }
-        
-        .progress-percentage {
-            color: #667eea;
-            font-weight: 700;
-        }
-        
-        .progress-bar-container {
-            height: 12px;
-            background: var(--bg-secondary);
-            border-radius: 6px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #28a745, #20c997);
-            border-radius: 6px;
-            transition: width 0.6s ease;
-            position: relative;
-        }
-        
-        .progress-bar-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent 25%, rgba(255,255,255,0.2) 25%, rgba(255,255,255,0.2) 50%, transparent 50%, transparent 75%, rgba(255,255,255,0.2) 75%);
-            background-size: 20px 20px;
-            animation: progress-stripes 1s linear infinite;
-        }
-        
-        @keyframes progress-stripes {
-            from { background-position: 0 0; }
-            to { background-position: 20px 0; }
-        }
-        
-        /* Enhanced Signature Items */
-        .signatures-list {
-            margin-top: 1rem;
-        }
-        
-        .enhanced-signature-item {
-            background: var(--bg-secondary);
-            border: 2px solid transparent;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            position: relative;
-            transition: all 0.3s ease;
-        }
-        
-        .enhanced-signature-item.signed {
-            border-left-color: #28a745;
-            background: rgba(40, 167, 69, 0.05);
-        }
-        
-        .enhanced-signature-item.rejected {
-            border-left-color: #dc3545;
-            background: rgba(220, 53, 69, 0.05);
-        }
-        
-        .enhanced-signature-item.pending {
-            border-left-color: #ffc107;
-            background: rgba(255, 193, 7, 0.05);
-        }
-        
-        .enhanced-signature-item.current-user {
-            border: 2px solid #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-        
-        .enhanced-signature-item:hover {
-            transform: translateX(4px);
-            box-shadow: 0 4px 16px var(--shadow-light);
-        }
-        
-        .signature-main {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-        
-        .signature-step {
-            display: flex;
-            align-items: center;
-            flex: 1;
-        }
-        
-        .step-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #6c757d;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1rem;
-            margin-right: 1rem;
-            flex-shrink: 0;
-        }
-        
-        .enhanced-signature-item.signed .step-circle {
-            background: linear-gradient(135deg, #28a745, #20c997);
-        }
-        
-        .enhanced-signature-item.rejected .step-circle {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-        }
-        
-        .enhanced-signature-item.pending .step-circle {
-            background: linear-gradient(135deg, #ffc107, #e0a800);
-            color: #000;
-        }
-        
-        .enhanced-signature-item.current-user .step-circle {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-        }
-        
-        .signature-user {
-            flex: 1;
-        }
-        
-        .user-name {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
-        }
-        
-        .current-user-badge {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .signature-status {
-            flex-shrink: 0;
-        }
-        
-        .enhanced-status-badge {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.875rem;
-            display: inline-flex;
-            align-items: center;
-        }
-        
-        .signature-meta {
-            background: var(--bg-primary);
-            border-radius: 8px;
-            padding: 0.75rem 1rem;
-            margin: 1rem 0;
-        }
-        
-        .meta-item {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-        
-        .signature-comment {
-            background: var(--bg-primary);
-            border-left: 3px solid #667eea;
-            border-radius: 0 8px 8px 0;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .comment-content {
-            color: var(--text-primary);
-            font-style: italic;
-            display: flex;
-            align-items: flex-start;
-        }
-        
-        .signature-divider {
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--border-color), transparent);
-            margin: 1.5rem 0;
-        }
-        
-        /* Dark Theme Adjustments */
-        [data-theme="dark"] .enhanced-document-preview {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-        }
-        
-        [data-theme="dark"] .enhanced-signature-pad-container {
-            background: var(--bg-primary);
-            border-color: var(--border-color);
-        }
-        
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .document-signing-header {
-                padding: 2rem 1rem;
-            }
-            
-            .preview-header, .signature-header, .info-header, .progress-header {
-                flex-direction: column;
-                text-align: center;
-                gap: 1rem;
-            }
-            
-            .signature-actions-section .d-flex {
-                flex-direction: column;
-                gap: 1rem;
-            }
-            
-            .action-group {
-                justify-content: center;
-            }
-            
-            .signature-main {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            
-            .info-label {
-                flex: 0 0 100%;
-                margin-bottom: 0.5rem;
-            }
-        }
-    </style>
-{% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
@@ -1211,13 +1486,10 @@
             
             // Form validation
             const confirmCheckbox = document.getElementById('confirmSignature');
-            const submitButton = document.getElementById('sign-button');
+            const submitButton = document.getElementById('sign-submit-btn');
             
-            if (!confirmCheckbox) {
-                return;
-            }
-            
-            if (!submitButton) {
+            if (!confirmCheckbox || !submitButton) {
+                console.warn('Required form elements not found for signature validation');
                 return;
             }
             
@@ -1243,35 +1515,53 @@
             
             // Prevent form submission if invalid
             document.querySelector('form').addEventListener('submit', function(e) {
-                
-                // If signature pad is not working, allow manual submission
-                if (typeof signaturePad === 'undefined') {
-                    const hiddenField = document.querySelector('input[name*="podpisElektroniczny"]');
-                    if (hiddenField && !hiddenField.value) {
-                        hiddenField.value = 'fallback-signature-' + Date.now();
-                    }
-                } else {
-                    // Signature is optional - set fallback if empty
-                    if (signaturePad && signaturePad.isEmpty()) {
+                try {
+                    // If signature pad is not working, allow manual submission
+                    if (typeof signaturePad === 'undefined') {
                         const hiddenField = document.querySelector('input[name*="podpisElektroniczny"]');
-                        if (hiddenField) {
-                            hiddenField.value = 'digital-signature-' + Date.now();
+                        if (hiddenField && !hiddenField.value) {
+                            hiddenField.value = 'fallback-signature-' + Date.now();
+                        }
+                    } else {
+                        // Signature is optional - set fallback if empty
+                        if (signaturePad && signaturePad.isEmpty()) {
+                            const hiddenField = document.querySelector('input[name*="podpisElektroniczny"]');
+                            if (hiddenField) {
+                                hiddenField.value = 'digital-signature-' + Date.now();
+                            }
+                        } else if (signaturePad && !signaturePad.isEmpty()) {
+                            // Save actual signature data if available
+                            const hiddenField = document.querySelector('input[name*="podpisElektroniczny"]');
+                            if (hiddenField) {
+                                try {
+                                    hiddenField.value = signaturePad.toDataURL();
+                                } catch (signatureError) {
+                                    console.warn('Could not save signature data:', signatureError);
+                                    hiddenField.value = 'signature-data-' + Date.now();
+                                }
+                            }
                         }
                     }
-                }
-                
-                if (!confirmCheckbox.checked) {
-                    e.preventDefault();
-                    alert('Proszę potwierdzić zgodę na podpisanie dokumentu');
-                    confirmCheckbox.focus();
-                    return false;
-                }
-                
-                
-                // Show loading state
-                if (submitButton) {
-                    submitButton.disabled = true;
-                    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Podpisuję...';
+                    
+                    if (!confirmCheckbox.checked) {
+                        e.preventDefault();
+                        alert('Proszę potwierdzić zgodę na podpisanie dokumentu');
+                        confirmCheckbox.focus();
+                        return false;
+                    }
+                    
+                    // Show loading state
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Podpisuję...';
+                    }
+                } catch (error) {
+                    console.error('Error during form submission:', error);
+                    // Allow form to submit anyway with fallback values
+                    const hiddenField = document.querySelector('input[name*="podpisElektroniczny"]');
+                    if (hiddenField && !hiddenField.value) {
+                        hiddenField.value = 'error-fallback-' + Date.now();
+                    }
                 }
             });
             

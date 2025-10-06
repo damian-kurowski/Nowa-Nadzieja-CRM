@@ -1,0 +1,258 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ustawienia prywatności - CRM Nowa Nadzieja{% endblock %}
+
+{% block page_title %}Ustawienia prywatności{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .privacy-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .privacy-card h3 {
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .privacy-card h3 i {
+            color: #667eea;
+        }
+
+        .consent-option {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .consent-option:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .consent-option label {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .consent-option input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            accent-color: #667eea;
+            margin-top: 2px;
+        }
+
+        .consent-text {
+            flex: 1;
+        }
+
+        .consent-text strong {
+            display: block;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .consent-text .description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .consent-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .consent-status.active {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .consent-status.inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-box h4 {
+            color: #667eea;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-box p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-lg-10 col-xl-8 mx-auto">
+            <!-- Info Box -->
+            <div class="info-box">
+                <h4>
+                    <i class="fas fa-info-circle"></i>
+                    Integracja ze stroną internetową
+                </h4>
+                <p>
+                    System CRM jest zintegrowany ze stroną internetową partii, która wyświetla strukturę organizacyjną.
+                    Możesz zdecydować, które dane kontaktowe chcesz udostępniać na stronie WWW. <strong>Twoje imię i nazwisko są zawsze widoczne</strong>,
+                    ale adres e-mail, numer telefonu i zdjęcie są wyświetlane na stronie <strong>tylko za Twoją zgodą</strong>.
+                    Dane te nie są udostępniane publicznie w żaden inny sposób.
+                </p>
+            </div>
+
+            <form method="post" action="{{ path('profil_prywatnosc') }}">
+                <!-- Card: Zgody na wyświetlanie na stronie WWW -->
+                <div class="privacy-card">
+                    <h3>
+                        <i class="fas fa-laptop-code"></i>
+                        Wyświetlanie danych na stronie internetowej
+                    </h3>
+
+                    <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                        Wybierz, które dane kontaktowe chcesz udostępniać na stronie internetowej partii w sekcji struktury organizacyjnej.
+                    </p>
+
+                    <!-- Email -->
+                    <div class="consent-option">
+                        <label>
+                            <input type="checkbox" name="api_email" {{ user.isZgodaApiEmail ? 'checked' : '' }}>
+                            <div class="consent-text">
+                                <strong>
+                                    <i class="fas fa-envelope"></i>
+                                    Adres e-mail
+                                </strong>
+                                <div class="description">
+                                    Twój adres e-mail będzie wyświetlany na stronie internetowej partii przy Twoim stanowisku w strukturze organizacyjnej.
+                                    Osoby odwiedzające stronę będą mogły skontaktować się z Tobą mailowo.
+                                </div>
+                                <span class="consent-status {{ user.isZgodaApiEmail ? 'active' : 'inactive' }}">
+                                    <i class="fas fa-{{ user.isZgodaApiEmail ? 'check-circle' : 'times-circle' }}"></i>
+                                    {{ user.isZgodaApiEmail ? 'Wyświetlane na stronie' : 'Niewyświetlane' }}
+                                </span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Telefon -->
+                    <div class="consent-option">
+                        <label>
+                            <input type="checkbox" name="api_telefon" {{ user.isZgodaApiTelefon ? 'checked' : '' }}>
+                            <div class="consent-text">
+                                <strong>
+                                    <i class="fas fa-phone"></i>
+                                    Numer telefonu
+                                </strong>
+                                <div class="description">
+                                    Twój numer telefonu będzie wyświetlany na stronie internetowej partii przy Twoim stanowisku w strukturze organizacyjnej.
+                                    Osoby odwiedzające stronę będą mogły skontaktować się z Tobą telefonicznie.
+                                </div>
+                                <span class="consent-status {{ user.isZgodaApiTelefon ? 'active' : 'inactive' }}">
+                                    <i class="fas fa-{{ user.isZgodaApiTelefon ? 'check-circle' : 'times-circle' }}"></i>
+                                    {{ user.isZgodaApiTelefon ? 'Wyświetlane na stronie' : 'Niewyświetlane' }}
+                                </span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <!-- Zdjęcie -->
+                    <div class="consent-option">
+                        <label>
+                            <input type="checkbox" name="api_zdjecie" {{ user.isZgodaApiZdjecie ? 'checked' : '' }}>
+                            <div class="consent-text">
+                                <strong>
+                                    <i class="fas fa-image"></i>
+                                    Zdjęcie profilowe
+                                </strong>
+                                <div class="description">
+                                    Twoje zdjęcie profilowe będzie wyświetlane na stronie internetowej partii przy Twoim stanowisku w strukturze organizacyjnej.
+                                    Pomoże to odwiedzającym rozpoznać funkcjonariuszy partii.
+                                </div>
+                                <span class="consent-status {{ user.isZgodaApiZdjecie ? 'active' : 'inactive' }}">
+                                    <i class="fas fa-{{ user.isZgodaApiZdjecie ? 'check-circle' : 'times-circle' }}"></i>
+                                    {{ user.isZgodaApiZdjecie ? 'Wyświetlane na stronie' : 'Niewyświetlane' }}
+                                </span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-save"></i>
+                            Zapisz ustawienia
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Back to profile -->
+            <div class="text-center mt-4">
+                <a href="{{ path('profil_index') }}" class="text-decoration-none" style="color: var(--text-secondary);">
+                    <i class="fas fa-arrow-left"></i>
+                    Powrót do profilu
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

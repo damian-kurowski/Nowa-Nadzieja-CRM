@@ -64,15 +64,20 @@ class ZebranieOkreguRepository extends ServiceEntityRepository
      */
     public function findForUser(User $user): array
     {
-        return $this->createQueryBuilder('z')
-            ->where('z.obserwator = :user')
-            ->orWhere('z.protokolant = :user')
-            ->orWhere('z.prowadzacy = :user')
-            ->orWhere('z.prezesOkregu = :user')
-            ->orWhere('z.wiceprezes1 = :user')
-            ->orWhere('z.wiceprezes2 = :user')
-            ->orWhere('z.sekretarzOkregu = :user')
-            ->orWhere('z.skarbnikOkregu = :user')
+        $qb = $this->createQueryBuilder('z');
+        return $qb
+            ->where(
+                $qb->expr()->orX(
+                    'z.obserwator = :user',
+                    'z.protokolant = :user',
+                    'z.prowadzacy = :user',
+                    'z.prezesOkregu = :user',
+                    'z.wiceprezes1 = :user',
+                    'z.wiceprezes2 = :user',
+                    'z.sekretarzOkregu = :user',
+                    'z.skarbnikOkregu = :user'
+                )
+            )
             ->setParameter('user', $user)
             ->orderBy('z.dataUtworzenia', 'DESC')
             ->getQuery()

@@ -38,7 +38,12 @@ class OdwolanieSekretarzOkregu extends AbstractDocument
             'creator' => true,  // Prezes Okręgu
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/odwolania/odwolanie_sekretarz_okregu.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

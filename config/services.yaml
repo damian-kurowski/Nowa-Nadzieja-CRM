@@ -6,6 +6,8 @@
 parameters:
     photos_directory: '%kernel.project_dir%/public/uploads/photos'
     struktura_api_key: '%env(STRUKTURA_API_KEY)%'
+    telegram_bot_token: '%env(TELEGRAM_BOT_TOKEN)%'
+    telegram_broadcast_bot_token: '%env(TELEGRAM_BROADCAST_BOT_TOKEN)%'
 
 services:
     # default configuration for services in *this* file
@@ -17,6 +19,12 @@ services:
     # this creates a service per class whose id is the fully-qualified class name
     App\:
         resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Tests/'
+            - '../src/Enum/'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
@@ -24,11 +32,19 @@ services:
     App\Service\PhotoService:
         arguments:
             $photoDirectory: '%photos_directory%'
-    
+
     App\Service\PaymentImportService:
         calls:
             - [setPaymentStatusService, ['@App\Service\PaymentStatusService']]
-    
+
+    App\Service\TelegramService:
+        arguments:
+            $telegramBotToken: '%telegram_bot_token%'
+
+    App\Service\TelegramBroadcastService:
+        arguments:
+            $telegramBroadcastBotToken: '%telegram_broadcast_bot_token%'
+
     # Performance optimization: Cache response listener
     App\EventListener\CacheResponseListener:
         tags:

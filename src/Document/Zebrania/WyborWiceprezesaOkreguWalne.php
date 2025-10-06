@@ -35,11 +35,17 @@ class WyborWiceprezesaOkreguWalne extends AbstractDocument
     public function getSignersConfig(): array
     {
         return [
-            'prowadzacy' => true,  // Przewodniczący Walnego Zgromadzenia
+            'prowadzacy' => true,   // Przewodniczący Walnego Zgromadzenia
             'protokolant' => true,  // Sekretarz Walnego Zgromadzenia
+            'obserwator' => true,   // Obserwator zebrania
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/wybor_wiceprezesa_okregu_walne.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

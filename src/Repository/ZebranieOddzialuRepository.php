@@ -147,11 +147,12 @@ class ZebranieOddzialuRepository extends ServiceEntityRepository
      */
     public function findUserMeetings(User $user, int $limit = 50): array
     {
-        return $this->createQueryBuilder('z')
+        $qb = $this->createQueryBuilder('z');
+        return $qb
             ->join('z.oddzial', 'o')
             ->addSelect('o')
             ->where(
-                $this->createQueryBuilder('z')->expr()->orX(
+                $qb->expr()->orX(
                     'z.obserwator = :user',
                     'z.protokolant = :user',
                     'z.prowadzacy = :user'

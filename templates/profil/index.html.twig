@@ -576,6 +576,74 @@
                         <a href="{{ path('profil_photo') }}" class="btn btn-enhanced btn-info-enhanced">
                             <i class="fas fa-camera me-2"></i>Zarządzaj zdjęciem
                         </a>
+
+                        <!-- Telegram Connection Button -->
+                        <a href="{{ path('first_login_connect_telegram', {reconnect: 1}) }}" class="btn btn-enhanced" style="background: linear-gradient(135deg, #0088cc 0%, #0077b5 100%); border-color: #0088cc; color: white;">
+                            <i class="fab fa-telegram me-2"></i>
+                            {% if user.isTelegramConnected %}
+                                Zmień połączenie Telegram
+                            {% else %}
+                                Połącz z Telegramem
+                            {% endif %}
+                        </a>
+
+                        <!-- API Settings Button -->
+                        <a href="{{ path('profil_prywatnosc') }}" class="btn btn-enhanced" style="background: linear-gradient(135deg, #28a745 0%, #20893d 100%); border-color: #28a745; color: white;">
+                            <i class="fas fa-shield-alt me-2"></i>Ustawienia prywatności
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Telegram & API Status Info -->
+                <div class="mt-4 p-3" style="background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color);">
+                    <!-- Telegram Status -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <small class="text-muted fw-bold">
+                                <i class="fab fa-telegram me-1"></i>Telegram
+                            </small>
+                            {% if user.isTelegramConnected %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check"></i> Połączono
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="fas fa-exclamation-triangle"></i> Niepołączone
+                                </span>
+                            {% endif %}
+                        </div>
+                        {% if user.isTelegramConnected and user.telegramUsername %}
+                            <small class="text-muted d-block">
+                                <code>@{{ user.telegramUsername }}</code>
+                            </small>
+                        {% endif %}
+                    </div>
+
+                    <!-- API Status -->
+                    <div>
+                        <small class="text-muted fw-bold d-block mb-2">
+                            <i class="fas fa-share-nodes me-1"></i>Udostępnianie API
+                        </small>
+                        <div class="d-flex gap-1 flex-wrap">
+                            {% if user.zgodaApiEmail %}
+                                <span class="badge bg-success" style="font-size: 0.7rem;">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                            {% endif %}
+                            {% if user.zgodaApiTelefon %}
+                                <span class="badge bg-success" style="font-size: 0.7rem;">
+                                    <i class="fas fa-phone"></i>
+                                </span>
+                            {% endif %}
+                            {% if user.zgodaApiZdjecie %}
+                                <span class="badge bg-success" style="font-size: 0.7rem;">
+                                    <i class="fas fa-camera"></i>
+                                </span>
+                            {% endif %}
+                            {% if not user.zgodaApiEmail and not user.zgodaApiTelefon and not user.zgodaApiZdjecie %}
+                                <small class="text-muted">Brak udostępnionych danych</small>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>

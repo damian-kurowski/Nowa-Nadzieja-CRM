@@ -72,3 +72,4 @@ docker-compose.override.yml
 # Performance optimization files
 PERFORMANCE_OPTIMIZATIONS.md
 FRONTEND_ANALYSIS_REPORT.md
+nul

@@ -1,0 +1,175 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nowy Przekaz Medialny{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('przekaz_medialny_index') }}">Przekazy Medialne</a></li>
+                    <li class="breadcrumb-item active">Nowy Przekaz</li>
+                </ol>
+            </nav>
+            <h1><i class="fas fa-plus-circle me-2"></i>Nowy Przekaz Medialny</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="fas fa-edit me-2 text-primary"></i>
+                        Formularz Przekazu
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" action="{{ path('przekaz_medialny_new') }}">
+                        <div class="mb-3">
+                            <label for="tytul" class="form-label">Tytuł przekazu <span class="text-danger">*</span></label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="tytul"
+                                   name="tytul"
+                                   maxlength="255"
+                                   required
+                                   placeholder="Np. Przekaz medialny - 15 października 2025">
+                            <div class="form-text">Maksymalnie 255 znaków</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tresc" class="form-label">Treść przekazu <span class="text-danger">*</span></label>
+                            <textarea class="form-control"
+                                      id="tresc"
+                                      name="tresc"
+                                      rows="10"
+                                      maxlength="4096"
+                                      required
+                                      placeholder="Wprowadź treść przekazu medialnego..."></textarea>
+                            <div class="form-text">
+                                <span id="charCount">0</span> / 4096 znaków (limit Telegram)
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Wskazówki:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Przekaz zostanie wysłany do wszystkich członków partii z połączonym Telegramem</li>
+                                <li>Możesz używać formatowania HTML: &lt;b&gt;pogrubienie&lt;/b&gt;, &lt;i&gt;kursywa&lt;/i&gt;</li>
+                                <li>Po utworzeniu przekazu będziesz mógł go wysłać lub zachować jako szkic</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('przekaz_medialny_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Anuluj
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Utwórz Przekaz
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #0088cc, #229ED9);">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="fab fa-telegram me-2"></i>
+                        Podgląd Telegram
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="telegram-preview p-3 rounded-3" style="background: #e5ddd5; min-height: 200px;">
+                        <div class="bg-white rounded-3 p-3 shadow-sm">
+                            <div id="preview">
+                                <p class="text-muted small mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Podgląd pojawi się po wpisaniu treści...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mt-3">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="fas fa-code me-2 text-info"></i>
+                        Formatowanie HTML
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <p class="small mb-2">Dostępne tagi HTML:</p>
+                    <ul class="small">
+                        <li><code>&lt;b&gt;tekst&lt;/b&gt;</code> - <b>pogrubienie</b></li>
+                        <li><code>&lt;i&gt;tekst&lt;/i&gt;</code> - <i>kursywa</i></li>
+                        <li><code>&lt;u&gt;tekst&lt;/u&gt;</code> - <u>podkreślenie</u></li>
+                        <li><code>&lt;code&gt;kod&lt;/code&gt;</code> - <code>kod</code></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const trescInput = document.getElementById('tresc');
+    const tytulInput = document.getElementById('tytul');
+    const charCount = document.getElementById('charCount');
+    const preview = document.getElementById('preview');
+
+    function updatePreview() {
+        const tytul = tytulInput.value || 'Tytuł przekazu';
+        const tresc = trescInput.value || '';
+
+        if (tresc.length === 0) {
+            preview.innerHTML = `
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Podgląd pojawi się po wpisaniu treści...
+                </p>
+            `;
+        } else {
+            preview.innerHTML = `
+                <div class="mb-2">
+                    <strong class="d-block mb-2">
+                        <i class="fas fa-bullhorn text-primary me-1"></i>
+                        ${tytul}
+                    </strong>
+                </div>
+                <div class="mb-2" style="line-height: 1.5;">
+                    ${tresc.replace(/\n/g, '<br>')}
+                </div>
+                <div class="border-top pt-2 mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-share-alt me-1"></i>
+                        Jeśli udostępniłeś ten przekaz, wyślij nam link do swojego posta!
+                    </small>
+                </div>
+            `;
+        }
+
+        charCount.textContent = tresc.length;
+
+        if (tresc.length > 4096) {
+            charCount.classList.add('text-danger');
+            charCount.classList.add('fw-bold');
+        } else {
+            charCount.classList.remove('text-danger');
+            charCount.classList.remove('fw-bold');
+        }
+    }
+
+    trescInput.addEventListener('input', updatePreview);
+    tytulInput.addEventListener('input', updatePreview);
+});
+</script>
+{% endblock %}

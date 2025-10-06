@@ -254,4 +254,29 @@ class UserRepository extends ServiceEntityRepository
 
         return false;
     }
+
+    /**
+     * Znajdź użytkownika z określoną rolą.
+     * 
+     * @param string $role Rola do wyszukania (np. 'ROLE_SEKRETARZ_PARTII')
+     * @return User|null
+     */
+    public function findOneByRole(string $role): ?User
+    {
+        $conn = $this->getEntityManager()->getConnection();
+        
+        // Używamy native SQL dla PostgreSQL z JSON_CONTAINS lub @> operator
+        $sql = 'SELECT * FROM "user" u WHERE u.roles::jsonb @> :role LIMIT 1';
+        
+        $stmt = $conn->prepare($sql);
+        $result = $stmt->executeQuery(['role' => '["' . $role . '"]']);
+        
+        $data = $result->fetchAssociative();
+        if (!$data) {
+            return null;
+        }
+        
+        // Hydratuj entity
+        return $this->getEntityManager()->find(User::class, $data['id']);
+    }
 }

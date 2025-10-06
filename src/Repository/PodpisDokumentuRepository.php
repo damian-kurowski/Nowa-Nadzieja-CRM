@@ -12,7 +12,7 @@ use Doctrine\Persistence\ManagerRegistry;
  * @method PodpisDokumentu|null find($id, $lockMode = null, $lockVersion = null)
  * @method PodpisDokumentu|null findOneBy(array<string, mixed> $criteria, ?array<string, string> $orderBy = null)
  *
- * @methfinal od PodpisDokumentu[]    findAll()
+ * @method PodpisDokumentu[]    findAll()
  *
  * @method PodpisDokumentu[] findBy(array<string, mixed> $criteria, ?array<string, string> $orderBy = null, $limit = null, $offset = null)
  */

@@ -29,7 +29,7 @@ class WyznaczenieProtokolanta extends AbstractDocument
     
     public function getRequiredFields(): array
     {
-        return ['czlonek', 'oddzial', 'data_zebrania', 'data_wejscia_w_zycie'];
+        return ['czlonek', 'oddzial', 'data_wejscia_w_zycie'];
     }
     
     public function getSignersConfig(): array
@@ -38,7 +38,12 @@ class WyznaczenieProtokolanta extends AbstractDocument
             'creator' => true,  // Prowadzący zebranie
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/wyznaczenie_protokolanta.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

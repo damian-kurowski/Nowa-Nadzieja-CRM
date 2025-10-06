@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Scheb\TwoFactorBundle\Model\Google\TwoFactorInterface as GoogleAuthenticatorTwoFactorInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -23,7 +24,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_user_data_rejestracji', columns: ['data_rejestracji'])]
 #[ORM\Index(name: 'idx_user_search', columns: ['imie', 'nazwisko', 'email'])]
 #[UniqueEntity(fields: ['email'], message: 'Użytkownik z tym adresem email już istnieje.')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, GoogleAuthenticatorTwoFactorInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -97,14 +98,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $cv = null;
 
-    #[ORM\ManyToOne(targetEntity: Okreg::class, inversedBy: 'czlonkowie')]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Okreg', inversedBy: 'czlonkowie')]
     private ?Okreg $okreg = null;
 
-    #[ORM\ManyToOne(targetEntity: Region::class, inversedBy: 'prezesi')]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Region', inversedBy: 'prezesi')]
     #[ORM\JoinColumn(nullable: true)]
     private ?Region $region = null;
 
-    #[ORM\ManyToOne(targetEntity: Oddzial::class, inversedBy: 'czlonkowie')]
+    #[ORM\ManyToOne(targetEntity: 'App\Entity\Oddzial', inversedBy: 'czlonkowie')]
     private ?Oddzial $oddzial = null;
 
     #[ORM\Column(length: 50)]
@@ -145,9 +146,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeInterface $dataRozmowaPrekwalifikacyjna = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $dataOpiniaRadyOddzialu = null;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $dataDecyzjaZarzadu = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
@@ -156,25 +154,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Funkcja>
      */
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Funkcja::class)]
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: 'App\Entity\Funkcja')]
     private Collection $funkcje;
-
-    /**
-     * @var Collection<int, OpiniaRadyOddzialu>
-     */
-    #[ORM\OneToMany(mappedBy: 'czlonek', targetEntity: OpiniaRadyOddzialu::class)]
-    private Collection $opinie;
 
     /**
      * @var Collection<int, Platnosc>
      */
-    #[ORM\OneToMany(mappedBy: 'darczyca', targetEntity: Platnosc::class)]
+    #[ORM\OneToMany(mappedBy: 'darczyca', targetEntity: 'App\Entity\Platnosc')]
     private Collection $platnosci;
 
     /**
      * @var Collection<int, SkladkaCzlonkowska>
      */
-    #[ORM\OneToMany(mappedBy: 'czlonek', targetEntity: SkladkaCzlonkowska::class)]
+    #[ORM\OneToMany(mappedBy: 'czlonek', targetEntity: 'App\Entity\SkladkaCzlonkowska')]
     private Collection $skladkiCzlonkowskie;
 
     #[ORM\Column(type: Types::BOOLEAN, nullable: true)]
@@ -190,7 +182,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeInterface $dataWaznosciSkladki = null;
 
     // Relacja do postępu kandydata (nowy system 8 kroków)
-    #[ORM\OneToOne(mappedBy: 'kandydat', targetEntity: PostepKandydata::class, cascade: ['persist', 'remove'])]
+    #[ORM\OneToOne(mappedBy: 'kandydat', targetEntity: 'App\Entity\PostepKandydata', cascade: ['persist', 'remove'])]
     private ?PostepKandydata $postepKandydataEntity = null;
 
     // Zatrudnienie w spółkach
@@ -222,6 +214,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $dataZgodyRodo = null;
 
+    // Zgody na udostępnianie danych w API
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $zgodaApiEmail = false;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $zgodaApiTelefon = false;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $zgodaApiZdjecie = false;
+
     // Media społecznościowe - JSON z linkami
     /**
      * @var array<string, string>|null
@@ -242,13 +244,38 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $dataZakonczeniaCzlonkostwa = null;
 
+    // Pola dla 2FA (Google Authenticator)
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $googleAuthenticatorSecret = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isTwoFactorEnabled = false;
+
+    // Pola dla wymuszonej zmiany hasła przy pierwszym logowaniu
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => true])]
+    private bool $isPasswordChangeRequired = true;
+
+    // Pola dla połączenia z Telegram (przekazy medialne)
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $telegramChatId = null;
+
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $telegramUsername = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $telegramConnectedAt = null;
+
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $isTelegramConnected = false;
+
     public function __construct()
     {
         $this->funkcje = new ArrayCollection();
-        $this->opinie = new ArrayCollection();
         $this->platnosci = new ArrayCollection();
         $this->skladkiCzlonkowskie = new ArrayCollection();
         $this->dataRejestracji = new \DateTime();
+        $this->isPasswordChangeRequired = true;
+        $this->isTwoFactorEnabled = false;
     }
 
     public function getId(): ?int
@@ -654,39 +681,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * Relacje kolekcji: OpiniaRadyOddzialu (mappedBy="czlonek").
-     */
-    /**
-     * @return Collection<int, OpiniaRadyOddzialu>
-     */
-    public function getOpinie(): Collection
-    {
-        return $this->opinie;
-    }
-
-    public function addOpinia(OpiniaRadyOddzialu $opinia): self
-    {
-        if (!$this->opinie->contains($opinia)) {
-            $this->opinie->add($opinia);
-            $opinia->setCzlonek($this);
-        }
-
-        return $this;
-    }
-
-    public function removeOpinia(OpiniaRadyOddzialu $opinia): self
-    {
-        if ($this->opinie->removeElement($opinia)) {
-            // Set czlonek to null if the relationship allows it
-            if ($opinia->getCzlonek() === $this) {
-                // Don't set to null if it's required
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * Relacje kolekcji: Platnosc (mappedBy="darczyca").
      */
     /**
@@ -785,18 +779,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setDataRozmowaPrekwalifikacyjna(?\DateTimeInterface $dataRozmowaPrekwalifikacyjna): self
     {
         $this->dataRozmowaPrekwalifikacyjna = $dataRozmowaPrekwalifikacyjna;
-
-        return $this;
-    }
-
-    public function getDataOpiniaRadyOddzialu(): ?\DateTimeInterface
-    {
-        return $this->dataOpiniaRadyOddzialu;
-    }
-
-    public function setDataOpiniaRadyOddzialu(?\DateTimeInterface $dataOpiniaRadyOddzialu): self
-    {
-        $this->dataOpiniaRadyOddzialu = $dataOpiniaRadyOddzialu;
 
         return $this;
     }
@@ -1446,6 +1428,140 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setDataZgodyRodo(?\DateTimeInterface $dataZgodyRodo): self
     {
         $this->dataZgodyRodo = $dataZgodyRodo;
+        return $this;
+    }
+
+    // 2FA Google Authenticator methods (required by GoogleAuthenticatorTwoFactorInterface)
+    public function isGoogleAuthenticatorEnabled(): bool
+    {
+        return $this->isTwoFactorEnabled && null !== $this->googleAuthenticatorSecret;
+    }
+
+    public function getGoogleAuthenticatorUsername(): string
+    {
+        return $this->email;
+    }
+
+    public function getGoogleAuthenticatorSecret(): ?string
+    {
+        return $this->googleAuthenticatorSecret;
+    }
+
+    public function setGoogleAuthenticatorSecret(?string $googleAuthenticatorSecret): self
+    {
+        $this->googleAuthenticatorSecret = $googleAuthenticatorSecret;
+        return $this;
+    }
+
+    public function isTwoFactorEnabled(): bool
+    {
+        return $this->isTwoFactorEnabled;
+    }
+
+    public function setIsTwoFactorEnabled(bool $isTwoFactorEnabled): self
+    {
+        $this->isTwoFactorEnabled = $isTwoFactorEnabled;
+        return $this;
+    }
+
+    // Password change requirement methods
+    public function isPasswordChangeRequired(): bool
+    {
+        return $this->isPasswordChangeRequired;
+    }
+
+    public function setIsPasswordChangeRequired(bool $isPasswordChangeRequired): self
+    {
+        $this->isPasswordChangeRequired = $isPasswordChangeRequired;
+        return $this;
+    }
+
+    /**
+     * Check if user needs to complete first login setup (RODO + password + 2FA + photo + Telegram)
+     */
+    public function requiresFirstLoginSetup(): bool
+    {
+        return !$this->zgodaRodo || $this->isPasswordChangeRequired || !$this->isTwoFactorEnabled || null === $this->zdjecie || !$this->isTelegramConnected;
+    }
+
+    // Getters and setters for API consent fields
+
+    public function isZgodaApiEmail(): bool
+    {
+        return $this->zgodaApiEmail;
+    }
+
+    public function setZgodaApiEmail(bool $zgodaApiEmail): self
+    {
+        $this->zgodaApiEmail = $zgodaApiEmail;
+        return $this;
+    }
+
+    public function isZgodaApiTelefon(): bool
+    {
+        return $this->zgodaApiTelefon;
+    }
+
+    public function setZgodaApiTelefon(bool $zgodaApiTelefon): self
+    {
+        $this->zgodaApiTelefon = $zgodaApiTelefon;
+        return $this;
+    }
+
+    public function isZgodaApiZdjecie(): bool
+    {
+        return $this->zgodaApiZdjecie;
+    }
+
+    public function setZgodaApiZdjecie(bool $zgodaApiZdjecie): self
+    {
+        $this->zgodaApiZdjecie = $zgodaApiZdjecie;
+        return $this;
+    }
+
+    // Getters and setters for Telegram connection
+
+    public function getTelegramChatId(): ?string
+    {
+        return $this->telegramChatId;
+    }
+
+    public function setTelegramChatId(?string $telegramChatId): self
+    {
+        $this->telegramChatId = $telegramChatId;
+        return $this;
+    }
+
+    public function getTelegramUsername(): ?string
+    {
+        return $this->telegramUsername;
+    }
+
+    public function setTelegramUsername(?string $telegramUsername): self
+    {
+        $this->telegramUsername = $telegramUsername;
+        return $this;
+    }
+
+    public function getTelegramConnectedAt(): ?\DateTimeInterface
+    {
+        return $this->telegramConnectedAt;
+    }
+
+    public function setTelegramConnectedAt(?\DateTimeInterface $telegramConnectedAt): self
+    {
+        $this->telegramConnectedAt = $telegramConnectedAt;
+        return $this;
+    }
+
+    public function isTelegramConnected(): bool
+    {
+        return $this->isTelegramConnected;
+    }
+
+    public function setIsTelegramConnected(bool $isTelegramConnected): self
+    {
+        $this->isTelegramConnected = $isTelegramConnected;
         return $this;
     }
 }

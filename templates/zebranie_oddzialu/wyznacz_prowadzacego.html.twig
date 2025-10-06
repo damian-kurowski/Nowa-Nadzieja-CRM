@@ -142,7 +142,7 @@
         </ul>
     </div>
 
-    <form method="post" class="step-card">
+    <form method="post" action="{{ path('zebranie_oddzialu_wyznacz_prowadzacego_post', {id: zebranie.id}) }}" class="step-card">
         <h4 class="mb-4">
             <i class="fas fa-users me-2"></i>
             Wybierz prowadzącego z członków oddziału
@@ -212,6 +212,8 @@
                 Nie można wyznaczyć prowadzącego.
             </div>
         {% endif %}
+
+        <input type="hidden" name="_token" value="{{ csrf_token('wyznacz_prowadzacego' ~ zebranie.id) }}">
 
         <div class="d-flex justify-content-between mt-4">
             <a href="{{ path('zebranie_wizard', {id: zebranie.id}) }}" class="btn btn-outline-secondary">

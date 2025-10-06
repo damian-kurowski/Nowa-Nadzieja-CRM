@@ -1,81 +1,603 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Odrzuć dokument{% endblock %}
+{% block title %}Odrzuć dokument - {{ dokument.numerDokumentu }} - CRM Nowa Nadzieja{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Light theme (default) */
+        .reject-header {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border-radius: 20px;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.25);
+        }
+
+        /* Dark theme support */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #0f172a;
+                color: #e2e8f0;
+            }
+
+            .reject-header {
+                background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+                box-shadow: 0 25px 50px -12px rgba(220, 38, 38, 0.4);
+            }
+
+            .reject-card {
+                background: #1e293b;
+                border: 1px solid #334155;
+                color: #e2e8f0;
+            }
+
+            .reject-card-header {
+                background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%);
+                border-bottom: 1px solid #7f1d1d;
+            }
+
+            .info-item {
+                background: #0f172a;
+                border-left: 4px solid #dc2626;
+                color: #e2e8f0;
+            }
+
+            .info-label {
+                color: #94a3b8;
+            }
+
+            .info-value {
+                color: #f1f5f9;
+            }
+
+            .warning-box {
+                background: linear-gradient(135deg, #451a03 0%, #78350f 100%);
+                border: 2px solid #d97706;
+                color: #fbbf24;
+            }
+
+            .enhanced-textarea {
+                background: #0f172a;
+                border: 2px solid #475569;
+                color: #e2e8f0;
+            }
+
+            .enhanced-textarea:focus {
+                border-color: #dc2626;
+                box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+                background: #1e293b;
+            }
+
+            .enhanced-label {
+                color: #f1f5f9;
+            }
+
+            .form-help {
+                color: #94a3b8;
+            }
+
+            .character-counter {
+                color: #64748b;
+            }
+        }
+
+        /* Manual dark theme toggle */
+        [data-theme="dark"] {
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .reject-header {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 25px 50px -12px rgba(220, 38, 38, 0.4);
+        }
+
+        [data-theme="dark"] .reject-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .reject-card-header {
+            background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 100%);
+            border-bottom: 1px solid #7f1d1d;
+        }
+
+        [data-theme="dark"] .info-item {
+            background: #0f172a;
+            border-left: 4px solid #dc2626;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .info-label {
+            color: #94a3b8;
+        }
+
+        [data-theme="dark"] .info-value {
+            color: #f1f5f9;
+        }
+
+        [data-theme="dark"] .warning-box {
+            background: linear-gradient(135deg, #451a03 0%, #78350f 100%);
+            border: 2px solid #d97706;
+            color: #fbbf24;
+        }
+
+        [data-theme="dark"] .enhanced-textarea {
+            background: #0f172a;
+            border: 2px solid #475569;
+            color: #e2e8f0;
+        }
+
+        [data-theme="dark"] .enhanced-textarea:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+            background: #1e293b;
+        }
+
+        [data-theme="dark"] .enhanced-textarea::placeholder {
+            color: #64748b;
+        }
+
+        [data-theme="dark"] .enhanced-label {
+            color: #f1f5f9;
+        }
+
+        [data-theme="dark"] .form-help {
+            color: #94a3b8;
+        }
+
+        [data-theme="dark"] .character-counter {
+            color: #64748b;
+        }
+
+        /* Dark theme button adjustments */
+        [data-theme="dark"] .btn-danger-enhanced {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.3);
+        }
+
+        [data-theme="dark"] .btn-danger-enhanced:hover {
+            box-shadow: 0 15px 25px -5px rgba(220, 38, 38, 0.6);
+        }
+
+        [data-theme="dark"] .btn-secondary-enhanced {
+            background: linear-gradient(135deg, #475569 0%, #334155 100%);
+        }
+
+        [data-theme="dark"] .btn-secondary-enhanced:hover {
+            box-shadow: 0 15px 25px -5px rgba(71, 85, 105, 0.6);
+        }
+
+        .reject-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(-10px, -10px) rotate(120deg); }
+            66% { transform: translate(10px, -10px) rotate(240deg); }
+        }
+
+        .warning-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            backdrop-filter: blur(10px);
+            margin-bottom: 1.5rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .reject-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .reject-card-header {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            padding: 2rem;
+            border-bottom: 1px solid #fecaca;
+            position: relative;
+        }
+
+        .reject-card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .document-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid #ef4444;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .info-value {
+            color: #111827;
+            font-weight: 500;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, #fef3cd 0%, #fdf6cd 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .warning-box::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            height: 4px;
+            background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+            border-radius: 16px 16px 0 0;
+        }
+
+        .enhanced-form-group {
+            margin-bottom: 2rem;
+        }
+
+        .enhanced-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+            display: block;
+        }
+
+        .enhanced-textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        .enhanced-textarea:focus {
+            outline: none;
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        .btn-enhanced {
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-danger-enhanced {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-danger-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(239, 68, 68, 0.4);
+            color: white;
+        }
+
+        .btn-secondary-enhanced {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            color: white;
+        }
+
+        .btn-secondary-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 25px -5px rgba(107, 114, 128, 0.4);
+            color: white;
+        }
+
+        .form-help {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+
+        .character-counter {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            text-align: right;
+            margin-top: 0.5rem;
+        }
+
+        /* Theme transition */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .reject-header {
+                padding: 2rem 1.5rem;
+                text-align: center;
+            }
+
+            .warning-icon {
+                margin: 0 auto 1.5rem auto;
+            }
+
+            .document-info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-enhanced {
+                width: 100%;
+                justify-content: center;
+                margin-bottom: 1rem;
+            }
+        }
+    </style>
+{% endblock %}
 
 {% block body %}
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header pb-0">
-                    <div class="d-lg-flex">
-                        <div>
-                            <h5 class="mb-0">Odrzuć dokument</h5>
-                            <p class="text-sm mb-0">{{ dokument.tytul }}</p>
-                        </div>
-                        <div class="ms-auto my-auto mt-lg-0 mt-4">
-                            <div class="ms-auto my-auto">
-                                <a href="{{ path('dokument_show', {'id': dokument.id}) }}" class="btn btn-outline-primary btn-sm mb-0">
-                                    <i class="fas fa-arrow-left me-1"></i> Powrót do dokumentu
-                                </a>
+    <!-- Enhanced Reject Header -->
+    <div class="reject-header">
+        <div class="text-center">
+            <div class="warning-icon mx-auto">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h1 class="mb-2">Odrzucenie dokumentu</h1>
+            <div class="document-meta">
+                <span class="doc-number">{{ dokument.numerDokumentu }}</span>
+                <span class="mx-2">•</span>
+                <span class="doc-type">{{ dokument.typDisplayName }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-6">
+                <!-- Document Information -->
+                <div class="reject-card mb-4">
+                    <div class="reject-card-header">
+                        <h5 class="mb-3 text-danger">
+                            <i class="fas fa-file-alt me-2"></i>Szczegóły dokumentu
+                        </h5>
+                        <div class="document-info-grid">
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-hashtag me-1"></i>Numer dokumentu
+                                </div>
+                                <div class="info-value">{{ dokument.numerDokumentu }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-file-alt me-1"></i>Typ dokumentu
+                                </div>
+                                <div class="info-value">{{ dokument.typDisplayName }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-calendar-plus me-1"></i>Data utworzenia
+                                </div>
+                                <div class="info-value">{{ dokument.dataUtworzenia|date('d.m.Y H:i') }}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-user me-1"></i>Utworzył
+                                </div>
+                                <div class="info-value">{{ dokument.tworca.fullName }}</div>
+                            </div>
+                            {% if dokument.kandydat %}
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-user-tag me-1"></i>Dotyczy
+                                </div>
+                                <div class="info-value">{{ dokument.kandydat.fullName }}</div>
+                            </div>
+                            {% endif %}
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-flag me-1"></i>Aktualny status
+                                </div>
+                                <div class="info-value">
+                                    <span class="badge bg-warning">{{ dokument.statusDisplayName }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="alert alert-warning">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                <strong>Uwaga:</strong> Odrzucenie dokumentu spowoduje jego anulowanie. 
-                                Ta operacja jest nieodwracalna.
-                            </div>
+
+                <!-- Warning Box -->
+                <div class="warning-box">
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #f59e0b;"></i>
                         </div>
-                    </div>
-                    
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h6>Szczegóły dokumentu:</h6>
-                            <ul class="list-unstyled">
-                                <li><strong>Numer:</strong> {{ dokument.numerDokumentu }}</li>
-                                <li><strong>Typ:</strong> {{ dokument.typDisplayName }}</li>
-                                <li><strong>Data utworzenia:</strong> {{ dokument.dataUtworzenia|date('d.m.Y H:i') }}</li>
-                                <li><strong>Status:</strong> 
-                                    <span class="badge bg-warning">{{ dokument.status|title }}</span>
-                                </li>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="mb-2" style="color: #92400e;">⚠️ Ostrzeżenie</h5>
+                            <p class="mb-2" style="color: #92400e; font-weight: 500;">
+                                Odrzucenie tego dokumentu spowoduje jego <strong>nieodwracalne anulowanie</strong>.
+                            </p>
+                            <ul class="mb-0" style="color: #92400e;">
+                                <li>Dokument nie będzie mógł być podpisany</li>
+                                <li>Operacja zostanie zapisana w historii dokumentu</li>
+                                <li>Wymagane jest podanie szczegółowego uzasadnienia</li>
                             </ul>
                         </div>
                     </div>
+                </div>
 
-                    <form method="post">
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="form-group">
-                                    <label for="reason"><strong>Powód odrzucenia *</strong></label>
-                                    <textarea class="form-control" name="reason" id="reason" rows="5" 
-                                              placeholder="Podaj szczegółowy powód odrzucenia dokumentu..." required></textarea>
-                                    <small class="form-text text-muted">
-                                        Wymagane jest podanie powodu odrzucenia. Informacja zostanie zapisana w historii dokumentu.
-                                    </small>
+                <!-- Rejection Form -->
+                <div class="reject-card">
+                    <div class="reject-card-header">
+                        <h5 class="mb-0 text-danger">
+                            <i class="fas fa-edit me-2"></i>Powód odrzucenia
+                        </h5>
+                    </div>
+                    <div class="p-4">
+                        {{ form_start(form, {'attr': {'id': 'rejectForm'}}) }}
+                            <div class="enhanced-form-group">
+                                <label for="{{ form.komentarz.vars.id }}" class="enhanced-label required">
+                                    <i class="fas fa-comment-alt me-2"></i>Szczegółowe uzasadnienie odrzucenia
+                                </label>
+                                {{ form_widget(form.komentarz, {
+                                    'attr': {
+                                        'class': 'enhanced-textarea',
+                                        'placeholder': 'Opisz szczegółowo powody odrzucenia dokumentu. Te informacje będą widoczne dla wszystkich osób mających dostęp do dokumentu.',
+                                        'maxlength': '1000',
+                                        'oninput': 'updateCharacterCounter(this)'
+                                    }
+                                }) }}
+                                <div class="d-flex justify-content-between">
+                                    <div class="form-help">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Uzasadnienie jest wymagane i zostanie zapisane w historii dokumentu.
+                                    </div>
+                                    <div class="character-counter" id="charCounter">0 / 1000</div>
                                 </div>
+                                {{ form_errors(form.komentarz) }}
                             </div>
-                        </div>
-                        
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-danger" onclick="return confirm('Czy na pewno chcesz odrzucić ten dokument? Ta operacja jest nieodwracalna.')">
-                                    <i class="fas fa-times-circle me-1"></i> Odrzuć dokument
-                                </button>
-                                <a href="{{ path('dokument_show', {'id': dokument.id}) }}" class="btn btn-secondary ms-2">
-                                    <i class="fas fa-arrow-left me-1"></i> Anuluj
+
+                            <div class="d-flex gap-3 justify-content-end">
+                                <a href="{{ path('dokument_show', {'id': dokument.id}) }}"
+                                   class="btn btn-secondary-enhanced">
+                                    <i class="fas fa-arrow-left me-2"></i>Anuluj
                                 </a>
+                                <button type="submit"
+                                        class="btn btn-danger-enhanced"
+                                        id="rejectButton"
+                                        disabled>
+                                    <i class="fas fa-times-circle me-2"></i>Odrzuć dokument
+                                </button>
                             </div>
-                        </div>
-                    </form>
+                        {{ form_end(form) }}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    <script>
+        function updateCharacterCounter(textarea) {
+            const counter = document.getElementById('charCounter');
+            const length = textarea.value.length;
+            const maxLength = textarea.getAttribute('maxlength');
+            counter.textContent = `${length} / ${maxLength}`;
+
+            // Update button state
+            const rejectButton = document.getElementById('rejectButton');
+            const isValid = length >= 10; // Minimum 10 characters
+            rejectButton.disabled = !isValid;
+
+            // Visual feedback
+            if (length >= 10) {
+                textarea.style.borderColor = '#10b981';
+                counter.style.color = '#10b981';
+            } else {
+                textarea.style.borderColor = '#ef4444';
+                counter.style.color = '#ef4444';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('rejectForm');
+            const textarea = form.querySelector('textarea');
+
+            // Initialize character counter
+            updateCharacterCounter(textarea);
+
+            // Enhanced confirmation dialog
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const reason = textarea.value.trim();
+                if (reason.length < 10) {
+                    alert('Uzasadnienie musi zawierać co najmniej 10 znaków.');
+                    textarea.focus();
+                    return;
+                }
+
+                // Custom confirmation dialog
+                const confirmed = confirm(`
+🚨 POTWIERDZENIE ODRZUCENIA DOKUMENTU
+
+Czy na pewno chcesz odrzucić dokument "${document.querySelector('.doc-number').textContent}"?
+
+⚠️ Ta operacja jest NIEODWRACALNA:
+• Dokument zostanie anulowany
+• Nie będzie można go podpisać
+• Uzasadnienie zostanie zapisane w historii
+
+Czy kontynuować?
+                `.trim());
+
+                if (confirmed) {
+                    // Add loading state
+                    const button = document.getElementById('rejectButton');
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Odrzucanie...';
+                    button.disabled = true;
+
+                    form.submit();
+                }
+            });
+
+            // Auto-resize textarea
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.max(150, this.scrollHeight) + 'px';
+            });
+        });
+    </script>
 {% endblock %}

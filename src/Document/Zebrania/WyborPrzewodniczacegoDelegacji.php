@@ -39,7 +39,12 @@ class WyborPrzewodniczacegoDelegacji extends AbstractDocument
             'sekretarz_delegacji' => true,  // Sekretarz Delegacji
         ];
     }
-    
+
+    public function getTemplateName(): string
+    {
+        return 'dokumenty/zebrania/wybor_przewodniczacego_delegacji.html.twig';
+    }
+
     public function generateContent(array $data): string
     {
         return <<<'EOT'

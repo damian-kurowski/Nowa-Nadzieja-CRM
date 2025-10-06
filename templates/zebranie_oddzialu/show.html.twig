@@ -220,123 +220,38 @@
                         
                     {% elseif zebranie.status == 'oczekuje_na_podpisy' %}
                         <div class="signatures-collection-section">
-                            <h5><i class="fas fa-signature"></i> Składanie Podpisów</h5>
-                            <p class="text-muted mb-3">Każdy uczestnik musi złożyć podpis przed zakończeniem zebrania.</p>
-                            
-                            <div class="participant-signatures">
-                                <div class="signature-item {% if zebranie.obserwatorPodpisal %}signed{% else %}pending{% endif %}">
-                                    <div class="signature-icon">
-                                        <i class="fas {% if zebranie.obserwatorPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
-                                    </div>
-                                    <div class="signature-info">
-                                        <div class="signature-role">Obserwator</div>
-                                        <div class="signature-person">{{ zebranie.obserwator.imie }} {{ zebranie.obserwator.nazwisko }}</div>
-                                        {% if zebranie.obserwatorPodpisal %}
-                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuObserwatora|date('d.m.Y H:i') }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="signature-badge {% if zebranie.obserwatorPodpisal %}signed{% else %}pending{% endif %}">
-                                        {% if zebranie.obserwatorPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
-                                    </div>
-                                </div>
+                            <h5><i class="fas fa-signature"></i> Oczekiwanie na Podpisy Dokumentów</h5>
+                            <p class="text-muted mb-3">Dokumenty zostały wygenerowane i oczekują na podpisy uczestników zebrania.</p>
 
-                                {% if zebranie.protokolant %}
-                                <div class="signature-item {% if zebranie.protokolantPodpisal %}signed{% else %}pending{% endif %}">
-                                    <div class="signature-icon">
-                                        <i class="fas {% if zebranie.protokolantPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
-                                    </div>
-                                    <div class="signature-info">
-                                        <div class="signature-role">Protokolant</div>
-                                        <div class="signature-person">{{ zebranie.protokolant.imie }} {{ zebranie.protokolant.nazwisko }}</div>
-                                        {% if zebranie.protokolantPodpisal %}
-                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuProtokolanta|date('d.m.Y H:i') }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="signature-badge {% if zebranie.protokolantPodpisal %}signed{% else %}pending{% endif %}">
-                                        {% if zebranie.protokolantPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
-                                    </div>
+                            {# Wyświetl listę dokumentów do podpisu #}
+                            {% if zebranie.dokumenty|length > 0 %}
+                                <div class="documents-to-sign">
+                                    <h6>Dokumenty do podpisania:</h6>
+                                    <ul class="list-group mb-3">
+                                        {% for dokument in zebranie.dokumenty %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ dokument.tytul }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ dokument.numerDokumentu }}</small>
+                                                </div>
+                                                <span class="badge badge-{% if dokument.status == 'podpisany' %}success{% else %}warning{% endif %}">
+                                                    {{ dokument.status|capitalize }}
+                                                </span>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                    <a href="{{ path('dokument_index') }}" class="btn btn-primary">
+                                        <i class="fas fa-file-signature"></i> Przejdź do dokumentów
+                                    </a>
                                 </div>
-                                {% endif %}
-
-                                {% if zebranie.prowadzacy %}
-                                <div class="signature-item {% if zebranie.prowadzacyPodpisal %}signed{% else %}pending{% endif %}">
-                                    <div class="signature-icon">
-                                        <i class="fas {% if zebranie.prowadzacyPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
-                                    </div>
-                                    <div class="signature-info">
-                                        <div class="signature-role">Prowadzący</div>
-                                        <div class="signature-person">{{ zebranie.prowadzacy.imie }} {{ zebranie.prowadzacy.nazwisko }}</div>
-                                        {% if zebranie.prowadzacyPodpisal %}
-                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuProwadzacego|date('d.m.Y H:i') }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="signature-badge {% if zebranie.prowadzacyPodpisal %}signed{% else %}pending{% endif %}">
-                                        {% if zebranie.prowadzacyPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
-                                    </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> Brak dokumentów do podpisania.
                                 </div>
-                                {% endif %}
+                            {% endif %}
 
-                                {% if zebranie.przewodniczacy %}
-                                <div class="signature-item {% if zebranie.przewodniczacyPodpisal %}signed{% else %}pending{% endif %}">
-                                    <div class="signature-icon">
-                                        <i class="fas {% if zebranie.przewodniczacyPodpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
-                                    </div>
-                                    <div class="signature-info">
-                                        <div class="signature-role">Przewodniczący</div>
-                                        <div class="signature-person">{{ zebranie.przewodniczacy.imie }} {{ zebranie.przewodniczacy.nazwisko }}</div>
-                                        {% if zebranie.przewodniczacyPodpisal %}
-                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuPrzewodniczacego|date('d.m.Y H:i') }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="signature-badge {% if zebranie.przewodniczacyPodpisal %}signed{% else %}pending{% endif %}">
-                                        {% if zebranie.przewodniczacyPodpisal %}Podpisane{% else %}Oczekuje{% endif %}
-                                    </div>
-                                </div>
-                                {% endif %}
-
-                                {% if zebranie.zastepca1 %}
-                                <div class="signature-item {% if zebranie.zastepca1Podpisal %}signed{% else %}pending{% endif %}">
-                                    <div class="signature-icon">
-                                        <i class="fas {% if zebranie.zastepca1Podpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
-                                    </div>
-                                    <div class="signature-info">
-                                        <div class="signature-role">Zastępca I</div>
-                                        <div class="signature-person">{{ zebranie.zastepca1.imie }} {{ zebranie.zastepca1.nazwisko }}</div>
-                                        {% if zebranie.zastepca1Podpisal %}
-                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuZastepcy1|date('d.m.Y H:i') }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="signature-badge {% if zebranie.zastepca1Podpisal %}signed{% else %}pending{% endif %}">
-                                        {% if zebranie.zastepca1Podpisal %}Podpisane{% else %}Oczekuje{% endif %}
-                                    </div>
-                                </div>
-                                {% endif %}
-
-                                {% if zebranie.zastepca2 %}
-                                <div class="signature-item {% if zebranie.zastepca2Podpisal %}signed{% else %}pending{% endif %}">
-                                    <div class="signature-icon">
-                                        <i class="fas {% if zebranie.zastepca2Podpisal %}fa-check{% else %}fa-clock{% endif %}"></i>
-                                    </div>
-                                    <div class="signature-info">
-                                        <div class="signature-role">Zastępca II</div>
-                                        <div class="signature-person">{{ zebranie.zastepca2.imie }} {{ zebranie.zastepca2.nazwisko }}</div>
-                                        {% if zebranie.zastepca2Podpisal %}
-                                            <div class="signature-time">Podpisane: {{ zebranie.dataPodpisuZastepcy2|date('d.m.Y H:i') }}</div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="signature-badge {% if zebranie.zastepca2Podpisal %}signed{% else %}pending{% endif %}">
-                                        {% if zebranie.zastepca2Podpisal %}Podpisane{% else %}Oczekuje{% endif %}
-                                    </div>
-                                </div>
-                                {% endif %}
-                            </div>
-
-                            {% if zebranie.canUserPerformAction(app.user, 'podpisz_obserwator') or 
-                                  zebranie.canUserPerformAction(app.user, 'podpisz_protokolant') or 
-                                  zebranie.canUserPerformAction(app.user, 'podpisz_prowadzacy') or
-                                  zebranie.canUserPerformAction(app.user, 'podpisz_przewodniczacy') or
-                                  zebranie.canUserPerformAction(app.user, 'podpisz_zastepca1') or
-                                  zebranie.canUserPerformAction(app.user, 'podpisz_zastepca2') %}
+                            {% if false %}{# Old deprecated signature collection logic - removed #}
                                 <div class="signature-pad-container">
                                     <h6><i class="fas fa-signature"></i> Twój podpis</h6>
                                     <p class="text-muted small mb-3">Narysuj swój podpis w polu poniżej, a następnie potwierdź.</p>
@@ -357,7 +272,8 @@
                                         </button>
                                     </div>
                                 </div>
-                            {% endif %}
+                            {% endif %}{# End of deprecated signature collection logic #}
+                            {% endif %}{# End of canUserPerformAction check #}
 
                             {% if zebranie.czyWszyscyPodpisali %}
                                 <div class="alert alert-success mt-3">
