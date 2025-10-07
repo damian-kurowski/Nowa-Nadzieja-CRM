@@ -112,7 +112,7 @@ security:
         ROLE_ZARZAD_OKREGU: [ROLE_FUNKCYJNY]
         ROLE_ZARZAD_ODDZIALU: [ROLE_FUNKCYJNY]
         ROLE_FUNKCYJNY: [ROLE_CZLONEK_PARTII]
-        ROLE_ADMIN: [ROLE_USER]
+        ROLE_ADMIN: [ROLE_FUNKCYJNY, ROLE_CZLONEK_PARTII]
 
         # Rola przekazu medialnego
         ROLE_PRZEKAZ: [ROLE_CZLONEK_PARTII]     # dostęp do wysyłania przekazów medialnych
