@@ -173,6 +173,10 @@ class CzlonekController extends AbstractController
             }
         }
 
+        // Sortowanie członków - alfabetycznie (nazwisko, imię)
+        $queryBuilder->orderBy('u.nazwisko', 'ASC')
+            ->addOrderBy('u.imie', 'ASC');
+
         $pagination = $paginator->paginate(
             $queryBuilder,
             $request->query->getInt('page', 1),

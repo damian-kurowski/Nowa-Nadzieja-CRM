@@ -170,6 +170,10 @@ class KandydatController extends AbstractController
             }
         }
 
+        // Sortowanie kandydatów - od najnowszych (data złożenia deklaracji DESC)
+        $queryBuilder->orderBy('u.dataZlozeniaDeklaracji', 'DESC')
+            ->addOrderBy('u.dataRejestracji', 'DESC');
+
         $pagination = $paginator->paginate(
             $queryBuilder,
             $request->query->getInt('page', 1),
