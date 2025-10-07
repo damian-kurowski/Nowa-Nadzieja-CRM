@@ -21,8 +21,6 @@
 Thumbs.db
 
 # Uploads and user content
-/public/uploads/
-
 # Deployment files
 /deploy/
 
@@ -60,12 +58,12 @@ ksztalt/
 zadanie
 generate_sample_data.php
 
-# Import and utility scripts
-import*.php
+# Import and utility scripts (exclude from root, but not from src/)
+/import*.php
 import_log.txt
-fix_*.php
-update_*.php
-remove_*.php
+/fix_*.php
+/update_*.php
+/remove_*.php
 *.csv
 test_*.json
 
