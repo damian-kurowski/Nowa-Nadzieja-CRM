@@ -62,6 +62,7 @@ generate_sample_data.php
 
 # Import and utility scripts
 import*.php
+import_log.txt
 fix_*.php
 update_*.php
 remove_*.php
@@ -70,6 +71,9 @@ test_*.json
 
 # Docker overrides
 docker-compose.override.yml
+
+# Redis dump
+dump.rdb
 
 # Performance optimization files
 PERFORMANCE_OPTIMIZATIONS.md
