@@ -3,6 +3,7 @@
 namespace App\EventSubscriber;
 
 use App\Entity\User;
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -33,6 +34,7 @@ class FirstLoginRedirectSubscriber implements EventSubscriberInterface
         private TokenStorageInterface $tokenStorage,
         private UrlGeneratorInterface $urlGenerator,
         private LoggerInterface $logger,
+        private EntityManagerInterface $entityManager,
     ) {
     }
 
@@ -70,6 +72,19 @@ class FirstLoginRedirectSubscriber implements EventSubscriberInterface
 
         /** @var User $user */
         $user = $token->getUser();
+
+        // WAŻNE: Odśwież użytkownika z bazy, aby mieć najnowsze dane
+        // Obiekt User w tokenie może być przestarzały (pochodzi z sesji)
+        try {
+            $this->entityManager->refresh($user);
+        } catch (\Exception $e) {
+            // Jeśli nie można odświeżyć (np. użytkownik został usunięty), ignoruj
+            $this->logger->warning('Cannot refresh user in FirstLoginRedirectSubscriber', [
+                'user_id' => $user->getId(),
+                'error' => $e->getMessage()
+            ]);
+            return;
+        }
 
         if ($user->requiresFirstLoginSetup()) {
             $event->setController(function() {
