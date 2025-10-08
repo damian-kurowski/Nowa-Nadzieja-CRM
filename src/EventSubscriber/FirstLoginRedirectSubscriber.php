@@ -86,7 +86,21 @@ class FirstLoginRedirectSubscriber implements EventSubscriberInterface
             return;
         }
 
-        if ($user->requiresFirstLoginSetup()) {
+        // Debug logging
+        $requiresSetup = $user->requiresFirstLoginSetup();
+        $this->logger->info('FirstLoginRedirectSubscriber check', [
+            'user_id' => $user->getId(),
+            'email' => $user->getEmail(),
+            'route' => $route,
+            'requires_setup' => $requiresSetup,
+            'first_login_api_consents_configured' => $user->isFirstLoginApiConsentsConfigured(),
+            'is_password_change_required' => $user->isPasswordChangeRequired(),
+            'is_two_factor_enabled' => $user->isTwoFactorEnabled(),
+            'has_photo' => $user->getZdjecie() !== null,
+            'is_telegram_connected' => $user->isTelegramConnected(),
+        ]);
+
+        if ($requiresSetup) {
             $event->setController(function() {
                 return new RedirectResponse($this->urlGenerator->generate('first_login_index'));
             });
