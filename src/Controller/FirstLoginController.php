@@ -85,6 +85,16 @@ class FirstLoginController extends AbstractController
         $error = null;
 
         if ($request->isMethod('POST')) {
+            // Walidacja CSRF tokena
+            $csrfToken = $request->request->get('_csrf_token');
+            if (!$this->isCsrfTokenValid('first_login_rodo', $csrfToken)) {
+                $error = 'Nieprawidłowy token CSRF. Odśwież stronę i spróbuj ponownie.';
+                return $this->render('security/first_login_rodo.html.twig', [
+                    'error' => $error,
+                    'user' => $user,
+                ]);
+            }
+
             $acceptRodo = $request->request->get('accept_rodo');
             $acceptMonitoring = $request->request->get('accept_monitoring');
 

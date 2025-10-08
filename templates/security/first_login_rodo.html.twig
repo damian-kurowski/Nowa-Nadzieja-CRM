@@ -438,6 +438,7 @@
                 {% endif %}
 
                 <form method="post" id="rodoForm">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('first_login_rodo') }}">
                     <!-- Consent Box -->
                     <div class="consent-box">
                         <h4>
