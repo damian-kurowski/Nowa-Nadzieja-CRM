@@ -17,6 +17,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 #[IsGranted('IS_AUTHENTICATED_FULLY')]
 class FirstLoginController extends AbstractController
@@ -28,6 +29,7 @@ class FirstLoginController extends AbstractController
         private ValidatorInterface $validator,
         private TelegramBroadcastService $telegramBroadcastService,
         private VerificationCodeRepository $verificationCodeRepository,
+        private TokenStorageInterface $tokenStorage,
     ) {
     }
 
@@ -104,6 +106,7 @@ class FirstLoginController extends AbstractController
                 $user->setFirstLoginApiConsentsConfigured(true);
 
                 $this->entityManager->flush();
+                $this->refreshUserInToken($user);
 
                 $this->addFlash('success', 'Zgoda na przetwarzanie danych została zaakceptowana');
 
@@ -173,6 +176,7 @@ class FirstLoginController extends AbstractController
                     $user->setPassword($hashedPassword);
                     $user->setIsPasswordChangeRequired(false);
                     $this->entityManager->flush();
+                    $this->refreshUserInToken($user);
 
                     $this->addFlash('success', 'Hasło zostało zmienione pomyślnie');
 
@@ -229,6 +233,7 @@ class FirstLoginController extends AbstractController
         if ($this->googleAuthenticator->checkCode($user, $code)) {
             $user->setIsTwoFactorEnabled(true);
             $this->entityManager->flush();
+            $this->refreshUserInToken($user);
 
             $this->addFlash('success', 'Uwierzytelnianie dwuskładnikowe zostało aktywowane');
 
@@ -290,10 +295,11 @@ class FirstLoginController extends AbstractController
                         $uploadedFile->move($uploadsDirectory, $newFilename);
                         $user->setZdjecie($newFilename);
                         $this->entityManager->flush();
+                        $this->refreshUserInToken($user);
 
                         $this->addFlash('success', 'Zdjęcie profilowe zostało dodane pomyślnie');
 
-                        return $this->redirectToRoute('dashboard');
+                        return $this->redirectToRoute('first_login_index');
                     } catch (\Exception $e) {
                         $error = 'Błąd podczas zapisywania pliku: ' . $e->getMessage();
                     }
@@ -394,10 +400,27 @@ class FirstLoginController extends AbstractController
         // Użytkownik będzie mógł połączyć później w ustawieniach
         $user->setIsTelegramConnected(true);
         $this->entityManager->flush();
+        $this->refreshUserInToken($user);
 
         $this->addFlash('info', 'Telegram został pominięty. Możesz połączyć konto później w ustawieniach.');
 
         // Wróć do profilu jeśli stamtąd przyszedł, inaczej do dashboardu
         return $this->redirectToRoute($fromProfile ? 'profil_index' : 'dashboard');
+    }
+
+    /**
+     * Odświeża obiekt użytkownika w security tokenie po zapisie zmian do bazy.
+     * To jest konieczne, aby EventSubscriber widział aktualne dane użytkownika.
+     */
+    private function refreshUserInToken(User $user): void
+    {
+        $token = $this->tokenStorage->getToken();
+        if ($token && $token->getUser() instanceof User) {
+            // Odśwież dane z bazy
+            $this->entityManager->refresh($user);
+            // Zaktualizuj obiekt użytkownika w tokenie
+            $token->setUser($user);
+            $this->tokenStorage->setToken($token);
+        }
     }
 }
