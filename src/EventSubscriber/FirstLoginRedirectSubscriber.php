@@ -47,6 +47,9 @@ class FirstLoginRedirectSubscriber implements EventSubscriberInterface
 
     public function onKernelController(ControllerEvent $event): void
     {
+        // TYMCZASOWO WYŁĄCZONE - first login flow disabled
+        return;
+
         if (!$event->isMainRequest()) {
             return;
         }
