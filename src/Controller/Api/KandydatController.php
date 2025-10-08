@@ -51,17 +51,30 @@ class KandydatController extends AbstractController
             return new JsonResponse(['error' => 'Invalid JSON: ' . $e->getMessage()], 400);
         }
         
-        // Sprawdź API key
+        // Sprawdź API key (obsługa wielu kluczy po przecinku)
         $providedKey = $requestData['api_key'] ?? null;
-        $expectedKey = $this->getParameter('struktura_api_key') ?? 'default_api_key_123';
-        
-        if (!$providedKey || !hash_equals($expectedKey, $providedKey)) {
+        $expectedKeys = $this->getParameter('struktura_api_key') ?? 'default_api_key_123';
+
+        // Rozdziel klucze po przecinku i usuń białe znaki
+        $validKeys = array_map('trim', explode(',', $expectedKeys));
+
+        $isAuthorized = false;
+        if ($providedKey) {
+            foreach ($validKeys as $validKey) {
+                if (hash_equals($validKey, $providedKey)) {
+                    $isAuthorized = true;
+                    break;
+                }
+            }
+        }
+
+        if (!$isAuthorized) {
             $this->logger->warning('Nieautoryzowany dostęp do API kandydata', [
                 'ip' => $request->getClientIp(),
                 'user_agent' => $request->headers->get('User-Agent'),
                 'provided_key' => $providedKey ?? 'missing'
             ]);
-            
+
             return new JsonResponse(['error' => 'Unauthorized'], 401);
         }
 

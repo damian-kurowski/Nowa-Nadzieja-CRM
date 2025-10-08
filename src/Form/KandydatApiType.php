@@ -48,6 +48,12 @@ class KandydatApiType extends AbstractType
                     new Assert\Regex(pattern: '/^\d{11}$/', message: 'PESEL musi składać się z 11 cyfr')
                 ]
             ])
+            ->add('oldId', TextType::class, [
+                'required' => false,
+                'constraints' => [
+                    new Assert\Length(max: 255, maxMessage: 'Old ID nie może być dłuższe niż {{ limit }} znaków')
+                ]
+            ])
 
             // Adres zamieszkania
             ->add('ulicaZamieszkania', TextType::class, [
