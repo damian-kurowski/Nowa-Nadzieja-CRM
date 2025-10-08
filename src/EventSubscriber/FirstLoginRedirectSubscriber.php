@@ -16,7 +16,6 @@ class FirstLoginRedirectSubscriber implements EventSubscriberInterface
 {
     private const ALLOWED_ROUTES = [
         'first_login_index',
-        'first_login_accept_rodo',
         'first_login_change_password',
         'first_login_setup_2fa',
         'first_login_verify_2fa',
@@ -47,9 +46,6 @@ class FirstLoginRedirectSubscriber implements EventSubscriberInterface
 
     public function onKernelController(ControllerEvent $event): void
     {
-        // TYMCZASOWO WYŁĄCZONE - first login flow disabled
-        return;
-
         if (!$event->isMainRequest()) {
             return;
         }
@@ -96,7 +92,6 @@ class FirstLoginRedirectSubscriber implements EventSubscriberInterface
             'email' => $user->getEmail(),
             'route' => $route,
             'requires_setup' => $requiresSetup,
-            'first_login_api_consents_configured' => $user->isFirstLoginApiConsentsConfigured(),
             'is_password_change_required' => $user->isPasswordChangeRequired(),
             'is_two_factor_enabled' => $user->isTwoFactorEnabled(),
             'has_photo' => $user->getZdjecie() !== null,

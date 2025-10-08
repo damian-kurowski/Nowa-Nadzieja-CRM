@@ -1482,11 +1482,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, GoogleA
     }
 
     /**
-     * Check if user needs to complete first login setup (API consents + password + 2FA + photo + Telegram)
+     * Check if user needs to complete first login setup (password + 2FA + photo + Telegram)
      */
     public function requiresFirstLoginSetup(): bool
     {
-        return !$this->firstLoginApiConsentsConfigured || $this->isPasswordChangeRequired || !$this->isTwoFactorEnabled || null === $this->zdjecie || !$this->isTelegramConnected;
+        return $this->isPasswordChangeRequired || !$this->isTwoFactorEnabled || null === $this->zdjecie || !$this->isTelegramConnected;
     }
 
     // Getters and setters for API consent fields

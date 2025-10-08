@@ -43,27 +43,22 @@ class FirstLoginController extends AbstractController
             return $this->redirectToRoute('dashboard');
         }
 
-        // Krok 1: Konfiguracja zgód API (wyświetlanie danych na stronie)
-        if (!$user->isFirstLoginApiConsentsConfigured()) {
-            return $this->redirectToRoute('first_login_accept_rodo');
-        }
-
-        // Krok 2: Zmiana hasła
+        // Krok 1: Zmiana hasła
         if ($user->isPasswordChangeRequired()) {
             return $this->redirectToRoute('first_login_change_password');
         }
 
-        // Krok 3: Konfiguracja 2FA
+        // Krok 2: Konfiguracja 2FA
         if (!$user->isTwoFactorEnabled()) {
             return $this->redirectToRoute('first_login_setup_2fa');
         }
 
-        // Krok 4: Upload zdjęcia
+        // Krok 3: Upload zdjęcia
         if (null === $user->getZdjecie()) {
             return $this->redirectToRoute('first_login_upload_photo');
         }
 
-        // Krok 5: Połączenie z Telegramem
+        // Krok 4: Połączenie z Telegramem
         if (!$user->isTelegramConnected()) {
             return $this->redirectToRoute('first_login_connect_telegram');
         }
@@ -138,11 +133,6 @@ class FirstLoginController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        // Sprawdź, czy zgody API zostały skonfigurowane
-        if (!$user->isFirstLoginApiConsentsConfigured()) {
-            return $this->redirectToRoute('first_login_accept_rodo');
-        }
-
         if (!$user->isPasswordChangeRequired()) {
             return $this->redirectToRoute('first_login_index');
         }
@@ -206,10 +196,6 @@ class FirstLoginController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        if (!$user->isFirstLoginApiConsentsConfigured()) {
-            return $this->redirectToRoute('first_login_accept_rodo');
-        }
-
         if ($user->isPasswordChangeRequired()) {
             return $this->redirectToRoute('first_login_change_password');
         }
@@ -260,10 +246,6 @@ class FirstLoginController extends AbstractController
     {
         /** @var User $user */
         $user = $this->getUser();
-
-        if (!$user->isFirstLoginApiConsentsConfigured()) {
-            return $this->redirectToRoute('first_login_accept_rodo');
-        }
 
         if ($user->isPasswordChangeRequired()) {
             return $this->redirectToRoute('first_login_change_password');
@@ -333,9 +315,6 @@ class FirstLoginController extends AbstractController
         $fromProfile = $request->query->get('reconnect') === '1';
 
         if (!$fromProfile) {
-            if (!$user->isFirstLoginApiConsentsConfigured()) {
-                return $this->redirectToRoute('first_login_accept_rodo');
-            }
             if ($user->isPasswordChangeRequired()) {
                 return $this->redirectToRoute('first_login_change_password');
             }
