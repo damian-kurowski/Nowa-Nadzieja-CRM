@@ -131,8 +131,20 @@
                     </h5>
                 </div>
                 <div class="card-body p-4">
+                    {% if przekaz.hasMedia %}
+                        <div class="mb-4">
+                            {% if przekaz.mediaType == 'photo' %}
+                                <img src="{{ asset(przekaz.mediaFilePath) }}" class="img-fluid rounded shadow-sm" alt="{{ przekaz.tytul }}">
+                            {% elseif przekaz.mediaType == 'video' %}
+                                <video controls class="w-100 rounded shadow-sm" style="max-height: 500px;">
+                                    <source src="{{ asset(przekaz.mediaFilePath) }}" type="video/mp4">
+                                    Twoja przeglądarka nie obsługuje odtwarzania wideo.
+                                </video>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                     <div class="przekaz-content mb-4" style="line-height: 1.8; font-size: 1.05rem;">
-                        {{ przekaz.tresc|nl2br }}
+                        {{ przekaz.tresc|escape|nl2br }}
                     </div>
                     <hr class="my-4">
                     <div class="row g-3">

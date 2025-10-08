@@ -13,6 +13,27 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Index(columns: ['status'], name: 'idx_przekaz_status')]
 class PrzekazMedialny
 {
+    // Status constants
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_SENDING = 'sending';
+    public const STATUS_SENT = 'sent';
+    public const STATUS_FAILED = 'failed';
+
+    // Media type constants
+    public const MEDIA_TYPE_PHOTO = 'photo';
+    public const MEDIA_TYPE_VIDEO = 'video';
+
+    // Limits
+    public const MAX_CAPTION_LENGTH = 1024; // Telegram caption limit
+    public const MAX_PHOTO_SIZE = 20 * 1024 * 1024; // 20MB
+    public const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+    public const FLUSH_BATCH_SIZE = 50;
+
+    // Allowed MIME types
+    public const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+    public const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/mpeg', 'video/quicktime'];
+
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -23,6 +44,12 @@ class PrzekazMedialny
 
     #[ORM\Column(type: 'text')]
     private ?string $tresc = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $mediaFilePath = null;
+
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $mediaType = null; // 'photo' or 'video'
 
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(nullable: false)]
@@ -41,7 +68,7 @@ class PrzekazMedialny
     private int $liczbaOdpowiedzi = 0;
 
     #[ORM\Column(length: 20)]
-    private string $status = 'draft'; // draft, sending, sent, failed
+    private string $status = self::STATUS_DRAFT;
 
     #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $dataUtworzenia = null;
@@ -239,16 +266,69 @@ class PrzekazMedialny
 
     public function isDraft(): bool
     {
-        return $this->status === 'draft';
+        return $this->status === self::STATUS_DRAFT;
     }
 
     public function isSent(): bool
     {
-        return $this->status === 'sent';
+        return $this->status === self::STATUS_SENT;
     }
 
     public function isSending(): bool
     {
-        return $this->status === 'sending';
+        return $this->status === self::STATUS_SENDING;
+    }
+
+    public function isFailed(): bool
+    {
+        return $this->status === self::STATUS_FAILED;
+    }
+
+    /**
+     * Calculate remaining caption space
+     */
+    public function getRemainingCaptionLength(): int
+    {
+        $footer = "Jeśli udostępniłeś ten przekaz, wyślij nam link do swojego posta!";
+        $prefix = "📢 ";
+        $htmlTags = 10; // <b></b> + newlines margin
+
+        $used = strlen($this->tytul ?? '') + strlen($this->tresc ?? '') + strlen($footer) + strlen($prefix) + $htmlTags;
+        return max(0, self::MAX_CAPTION_LENGTH - $used);
+    }
+
+    /**
+     * Get all allowed MIME types
+     */
+    public static function getAllowedMimeTypes(): array
+    {
+        return array_merge(self::ALLOWED_IMAGE_TYPES, self::ALLOWED_VIDEO_TYPES);
+    }
+
+    public function getMediaFilePath(): ?string
+    {
+        return $this->mediaFilePath;
+    }
+
+    public function setMediaFilePath(?string $mediaFilePath): static
+    {
+        $this->mediaFilePath = $mediaFilePath;
+        return $this;
+    }
+
+    public function getMediaType(): ?string
+    {
+        return $this->mediaType;
+    }
+
+    public function setMediaType(?string $mediaType): static
+    {
+        $this->mediaType = $mediaType;
+        return $this;
+    }
+
+    public function hasMedia(): bool
+    {
+        return $this->mediaFilePath !== null;
     }
 }

@@ -22,6 +22,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(name: 'idx_user_typ_status', columns: ['typ_uzytkownika', 'status'])]
 #[ORM\Index(name: 'idx_user_pesel', columns: ['pesel'])]
 #[ORM\Index(name: 'idx_user_data_rejestracji', columns: ['data_rejestracji'])]
+#[ORM\Index(name: 'idx_user_telegram_connected', columns: ['is_telegram_connected'])]
 #[ORM\Index(name: 'idx_user_search', columns: ['imie', 'nazwisko', 'email'])]
 #[UniqueEntity(fields: ['email'], message: 'Użytkownik z tym adresem email już istnieje.')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface, GoogleAuthenticatorTwoFactorInterface
@@ -223,6 +224,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, GoogleA
 
     #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
     private bool $zgodaApiZdjecie = false;
+
+    // Śledzenie czy użytkownik przeszedł przez krok konfiguracji zgód API w first login
+    #[ORM\Column(type: Types::BOOLEAN, options: ['default' => false])]
+    private bool $firstLoginApiConsentsConfigured = false;
 
     // Media społecznościowe - JSON z linkami
     /**
@@ -1477,11 +1482,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, GoogleA
     }
 
     /**
-     * Check if user needs to complete first login setup (RODO + password + 2FA + photo + Telegram)
+     * Check if user needs to complete first login setup (API consents + password + 2FA + photo + Telegram)
      */
     public function requiresFirstLoginSetup(): bool
     {
-        return !$this->zgodaRodo || $this->isPasswordChangeRequired || !$this->isTwoFactorEnabled || null === $this->zdjecie || !$this->isTelegramConnected;
+        return !$this->firstLoginApiConsentsConfigured || $this->isPasswordChangeRequired || !$this->isTwoFactorEnabled || null === $this->zdjecie || !$this->isTelegramConnected;
     }
 
     // Getters and setters for API consent fields
@@ -1516,6 +1521,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface, GoogleA
     public function setZgodaApiZdjecie(bool $zgodaApiZdjecie): self
     {
         $this->zgodaApiZdjecie = $zgodaApiZdjecie;
+        return $this;
+    }
+
+    public function isFirstLoginApiConsentsConfigured(): bool
+    {
+        return $this->firstLoginApiConsentsConfigured;
+    }
+
+    public function setFirstLoginApiConsentsConfigured(bool $firstLoginApiConsentsConfigured): self
+    {
+        $this->firstLoginApiConsentsConfigured = $firstLoginApiConsentsConfigured;
         return $this;
     }
 

@@ -11,6 +11,8 @@ use App\Repository\PrzekazOdbiorcaRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Mime\Part\DataPart;
+use Symfony\Component\Mime\Part\Multipart\FormDataPart;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class TelegramBroadcastService
@@ -154,6 +156,70 @@ class TelegramBroadcastService
             ]);
             return ['ok' => false, 'description' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Wyślij media (zdjęcie lub wideo) do użytkownika
+     */
+    private function sendMediaToUser(string $chatId, string $mediaPath, string $caption, string $mediaType): array
+    {
+        try {
+            $formFields = [
+                'chat_id' => $chatId,
+                'caption' => $caption,
+                'parse_mode' => 'HTML',
+                $mediaType => DataPart::fromPath($mediaPath),
+            ];
+
+            $formData = new FormDataPart($formFields);
+            $endpoint = $mediaType === 'photo' ? '/sendPhoto' : '/sendVideo';
+
+            $response = $this->httpClient->request('POST',
+                self::TELEGRAM_API_URL . $this->telegramBroadcastBotToken . $endpoint,
+                [
+                    'headers' => $formData->getPreparedHeaders()->toArray(),
+                    'body' => $formData->bodyToIterable(),
+                ]
+            );
+
+            $statusCode = $response->getStatusCode();
+            $content = $response->toArray(false);
+
+            if ($statusCode === 200 && isset($content['ok']) && $content['ok']) {
+                return $content;
+            }
+
+            $this->logger->error("Błąd przy wysyłaniu {$mediaType} Telegram", [
+                'status_code' => $statusCode,
+                'response' => $content,
+                'media_type' => $mediaType,
+            ]);
+
+            return ['ok' => false, 'description' => $content['description'] ?? 'Unknown error'];
+        } catch (\Exception $e) {
+            $this->logger->error("Wyjątek podczas wysyłania {$mediaType} Telegram: " . $e->getMessage(), [
+                'exception' => $e,
+                'chat_id' => $chatId,
+                'media_type' => $mediaType,
+            ]);
+            return ['ok' => false, 'description' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Wyślij zdjęcie do użytkownika
+     */
+    public function sendPhotoToUser(string $chatId, string $photoPath, string $caption): array
+    {
+        return $this->sendMediaToUser($chatId, $photoPath, $caption, 'photo');
+    }
+
+    /**
+     * Wyślij wideo do użytkownika
+     */
+    public function sendVideoToUser(string $chatId, string $videoPath, string $caption): array
+    {
+        return $this->sendMediaToUser($chatId, $videoPath, $caption, 'video');
     }
 
     /**

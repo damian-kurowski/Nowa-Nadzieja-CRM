@@ -22,9 +22,9 @@
                                     <div class="card h-100 border-start border-primary border-3">
                                         <div class="card-body">
                                             <div class="d-flex align-items-center mb-3">
-                                                {% if czlonek.zdjecie %}
-                                                    <img src="{{ asset('uploads/photos/' ~ czlonek.zdjecie) }}" 
-                                                         class="rounded-circle me-3" 
+                                                {% if czlonek.zdjecie and czlonek.zgodaApiZdjecie %}
+                                                    <img src="{{ asset('uploads/photos/' ~ czlonek.zdjecie) }}"
+                                                         class="rounded-circle me-3"
                                                          style="width: 60px; height: 60px; object-fit: cover;"
                                                          alt="Zdjęcie {{ czlonek.fullName }}">
                                                 {% else %}
@@ -53,20 +53,24 @@
                                                 <div class="col-6">
                                                     <small class="text-muted d-block">Email</small>
                                                     <small class="fw-bold">
-                                                        <a href="mailto:{{ czlonek.email }}" class="text-decoration-none">
-                                                            {{ czlonek.email }}
-                                                        </a>
+                                                        {% if czlonek.zgodaApiEmail %}
+                                                            <a href="mailto:{{ czlonek.email }}" class="text-decoration-none">
+                                                                {{ czlonek.email }}
+                                                            </a>
+                                                        {% else %}
+                                                            <span class="text-muted">Ukryty</span>
+                                                        {% endif %}
                                                     </small>
                                                 </div>
                                                 <div class="col-6">
                                                     <small class="text-muted d-block">Telefon</small>
                                                     <small class="fw-bold">
-                                                        {% if czlonek.telefon %}
+                                                        {% if czlonek.zgodaApiTelefon and czlonek.telefon %}
                                                             <a href="tel:{{ czlonek.telefon }}" class="text-decoration-none">
                                                                 {{ czlonek.telefon }}
                                                             </a>
                                                         {% else %}
-                                                            <span class="text-muted">Brak</span>
+                                                            <span class="text-muted">Ukryty</span>
                                                         {% endif %}
                                                     </small>
                                                 </div>

@@ -26,7 +26,9 @@
                     </h5>
                 </div>
                 <div class="card-body p-4">
-                    <form method="post" action="{{ path('przekaz_medialny_new') }}">
+                    <form method="post" action="{{ path('przekaz_medialny_new') }}" enctype="multipart/form-data">
+                        <input type="hidden" name="_token" value="{{ csrf_token('przekaz_new') }}">
+
                         <div class="mb-3">
                             <label for="tytul" class="form-label">Tytuł przekazu <span class="text-danger">*</span></label>
                             <input type="text"
@@ -40,16 +42,38 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="media_file" class="form-label">
+                                <i class="fas fa-photo-video me-2"></i>
+                                Zdjęcie lub wideo (opcjonalnie)
+                            </label>
+                            <input type="file"
+                                   class="form-control"
+                                   id="media_file"
+                                   name="media_file"
+                                   accept="image/jpeg,image/png,image/gif,video/mp4,video/mpeg,video/quicktime">
+                            <div class="form-text">
+                                Dozwolone: JPG, PNG, GIF (max 20MB), MP4, MPEG, MOV (max 50MB)
+                            </div>
+                            <div id="mediaPreview" class="mt-2" style="display: none;">
+                                <img id="imagePreview" src="" class="img-fluid rounded" style="max-height: 200px; display: none;">
+                                <video id="videoPreview" controls class="w-100 rounded" style="max-height: 200px; display: none;"></video>
+                                <button type="button" class="btn btn-sm btn-danger mt-2" id="removeMedia">
+                                    <i class="fas fa-times me-1"></i>Usuń plik
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
                             <label for="tresc" class="form-label">Treść przekazu <span class="text-danger">*</span></label>
                             <textarea class="form-control"
                                       id="tresc"
                                       name="tresc"
                                       rows="10"
-                                      maxlength="4096"
                                       required
                                       placeholder="Wprowadź treść przekazu medialnego..."></textarea>
                             <div class="form-text">
-                                <span id="charCount">0</span> / 4096 znaków (limit Telegram)
+                                <span id="charCount">0</span> znaków
+                                <span id="charWarning" class="text-danger ms-2" style="display: none;"></span>
                             </div>
                         </div>
 
@@ -58,6 +82,7 @@
                             <strong>Wskazówki:</strong>
                             <ul class="mb-0 mt-2">
                                 <li>Przekaz zostanie wysłany do wszystkich członków partii z połączonym Telegramem</li>
+                                <li>Możesz dodać zdjęcie lub wideo do przekazu</li>
                                 <li>Możesz używać formatowania HTML: &lt;b&gt;pogrubienie&lt;/b&gt;, &lt;i&gt;kursywa&lt;/i&gt;</li>
                                 <li>Po utworzeniu przekazu będziesz mógł go wysłać lub zachować jako szkic</li>
                             </ul>
@@ -124,7 +149,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const trescInput = document.getElementById('tresc');
     const tytulInput = document.getElementById('tytul');
     const charCount = document.getElementById('charCount');
+    const charWarning = document.getElementById('charWarning');
     const preview = document.getElementById('preview');
+
+    const maxCaptionLength = 1024;
+    const footer = "Jeśli udostępniłeś ten przekaz, wyślij nam link do swojego posta!";
+    const prefix = "📢 ";
+    const htmlTagsMargin = 10;
+
+    function calculateTotalLength(tytul, tresc) {
+        return tytul.length + tresc.length + footer.length + prefix.length + htmlTagsMargin;
+    }
 
     function updatePreview() {
         const tytul = tytulInput.value || 'Tytuł przekazu';
@@ -151,25 +186,97 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="border-top pt-2 mt-2">
                     <small class="text-muted">
                         <i class="fas fa-share-alt me-1"></i>
-                        Jeśli udostępniłeś ten przekaz, wyślij nam link do swojego posta!
+                        ${footer}
                     </small>
                 </div>
             `;
         }
 
+        const totalLength = calculateTotalLength(tytulInput.value || '', tresc);
         charCount.textContent = tresc.length;
 
-        if (tresc.length > 4096) {
+        if (totalLength > maxCaptionLength) {
+            const overflow = totalLength - maxCaptionLength;
             charCount.classList.add('text-danger');
             charCount.classList.add('fw-bold');
+            charWarning.textContent = `(Za długo o ${overflow} znaków! Skróć tytuł lub treść)`;
+            charWarning.style.display = 'inline';
         } else {
             charCount.classList.remove('text-danger');
             charCount.classList.remove('fw-bold');
+            charWarning.style.display = 'none';
         }
     }
 
     trescInput.addEventListener('input', updatePreview);
     tytulInput.addEventListener('input', updatePreview);
+
+    // Media file preview and validation
+    const mediaFile = document.getElementById('media_file');
+    const mediaPreview = document.getElementById('mediaPreview');
+    const imagePreview = document.getElementById('imagePreview');
+    const videoPreview = document.getElementById('videoPreview');
+    const removeMediaBtn = document.getElementById('removeMedia');
+
+    // Allowed MIME types
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    const allowedVideoTypes = ['video/mp4', 'video/mpeg', 'video/quicktime'];
+    const maxPhotoSize = 20 * 1024 * 1024; // 20MB
+    const maxVideoSize = 50 * 1024 * 1024; // 50MB
+
+    mediaFile.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const fileType = file.type;
+        const fileSize = file.size;
+
+        // Validate file type
+        const isImage = allowedImageTypes.includes(fileType);
+        const isVideo = allowedVideoTypes.includes(fileType);
+
+        if (!isImage && !isVideo) {
+            alert('Nieprawidłowy format pliku. Dozwolone: JPG, PNG, GIF, MP4, MPEG, MOV');
+            mediaFile.value = '';
+            return;
+        }
+
+        // Validate file size
+        const maxSize = isImage ? maxPhotoSize : maxVideoSize;
+        if (fileSize > maxSize) {
+            const maxSizeMB = maxSize / (1024 * 1024);
+            alert(`Plik jest za duży. Maksymalny rozmiar: ${maxSizeMB}MB`);
+            mediaFile.value = '';
+            return;
+        }
+
+        // Preview file
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+            if (isImage) {
+                imagePreview.src = event.target.result;
+                imagePreview.style.display = 'block';
+                videoPreview.style.display = 'none';
+            } else if (isVideo) {
+                videoPreview.src = event.target.result;
+                videoPreview.style.display = 'block';
+                imagePreview.style.display = 'none';
+            }
+            mediaPreview.style.display = 'block';
+        };
+
+        reader.readAsDataURL(file);
+    });
+
+    removeMediaBtn.addEventListener('click', function() {
+        mediaFile.value = '';
+        mediaPreview.style.display = 'none';
+        imagePreview.src = '';
+        videoPreview.src = '';
+        imagePreview.style.display = 'none';
+        videoPreview.style.display = 'none';
+    });
 });
 </script>
 {% endblock %}

@@ -74,20 +74,29 @@
                                 <!-- Search and Filter -->
                                 <div class="speaker-controls mb-3">
                                     <div class="row g-2">
-                                        <div class="col-md-8">
+                                        <div class="col-12">
                                             <div class="input-group">
                                                 <span class="input-group-text">
                                                     <i class="fas fa-search"></i>
                                                 </span>
-                                                <input type="text" class="form-control" id="speakerSearch" 
-                                                       placeholder="Szukaj po nazwisku lub imieniu...">
+                                                <input type="text" class="form-control" id="speakerSearch"
+                                                       placeholder="Wpisz minimum 3 znaki imienia lub nazwiska...">
                                             </div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Wpisz minimum 3 znaki aby rozpocząć wyszukiwanie
+                                            </small>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-md-3" style="display: none;">
                                             <select class="form-select" id="speakerTypeFilter">
-                                                <option value="">Wszyscy</option>
+                                                <option value="">Wszystkie role</option>
                                                 <option value="czlonek">Członkowie</option>
-                                                <option value="kandydat">Kandydaci</option>
+                                                <option value="funkcyjny">Funkcyjni</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3" style="display: none;">
+                                            <select class="form-select" id="districtFilter">
+                                                <option value="">Wszystkie okręgi</option>
                                             </select>
                                         </div>
                                     </div>

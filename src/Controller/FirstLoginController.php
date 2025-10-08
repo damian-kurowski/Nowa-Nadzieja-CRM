@@ -41,8 +41,8 @@ class FirstLoginController extends AbstractController
             return $this->redirectToRoute('dashboard');
         }
 
-        // Krok 1: Akceptacja zgody RODO
-        if (!$user->getZgodaRodo()) {
+        // Krok 1: Konfiguracja zgód API (wyświetlanie danych na stronie)
+        if (!$user->isFirstLoginApiConsentsConfigured()) {
             return $this->redirectToRoute('first_login_accept_rodo');
         }
 
@@ -75,8 +75,8 @@ class FirstLoginController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        // Jeśli już zaakceptowano, przekieruj dalej
-        if ($user->getZgodaRodo()) {
+        // Jeśli już skonfigurowano zgody API, przekieruj dalej
+        if ($user->isFirstLoginApiConsentsConfigured()) {
             return $this->redirectToRoute('first_login_index');
         }
 
@@ -100,6 +100,9 @@ class FirstLoginController extends AbstractController
                 $user->setZgodaApiTelefon($apiTelefon);
                 $user->setZgodaApiZdjecie($apiZdjecie);
 
+                // Oznacz że użytkownik przeszedł przez konfigurację zgód API
+                $user->setFirstLoginApiConsentsConfigured(true);
+
                 $this->entityManager->flush();
 
                 $this->addFlash('success', 'Zgoda na przetwarzanie danych została zaakceptowana');
@@ -122,8 +125,8 @@ class FirstLoginController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        // Sprawdź, czy RODO zostało zaakceptowane
-        if (!$user->getZgodaRodo()) {
+        // Sprawdź, czy zgody API zostały skonfigurowane
+        if (!$user->isFirstLoginApiConsentsConfigured()) {
             return $this->redirectToRoute('first_login_accept_rodo');
         }
 
@@ -153,8 +156,8 @@ class FirstLoginController extends AbstractController
                 ]);
 
                 $regexConstraint = new Assert\Regex([
-                    'pattern' => '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/',
-                    'message' => 'Hasło musi zawierać: wielką literę, małą literę, cyfrę i znak specjalny (@$!%*?&)',
+                    'pattern' => '/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/',
+                    'message' => 'Hasło musi zawierać: wielką literę, małą literę i cyfrę',
                 ]);
 
                 $violations = $this->validator->validate($newPassword, [
@@ -189,7 +192,7 @@ class FirstLoginController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        if (!$user->getZgodaRodo()) {
+        if (!$user->isFirstLoginApiConsentsConfigured()) {
             return $this->redirectToRoute('first_login_accept_rodo');
         }
 
@@ -243,7 +246,7 @@ class FirstLoginController extends AbstractController
         /** @var User $user */
         $user = $this->getUser();
 
-        if (!$user->getZgodaRodo()) {
+        if (!$user->isFirstLoginApiConsentsConfigured()) {
             return $this->redirectToRoute('first_login_accept_rodo');
         }
 
@@ -314,7 +317,7 @@ class FirstLoginController extends AbstractController
         $fromProfile = $request->query->get('reconnect') === '1';
 
         if (!$fromProfile) {
-            if (!$user->getZgodaRodo()) {
+            if (!$user->isFirstLoginApiConsentsConfigured()) {
                 return $this->redirectToRoute('first_login_accept_rodo');
             }
             if ($user->isPasswordChangeRequired()) {

@@ -265,6 +265,147 @@
             margin-right: 0.5rem;
             color: #17a2b8;
         }
+
+        /* Enhanced Speaker Selection Styles */
+        .enhanced-speaker-selection {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .speaker-controls {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .selected-speakers {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(30, 126, 52, 0.05));
+            border: 1px solid rgba(40, 167, 69, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .selected-speakers-list {
+            min-height: 60px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+
+        .selected-speaker-item {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        .selected-speaker-item .remove-speaker {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .selected-speaker-item .remove-speaker:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .available-speakers {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .speakers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .speaker-card {
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .speaker-card:hover {
+            border-color: #17a2b8;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px var(--shadow-light);
+        }
+
+        .speaker-card.selected {
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(30, 126, 52, 0.05));
+            border-color: #28a745;
+            color: #28a745;
+        }
+
+        .speaker-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6c757d, #545b62);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .speaker-avatar.czlonek { background: linear-gradient(135deg, #17a2b8, #138496); }
+
+        .speaker-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .speaker-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .speaker-details {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
     </style>
 {% endblock %}
 
@@ -355,10 +496,68 @@
                             <label class="form-label">
                                 <i class="fas fa-microphone"></i>{{ form.mowcy.vars.label }}
                             </label>
-                            {{ form_widget(form.mowcy, {'attr': {'class': 'enhanced-select', 'multiple': 'multiple', 'size': '4'}}) }}
+
+                            <!-- Enhanced Speaker Selection -->
+                            <div class="enhanced-speaker-selection">
+                                <!-- Search and Filter -->
+                                <div class="speaker-controls mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="fas fa-search"></i>
+                                                </span>
+                                                <input type="text" class="form-control" id="speakerSearch"
+                                                       placeholder="Wpisz minimum 3 znaki imienia lub nazwiska...">
+                                            </div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Wpisz minimum 3 znaki aby rozpocząć wyszukiwanie
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Selected Speakers -->
+                                <div class="selected-speakers mb-3" id="selectedSpeakers">
+                                    <div class="selected-speakers-header">
+                                        <small class="text-muted">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            Wybrani mówcy (<span id="selectedCount">0</span>):
+                                        </small>
+                                    </div>
+                                    <div class="selected-speakers-list" id="selectedSpeakersList">
+                                        <div class="no-selection text-muted text-center py-2">
+                                            <small>Nie wybrano żadnych mówców</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Available Speakers -->
+                                <div class="available-speakers">
+                                    <div class="available-speakers-header mb-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-users me-1"></i>
+                                            Dostępni mówcy:
+                                        </small>
+                                    </div>
+                                    <div class="speakers-grid" id="speakersGrid">
+                                        <div class="loading-message text-center py-4">
+                                            <div class="spinner-border text-primary" role="status">
+                                                <span class="visually-hidden">Ładowanie...</span>
+                                            </div>
+                                            <p class="mt-2 text-muted">Ładowanie listy mówców...</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Hidden original select for form submission -->
+                                {{ form_widget(form.mowcy, {'attr': {'style': 'display: none;'}}) }}
+                            </div>
+
                             <div class="help-text">
                                 <i class="fas fa-info-circle"></i>
-                                Przytrzymaj Ctrl aby wybrać wielu mówców
+                                Kliknij na osobę aby dodać/usunąć ją z listy mówców
                             </div>
                             {{ form_errors(form.mowcy) }}
                         </div>
@@ -512,5 +711,260 @@
                 }
             });
         }
+
+        // Enhanced Speaker Selection System with Lazy Loading (same as new.html.twig)
+        class EnhancedSpeakerSelection {
+            constructor() {
+                this.selectedSpeakers = new Map();
+                this.searchResults = [];
+                this.searchTimeout = null;
+                this.isSearching = false;
+
+                this.originalSelect = document.querySelector('select[multiple][name*="mowcy"]');
+                if (!this.originalSelect) {
+                    console.error('Original select not found');
+                    return;
+                }
+
+                this.speakersGrid = document.getElementById('speakersGrid');
+                this.selectedSpeakersList = document.getElementById('selectedSpeakersList');
+                this.selectedCount = document.getElementById('selectedCount');
+                this.searchInput = document.getElementById('speakerSearch');
+
+                if (!this.speakersGrid || !this.selectedSpeakersList) {
+                    console.error('Required elements not found');
+                    return;
+                }
+
+                this.init();
+            }
+
+            init() {
+                this.loadExistingSpeakers();
+                this.setupEventListeners();
+                this.showInitialMessage();
+                this.updateSelectedDisplay();
+            }
+
+            loadExistingSpeakers() {
+                const options = this.originalSelect.querySelectorAll('option[selected], option:checked');
+                options.forEach(option => {
+                    if (option.value) {
+                        const fullText = option.textContent.trim();
+                        const emailMatch = fullText.match(/\(([^)]+)\)$/);
+                        const email = emailMatch ? emailMatch[1] : '';
+                        const name = emailMatch ? fullText.replace(/\s*\([^)]+\)$/, '') : fullText;
+
+                        this.selectedSpeakers.set(option.value, {
+                            id: option.value,
+                            name: name,
+                            email: email
+                        });
+                    }
+                });
+            }
+
+            showInitialMessage() {
+                this.speakersGrid.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">Wpisz minimum 3 znaki aby wyszukać osoby</h6>
+                        <p class="text-muted small mb-0">Rozpocznij wpisywanie imienia lub nazwiska mówcy</p>
+                    </div>
+                `;
+            }
+
+            getInitials(name) {
+                return name.split(' ')
+                    .map(word => word.charAt(0))
+                    .join('')
+                    .toUpperCase()
+                    .substring(0, 2);
+            }
+
+            setupEventListeners() {
+                if (this.searchInput) {
+                    this.searchInput.addEventListener('input', () => this.handleSearch());
+                }
+            }
+
+            handleSearch() {
+                const query = this.searchInput.value.trim();
+
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
+                }
+
+                if (query.length < 3) {
+                    this.showInitialMessage();
+                    return;
+                }
+
+                this.searchTimeout = setTimeout(() => {
+                    this.performSearch(query);
+                }, 300);
+            }
+
+            async performSearch(query) {
+                this.isSearching = true;
+                this.showLoadingState();
+
+                try {
+                    const response = await fetch(`{{ path('wystep_medialny_search_speakers') }}?q=${encodeURIComponent(query)}`);
+                    if (!response.ok) {
+                        throw new Error('Search failed');
+                    }
+
+                    const results = await response.json();
+                    this.searchResults = results;
+                    this.renderSearchResults();
+                } catch (error) {
+                    console.error('Search error:', error);
+                    this.showErrorMessage();
+                } finally {
+                    this.isSearching = false;
+                }
+            }
+
+            showLoadingState() {
+                this.speakersGrid.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Wyszukiwanie...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Wyszukiwanie...</p>
+                    </div>
+                `;
+            }
+
+            showErrorMessage() {
+                this.speakersGrid.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.
+                    </div>
+                `;
+            }
+
+            renderSearchResults() {
+                if (this.searchResults.length === 0) {
+                    this.speakersGrid.innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-user-slash fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Nie znaleziono osób spełniających kryteria</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                this.speakersGrid.innerHTML = this.searchResults
+                    .map(speaker => this.createSpeakerCard(speaker))
+                    .join('');
+
+                this.speakersGrid.querySelectorAll('.speaker-card').forEach(card => {
+                    card.addEventListener('click', (e) => {
+                        const speakerId = card.dataset.speakerId;
+                        const speakerData = this.searchResults.find(s => s.id == speakerId);
+                        if (speakerData) {
+                            this.toggleSpeaker(speakerId, speakerData);
+                        }
+                    });
+                });
+            }
+
+            createSpeakerCard(speaker) {
+                const isSelected = this.selectedSpeakers.has(speaker.id.toString());
+
+                return `
+                    <div class="speaker-card ${isSelected ? 'selected' : ''}" data-speaker-id="${speaker.id}">
+                        <div class="speaker-avatar czlonek">
+                            ${this.getInitials(speaker.name)}
+                        </div>
+                        <div class="speaker-info">
+                            <div class="speaker-name">${speaker.name}</div>
+                            <div class="speaker-details">
+                                <small class="text-muted">${speaker.email}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            toggleSpeaker(speakerId, speakerData) {
+                const id = speakerId.toString();
+
+                if (this.selectedSpeakers.has(id)) {
+                    this.selectedSpeakers.delete(id);
+                } else {
+                    this.selectedSpeakers.set(id, speakerData);
+                }
+
+                this.updateSelectedDisplay();
+                this.updateOriginalSelect();
+                this.renderSearchResults();
+            }
+
+            removeSpeaker(speakerId) {
+                const id = speakerId.toString();
+                this.selectedSpeakers.delete(id);
+                this.updateSelectedDisplay();
+                this.updateOriginalSelect();
+                this.renderSearchResults();
+            }
+
+            updateSelectedDisplay() {
+                const count = this.selectedSpeakers.size;
+                this.selectedCount.textContent = count;
+
+                if (count === 0) {
+                    this.selectedSpeakersList.innerHTML = `
+                        <div class="no-selection text-muted text-center py-2">
+                            <small>Nie wybrano żadnych mówców</small>
+                        </div>
+                    `;
+                } else {
+                    const selectedArray = Array.from(this.selectedSpeakers.values());
+
+                    this.selectedSpeakersList.innerHTML = selectedArray
+                        .map(speaker => `
+                            <div class="selected-speaker-item">
+                                <span>${speaker.name}</span>
+                                <button type="button" class="remove-speaker" data-speaker-id="${speaker.id}">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        `)
+                        .join('');
+
+                    this.selectedSpeakersList.querySelectorAll('.remove-speaker').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const speakerId = btn.dataset.speakerId;
+                            this.removeSpeaker(speakerId);
+                        });
+                    });
+                }
+            }
+
+            updateOriginalSelect() {
+                this.originalSelect.innerHTML = '';
+
+                this.selectedSpeakers.forEach((speaker, id) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = speaker.name;
+                    option.selected = true;
+                    this.originalSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Initialize speaker selection system
+        let speakerSelection;
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                speakerSelection = new EnhancedSpeakerSelection();
+            }, 100);
+        });
     </script>
 {% endblock %}

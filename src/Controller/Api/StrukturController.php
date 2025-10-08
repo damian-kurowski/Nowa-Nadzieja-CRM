@@ -279,27 +279,15 @@ class StrukturController extends AbstractController
     
     private function formatPerson($user): array
     {
-        $data = [
+        return [
             'first_name' => $user->getImie(),
             'last_name' => $user->getNazwisko(),
+            'email' => $user->isZgodaApiEmail() ? $user->getEmail() : null,
+            'phone' => $user->isZgodaApiTelefon() ? $user->getTelefon() : null,
+            'photo_url' => ($user->isZgodaApiZdjecie() && $user->getZdjecie())
+                ? '/uploads/photos/' . $user->getZdjecie()
+                : null
         ];
-
-        // Dodaj email tylko jeśli użytkownik wyraził zgodę
-        if ($user->isZgodaApiEmail()) {
-            $data['email'] = $user->getEmail();
-        }
-
-        // Dodaj telefon tylko jeśli użytkownik wyraził zgodę
-        if ($user->isZgodaApiTelefon()) {
-            $data['phone'] = $user->getTelefon();
-        }
-
-        // Dodaj zdjęcie tylko jeśli użytkownik wyraził zgodę
-        if ($user->isZgodaApiZdjecie() && $user->getZdjecie()) {
-            $data['photo_url'] = '/uploads/photos/' . $user->getZdjecie();
-        }
-
-        return $data;
     }
     
     private function validateApiKey(Request $request): bool

@@ -37,7 +37,10 @@
       "Bash(git push:*)",
       "Bash(set PGPASSWORD=password)",
       "Bash(scp:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(if exist varcache rd /s /q varcache)",
+      "Bash(rm:*)",
+      "Read(//c/Users/Cogitech/scoop/apps/php/8.4.10/**)"
     ],
     "deny": [],
     "ask": []

@@ -91,20 +91,22 @@ class CzlonekController extends AbstractController
         // Filtr składki - używamy pól aktualizowanych przez PaymentStatusService
         if ($skladka = $request->query->get('skladka')) {
             $currentDate = new \DateTime();
-            
+            $currentEndOfMonth = clone $currentDate;
+            $currentEndOfMonth->modify('last day of this month')->setTime(23, 59, 59);
+
             switch ($skladka) {
                 case 'oplacona':
-                    // Członkowie z ważną składką (data ważności >= dziś)
-                    $queryBuilder->andWhere('u.dataWaznosciSkladki >= :current_date')
-                        ->setParameter('current_date', $currentDate->format('Y-m-d'));
+                    // Członkowie z ważną składką (data ważności >= koniec bieżącego miesiąca)
+                    $queryBuilder->andWhere('u.dataWaznosciSkladki >= :current_end_of_month')
+                        ->setParameter('current_end_of_month', $currentEndOfMonth->format('Y-m-d H:i:s'));
                     break;
-                    
+
                 case 'nieoplacona':
-                    // Członkowie bez ważnej składki (data ważności < dziś lub NULL)
-                    $queryBuilder->andWhere('u.dataWaznosciSkladki < :current_date OR u.dataWaznosciSkladki IS NULL')
-                        ->setParameter('current_date', $currentDate->format('Y-m-d'));
+                    // Członkowie bez ważnej składki (data ważności < koniec bieżącego miesiąca lub NULL)
+                    $queryBuilder->andWhere('u.dataWaznosciSkladki < :current_end_of_month OR u.dataWaznosciSkladki IS NULL')
+                        ->setParameter('current_end_of_month', $currentEndOfMonth->format('Y-m-d H:i:s'));
                     break;
-                    
+
                 case 'przeterminowana':
                     // Członkowie z zaległościami (data ważności < 3 miesiące temu lub NULL)
                     $threeMonthsAgo = (clone $currentDate)->modify('-3 months');
@@ -205,9 +207,15 @@ class CzlonekController extends AbstractController
             ->getQuery()
             ->getSingleScalarResult();
             
+        // Opłacone składki - ta sama logika co filtr (data ważności >= koniec bieżącego miesiąca)
+        $currentDate = new \DateTime();
+        $currentEndOfMonth = clone $currentDate;
+        $currentEndOfMonth->modify('last day of this month')->setTime(23, 59, 59);
+
         $paidMemberships = $userRepository->createQueryBuilderForUser($currentUser, 'czlonek')
             ->select('COUNT(u.id)')
-            ->andWhere('u.skladkaOplacona = true')
+            ->andWhere('u.dataWaznosciSkladki >= :current_end_of_month')
+            ->setParameter('current_end_of_month', $currentEndOfMonth->format('Y-m-d H:i:s'))
             ->getQuery()
             ->getSingleScalarResult();
             

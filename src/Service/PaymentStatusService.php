@@ -43,32 +43,25 @@ class PaymentStatusService
 
     public function getPaymentStatus(User $user): array
     {
-        // Get paid membership fees from new table
+        // Oblicz sumę wpłaconych składek
         $oplaconeSkladki = $this->skladkaCzlonkowskaRepository->findOplaconeByCzlonek($user);
         $totalPaid = 0;
-        
+
         foreach ($oplaconeSkladki as $skladka) {
             $totalPaid += (float) $skladka->getKwota();
         }
-        
-        // Oblicz rzeczywistą ważność z uwzględnieniem historycznych stawek
-        if ($user->getTypUzytkownika() === 'kandydat') {
-            // Dla kandydatów miesiące liczą się od dzisiaj
-            $najpozniejszaDataWaznosci = $this->calculateCombinedValidityWithHistoricalRates($oplaconeSkladki);
-        } else {
-            // Dla członków miesiące liczą się od daty przyjęcia do partii
-            $membershipStartDate = $this->getMembershipStartDate($user);
-            $najpozniejszaDataWaznosci = $this->calculateCombinedValidityForMember($oplaconeSkladki, $membershipStartDate);
-        }
-        
-        // Sprawdź czy składki są aktualne
-        $currentDate = new \DateTime();
-        $currentMonthPaid = $najpozniejszaDataWaznosci && $najpozniejszaDataWaznosci >= $currentDate;
-        
+
         // Special logic for candidates vs members
         if ($user->getTypUzytkownika() === 'kandydat') {
-            return $this->getCandidatePaymentStatus($user, $totalPaid, null, $najpozniejszaDataWaznosci, $currentMonthPaid);
+            // Kandydaci: tylko sprawdzamy czy wpłacili 60 PLN (opłata kandydacka)
+            return $this->getCandidatePaymentStatus($user, $totalPaid, null, null, false);
         } else {
+            // Członkowie: używamy najpóźniejszej daty ważności z tabeli skladka_czlonkowska
+            $najpozniejszaDataWaznosci = $this->skladkaCzlonkowskaRepository->getNajpozniejszaDataWaznosci($user);
+
+            $currentDate = new \DateTime();
+            $currentMonthPaid = $najpozniejszaDataWaznosci && $najpozniejszaDataWaznosci >= $currentDate;
+
             return $this->getMemberPaymentStatus($user, $totalPaid, null, $najpozniejszaDataWaznosci, $currentMonthPaid);
         }
     }
@@ -76,75 +69,44 @@ class PaymentStatusService
     private function getCandidatePaymentStatus(User $user, float $totalPaid, $najnowszaSkladka, $najpozniejszaDataWaznosci, bool $currentMonthPaid): array
     {
         $monthlyFee = self::MONTHLY_FEE;
-        $requiredAdvanceMonths = self::CANDIDATE_ADVANCE_MONTHS;
-        $currentDate = new \DateTime();
-        
-        // Kandydaci MUSZĄ wpłacić pełne 3 miesiące z góry (nie częściowe)
-        $requiredAmount = $requiredAdvanceMonths * $monthlyFee;
+        $requiredAmount = self::CANDIDATE_ADVANCE_MONTHS * $monthlyFee; // 60 PLN (3 x 20 PLN)
+
+        // Kandydaci: opłata kandydacka 60 PLN - albo mają, albo nie (bez liczenia czasu)
         $hasFullPayment = $totalPaid >= $requiredAmount;
-        
+
         if (!$hasFullPayment) {
             $missingAmount = $requiredAmount - $totalPaid;
-            
+
             return [
                 'status' => 'candidate_insufficient',
-                'message' => "❌ Kandydat musi wpłacić pełną składkę za {$requiredAdvanceMonths} miesiące ({$requiredAmount} PLN). Brakuje: {$missingAmount} PLN",
+                'message' => "❌ Wymagana opłata kandydacka: {$requiredAmount} PLN. Brakuje: {$missingAmount} PLN",
                 'color' => 'danger',
                 'monthsCovered' => 0,
                 'monthsSinceStart' => 0,
                 'totalPaid' => $totalPaid,
                 'monthlyFee' => $monthlyFee,
                 'overdueMonths' => 0,
-                'paidUntil' => $najpozniejszaDataWaznosci,
+                'paidUntil' => null,
                 'isCandidate' => true,
                 'hasRequiredAdvance' => false,
                 'missingAmount' => $missingAmount
             ];
         }
-        
-        // Kandydat wpłacił wystarczająco - używamy rzeczywistej daty ważności z historycznymi stawkami
-        if ($najpozniejszaDataWaznosci) {
-            $monthsAhead = max(0, $this->getMonthsDifference($currentDate, $najpozniejszaDataWaznosci));
-            
-            return [
-                'status' => 'candidate_ready',
-                'message' => "✅ Kandydat opłacił składki do " . $najpozniejszaDataWaznosci->format('m.Y') . " ({$monthsAhead} mies. z góry)",
-                'color' => 'success',
-                'monthsCovered' => $monthsAhead,
-                'monthsSinceStart' => 0,
-                'totalPaid' => $totalPaid,
-                'monthlyFee' => $monthlyFee,
-                'overdueMonths' => 0,
-                'paidUntil' => $najpozniejszaDataWaznosci,
-                'isCandidate' => true,
-                'hasRequiredAdvance' => true,
-                'advanceMonths' => $monthsAhead
-            ];
-        } else {
-            // Fallback - oblicz standardowo
-            $monthsCovered = (int) floor($totalPaid / $monthlyFee);
-            $currentMonthStart = clone $currentDate;
-            $currentMonthStart->modify('first day of this month');
-            
-            $validUntil = clone $currentMonthStart;
-            $validUntil->modify("+{$monthsCovered} months");
-            $validUntil->modify('last day of this month')->setTime(23, 59, 59);
-            
-            return [
-                'status' => 'candidate_ready',
-                'message' => "✅ Kandydat opłacił składki na {$monthsCovered} miesięcy (do " . $validUntil->format('m.Y') . ")",
-                'color' => 'success',
-                'monthsCovered' => $monthsCovered,
-                'monthsSinceStart' => 0,
-                'totalPaid' => $totalPaid,
-                'monthlyFee' => $monthlyFee,
-                'overdueMonths' => 0,
-                'paidUntil' => $validUntil,
-                'isCandidate' => true,
-                'hasRequiredAdvance' => true,
-                'advanceMonths' => $monthsCovered
-            ];
-        }
+
+        // Kandydat wpłacił opłatę kandydacką
+        return [
+            'status' => 'candidate_ready',
+            'message' => "✅ Opłata kandydacka wpłacona ({$requiredAmount} PLN)",
+            'color' => 'success',
+            'monthsCovered' => 0,
+            'monthsSinceStart' => 0,
+            'totalPaid' => $totalPaid,
+            'monthlyFee' => $monthlyFee,
+            'overdueMonths' => 0,
+            'paidUntil' => null,
+            'isCandidate' => true,
+            'hasRequiredAdvance' => true
+        ];
     }
 
     private function getMemberPaymentStatus(User $user, float $totalPaid, $najnowszaSkladka, $najpozniejszaDataWaznosci, bool $currentMonthPaid): array
@@ -301,28 +263,15 @@ class PaymentStatusService
         return $this->skladkaCzlonkowskaRepository->findByCzlonek($user, ['rok' => 'DESC', 'miesiac' => 'DESC']);
     }
 
-    private function getStartDate(User $user): \DateTime
-    {
-        // Try to get the first payment date
-        $firstPayment = $this->platnoscRepository->findFirstPaymentByUser($user);
-        
-        if ($firstPayment && $firstPayment->getDataKsiegowania()) {
-            return $firstPayment->getDataKsiegowania();
-        }
-        
-        // Fallback to user registration date or account creation
-        return $user->getDataRejestracji() ?: new \DateTime('2025-01-01');
-    }
-
     private function getMembershipStartDate(User $user): \DateTime
     {
         // For members, use the date they became a member (not registration date)
         $membershipDate = $user->getDataPrzyjeciaDoPartii();
-        
+
         if ($membershipDate) {
             return $membershipDate;
         }
-        
+
         // Fallback to registration date if no membership date set
         return $user->getDataRejestracji() ?: new \DateTime('2025-01-01');
     }
@@ -399,21 +348,33 @@ class PaymentStatusService
             $user->setDataOplaceniaSkladki(null);
             $user->setKwotaSkladki(null);
         } else {
-            // Oblicz rzeczywistą datę ważności z uwzględnieniem wszystkich składek
-            if ($user->getTypUzytkownika() === 'kandydat') {
-                $najpozniejszaDataWaznosci = $this->calculateCombinedValidityWithHistoricalRates($oplaconeSkladki);
-            } else {
-                $membershipStartDate = $this->getMembershipStartDate($user);
-                $najpozniejszaDataWaznosci = $this->calculateCombinedValidityForMember($oplaconeSkladki, $membershipStartDate);
+            $totalPaid = 0;
+            foreach ($oplaconeSkladki as $skladka) {
+                $totalPaid += (float) $skladka->getKwota();
             }
-            
-            $currentDate = new \DateTime();
-            $isValid = $najpozniejszaDataWaznosci && $najpozniejszaDataWaznosci >= $currentDate;
-            
-            // Ustaw status w tabeli user na podstawie rzeczywistych obliczeń
-            $user->setSkladkaOplacona($isValid);
-            $user->setDataWaznosciSkladki($najpozniejszaDataWaznosci);
-            
+
+            if ($user->getTypUzytkownika() === 'kandydat') {
+                // Kandydaci: opłata kandydacka 60 PLN - albo mają, albo nie
+                $requiredAmount = self::CANDIDATE_ADVANCE_MONTHS * self::MONTHLY_FEE; // 60 PLN
+                $isValid = $totalPaid >= $requiredAmount;
+
+                $user->setSkladkaOplacona($isValid);
+                $user->setDataWaznosciSkladki(null); // Kandydaci nie mają daty ważności
+            } else {
+                // Członkowie: używamy najpóźniejszej daty ważności z tabeli skladka_czlonkowska
+                $najpozniejszaDataWaznosci = $this->skladkaCzlonkowskaRepository->getNajpozniejszaDataWaznosci($user);
+
+                $currentDate = new \DateTime();
+                $currentEndOfMonth = clone $currentDate;
+                $currentEndOfMonth->modify('last day of this month')->setTime(23, 59, 59);
+
+                // Składka jest opłacona gdy pokrywa cały bieżący miesiąc (do końca miesiąca)
+                $isValid = $najpozniejszaDataWaznosci && $najpozniejszaDataWaznosci >= $currentEndOfMonth;
+
+                $user->setSkladkaOplacona($isValid);
+                $user->setDataWaznosciSkladki($najpozniejszaDataWaznosci);
+            }
+
             // Ustaw dane ostatniej wpłaty
             $ostatniaWplata = end($oplaconeSkladki); // Ostatnia składka (sortowana w repository)
             if ($ostatniaWplata) {
@@ -426,128 +387,6 @@ class PaymentStatusService
         $this->entityManager->flush();
     }
 
-    /**
-     * Oblicz rzeczywistą datę ważności składki z uwzględnieniem historycznych stawek
-     */
-    public function calculateValidityWithHistoricalRates(\DateTime $paymentDate, float $amount): \DateTime
-    {
-        $rateChangeDate = new \DateTime('2022-06-06');
-        
-        // Jeśli wpłata była przed zmianą stawki lub w dniu zmiany
-        if ($paymentDate <= $rateChangeDate) {
-            // Cała kwota rozliczana według starej stawki (10 PLN/miesiąc) aż do wyczerpania puli
-            $monthsCovered = (int) floor($amount / 10.00);
-            
-            // Oblicz datę ważności od początku miesiąca wpłaty
-            $validityStart = clone $paymentDate;
-            $validityStart->modify('first day of this month');
-            
-            $validity = clone $validityStart;
-            $validity->modify("+{$monthsCovered} months");
-            $validity->modify('last day of this month')->setTime(23, 59, 59);
-            
-            return $validity;
-        }
-        
-        // Wpłata po zmianie stawki - standardowa logika z nową stawką
-        $monthsCovered = (int) floor($amount / 20.00);
-        
-        $validityStart = clone $paymentDate;
-        $validityStart->modify('first day of this month');
-        
-        $validity = clone $validityStart;
-        $validity->modify("+{$monthsCovered} months");
-        $validity->modify('last day of this month')->setTime(23, 59, 59);
-        
-        return $validity;
-    }
-
-    /**
-     * Oblicz łączną ważność wszystkich składek z uwzględnieniem historycznych stawek
-     * Wszystkie wpłaty się sumują, dają łączną ilość miesięcy od momentu zostania członkiem
-     */
-    public function calculateCombinedValidityWithHistoricalRates(array $skladki): ?\DateTime
-    {
-        if (empty($skladki)) {
-            return null;
-        }
-        
-        $totalMonths = 0;
-        $rateChangeDate = new \DateTime('2022-06-06');
-        
-        // Sumuj wszystkie miesiące z uwzględnieniem historycznych stawek
-        foreach ($skladki as $skladka) {
-            $paymentDate = $skladka->getDataPlatnosci();
-            $amount = (float) $skladka->getKwota();
-            
-            if (!$paymentDate) continue;
-            
-            if ($paymentDate <= $rateChangeDate) {
-                // Wpłata przed zmianą stawki: kwota ÷ 10 = ilość miesięcy
-                $totalMonths += (int) floor($amount / 10.00);
-            } else {
-                // Wpłata po zmianie stawki: kwota ÷ 20 = ilość miesięcy
-                $totalMonths += (int) floor($amount / 20.00);
-            }
-        }
-        
-        if ($totalMonths <= 0) {
-            return null;
-        }
-        
-        // Miesiące liczą się od dzisiaj (dla kandydatów) lub od daty przyjęcia (dla członków)
-        $startDate = new \DateTime();
-        $startDate->modify('first day of this month');
-        
-        $validity = clone $startDate;
-        $validity->modify("+{$totalMonths} months");
-        $validity->modify('last day of this month')->setTime(23, 59, 59);
-        
-        return $validity;
-    }
-
-    /**
-     * Oblicz łączną ważność dla członka od daty przyjęcia do partii
-     */
-    public function calculateCombinedValidityForMember(array $skladki, \DateTime $membershipStartDate): ?\DateTime
-    {
-        if (empty($skladki)) {
-            return null;
-        }
-        
-        $totalMonths = 0;
-        $rateChangeDate = new \DateTime('2022-06-06');
-        
-        // Sumuj wszystkie miesiące z uwzględnieniem historycznych stawek
-        foreach ($skladki as $skladka) {
-            $paymentDate = $skladka->getDataPlatnosci();
-            $amount = (float) $skladka->getKwota();
-            
-            if (!$paymentDate) continue;
-            
-            if ($paymentDate <= $rateChangeDate) {
-                // Wpłata przed zmianą stawki: kwota ÷ 10 = ilość miesięcy
-                $totalMonths += (int) floor($amount / 10.00);
-            } else {
-                // Wpłata po zmianie stawki: kwota ÷ 20 = ilość miesięcy
-                $totalMonths += (int) floor($amount / 20.00);
-            }
-        }
-        
-        if ($totalMonths <= 0) {
-            return null;
-        }
-        
-        // Miesiące liczą się od daty przyjęcia do partii
-        $startDate = clone $membershipStartDate;
-        $startDate->modify('first day of this month');
-        
-        $validity = clone $startDate;
-        $validity->modify("+{$totalMonths} months");
-        $validity->modify('last day of this month')->setTime(23, 59, 59);
-        
-        return $validity;
-    }
 
     /**
      * Handle candidate becoming a member - recalculate payment validity dates

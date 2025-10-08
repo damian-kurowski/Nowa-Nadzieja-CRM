@@ -30,6 +30,15 @@ class KonferencjaPrasowaType extends AbstractType
     #[\Override]
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        /** @var KonferencjaPrasowa|null $konferencja */
+        $konferencja = $options['data'] ?? null;
+
+        // Get existing speakers for edit mode
+        $existingSpeakers = [];
+        if ($konferencja && $konferencja->getId()) {
+            $existingSpeakers = $konferencja->getMowcy()->toArray();
+        }
+
         $builder
             ->add('dataIGodzina', DateTimeType::class, [
                 'label' => 'Data i godzina konferencji',
@@ -69,9 +78,9 @@ class KonferencjaPrasowaType extends AbstractType
                 'multiple' => true,
                 'expanded' => false,
                 'label' => 'Mówcy/Uczestnicy konferencji',
-                'attr' => ['class' => 'select2'],
+                'attr' => ['class' => 'select2', 'data-existing-speakers' => json_encode($existingSpeakers)],
                 'required' => false,
-                'choices' => $this->getMowcyChoices(),
+                'choices' => $existingSpeakers, // Load existing speakers for edit mode
             ]);
     }
 

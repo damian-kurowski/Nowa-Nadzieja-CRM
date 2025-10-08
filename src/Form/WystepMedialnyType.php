@@ -30,6 +30,15 @@ class WystepMedialnyType extends AbstractType
     #[\Override]
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        /** @var WystepMedialny|null $wystep */
+        $wystep = $options['data'] ?? null;
+
+        // Get existing speakers for edit mode
+        $existingSpeakers = [];
+        if ($wystep && $wystep->getId()) {
+            $existingSpeakers = $wystep->getMowcy()->toArray();
+        }
+
         $builder
             ->add('dataIGodzina', DateTimeType::class, [
                 'label' => 'Data i godzina wydarzenia',
@@ -71,7 +80,7 @@ class WystepMedialnyType extends AbstractType
                 'label' => 'Mówcy/osoby występujące',
                 'attr' => ['class' => 'select2'],
                 'required' => false,
-                'choices' => $this->getMowcyChoices(),
+                'choices' => $existingSpeakers, // Load existing speakers for edit mode
             ]);
     }
 

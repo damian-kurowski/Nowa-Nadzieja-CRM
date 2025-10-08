@@ -156,7 +156,7 @@ class SkladkaCzlonkowskaRepository extends ServiceEntityRepository
             ->orderBy('s.miesiac', 'ASC');
 
         $results = $qb->getQuery()->getResult();
-        
+
         $statystyki = [];
         foreach ($results as $result) {
             $statystyki[$result['miesiac']] = [
@@ -174,5 +174,23 @@ class SkladkaCzlonkowskaRepository extends ServiceEntityRepository
 
         ksort($statystyki);
         return $statystyki;
+    }
+
+    /**
+     * Zwróć najpóźniejszą datę ważności składki spośród wszystkich opłaconych składek użytkownika
+     */
+    public function getNajpozniejszaDataWaznosci(User $czlonek): ?\DateTimeInterface
+    {
+        $result = $this->createQueryBuilder('s')
+            ->select('MAX(s.dataWaznosciSkladki) as maxData')
+            ->andWhere('s.czlonek = :czlonek')
+            ->andWhere('s.status = :status')
+            ->andWhere('s.dataWaznosciSkladki IS NOT NULL')
+            ->setParameter('czlonek', $czlonek)
+            ->setParameter('status', 'oplacona')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $result ? new \DateTime($result) : null;
     }
 }

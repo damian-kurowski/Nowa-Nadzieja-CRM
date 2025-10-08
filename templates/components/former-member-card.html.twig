@@ -8,7 +8,7 @@
     {# Card Header #}
     <div class="unified-card-header">
         <div class="unified-card-avatar">
-            {% if formerMember.zdjecie %}
+            {% if formerMember.zdjecie and formerMember.zgodaApiZdjecie %}
                 <img src="{{ asset('uploads/photos/' ~ formerMember.zdjecie) }}" alt="{{ formerMember.fullName }}">
             {% else %}
                 <span class="unified-card-avatar-initials">
@@ -19,13 +19,13 @@
         <div class="unified-card-info">
             <h6 class="unified-card-name">{{ formerMember.fullName }}</h6>
             <div class="unified-card-meta">
-                {% if formerMember.email %}
+                {% if formerMember.email and formerMember.zgodaApiEmail %}
                     <div class="unified-card-meta-item">
                         <i class="fas fa-envelope"></i>
                         <span>{{ formerMember.email }}</span>
                     </div>
                 {% endif %}
-                {% if formerMember.telefon %}
+                {% if formerMember.telefon and formerMember.zgodaApiTelefon %}
                     <div class="unified-card-meta-item">
                         <i class="fas fa-phone"></i>
                         <span>{{ formerMember.telefon }}</span>

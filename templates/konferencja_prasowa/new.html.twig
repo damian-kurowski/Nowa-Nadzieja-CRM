@@ -363,23 +363,27 @@
                                 <!-- Search and Filter -->
                                 <div class="speaker-controls mb-3">
                                     <div class="row g-2">
-                                        <div class="col-md-6">
+                                        <div class="col-12">
                                             <div class="input-group">
                                                 <span class="input-group-text">
                                                     <i class="fas fa-search"></i>
                                                 </span>
-                                                <input type="text" class="form-control" id="speakerSearch" 
-                                                       placeholder="Szukaj po nazwisku lub imieniu...">
+                                                <input type="text" class="form-control" id="speakerSearch"
+                                                       placeholder="Wpisz minimum 3 znaki imienia lub nazwiska...">
                                             </div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Wpisz minimum 3 znaki aby rozpocząć wyszukiwanie
+                                            </small>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-3" style="display: none;">
                                             <select class="form-select" id="speakerTypeFilter">
                                                 <option value="">Wszystkie role</option>
                                                 <option value="czlonek">Członkowie</option>
                                                 <option value="funkcyjny">Funkcyjni</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-3">
+                                        <div class="col-md-3" style="display: none;">
                                             <select class="form-select" id="districtFilter">
                                                 <option value="">Wszystkie okręgi</option>
                                             </select>
@@ -548,14 +552,14 @@
         // Auto-focus na pierwszym polu
         document.querySelector('input[type="text"]').focus();
         
-        // Enhanced Speaker Selection System
+        // Enhanced Speaker Selection System with Lazy Loading
         class EnhancedSpeakerSelection {
             constructor() {
-                this.selectedSpeakers = new Set();
-                this.allSpeakers = [];
-                this.filteredSpeakers = [];
-                this.districts = new Set();
-                
+                this.selectedSpeakers = new Map(); // Changed to Map to store full speaker data
+                this.searchResults = [];
+                this.searchTimeout = null;
+                this.isSearching = false;
+
                 // Znajdź oryginalny select - może mieć inne ID
                 this.originalSelect = document.querySelector('select[multiple][name*="mowcy"]');
                 if (!this.originalSelect) {
@@ -563,73 +567,62 @@
                     this.showFallbackMessage();
                     return;
                 }
-                
+
                 this.speakersGrid = document.getElementById('speakersGrid');
                 this.selectedSpeakersList = document.getElementById('selectedSpeakersList');
                 this.selectedCount = document.getElementById('selectedCount');
                 this.searchInput = document.getElementById('speakerSearch');
                 this.typeFilter = document.getElementById('speakerTypeFilter');
                 this.districtFilter = document.getElementById('districtFilter');
-                
+
                 if (!this.speakersGrid || !this.selectedSpeakersList) {
                     console.error('Required elements not found');
                     this.showFallbackMessage();
                     return;
                 }
-                
+
                 this.init();
             }
-            
+
             init() {
-                this.extractSpeakersFromSelect();
+                this.loadExistingSpeakers();
                 this.setupEventListeners();
-                this.renderSpeakers();
+                this.showInitialMessage();
                 this.updateSelectedDisplay();
+                // Hide type and district filters - not needed with search
+                if (this.typeFilter) this.typeFilter.closest('.col-md-3').style.display = 'none';
+                if (this.districtFilter) this.districtFilter.closest('.col-md-3').style.display = 'none';
             }
-            
-            extractSpeakersFromSelect() {
-                const options = this.originalSelect.querySelectorAll('option');
-                if (options.length <= 1) { // Only empty option
-                    this.showNoSpeakersMessage();
-                    return;
-                }
-                
-                this.allSpeakers = Array.from(options).map(option => {
-                    if (option.value === '') return null;
-                    
-                    const fullText = option.textContent.trim();
-                    const emailMatch = fullText.match(/\(([^)]+)\)$/);
-                    const email = emailMatch ? emailMatch[1] : '';
-                    const name = emailMatch ? fullText.replace(/\s*\([^)]+\)$/, '') : fullText;
-                    
-                    // Rozpoznaj typ użytkownika na podstawie email lub nazwy
-                    let userType = 'czlonek';
-                    let district = 'Nieznany';
-                    
-                    if (email.includes('funkcyjny') || name.toLowerCase().includes('prezes') || 
-                        name.toLowerCase().includes('sekretarz') || name.toLowerCase().includes('wiceprezes')) {
-                        userType = 'funkcyjny';
-                        district = 'Ogólnopolski';
+
+            loadExistingSpeakers() {
+                // Load existing selected speakers from the select element (edit mode)
+                const options = this.originalSelect.querySelectorAll('option[selected], option:checked');
+                options.forEach(option => {
+                    if (option.value) {
+                        const fullText = option.textContent.trim();
+                        const emailMatch = fullText.match(/\(([^)]+)\)$/);
+                        const email = emailMatch ? emailMatch[1] : '';
+                        const name = emailMatch ? fullText.replace(/\s*\([^)]+\)$/, '') : fullText;
+
+                        this.selectedSpeakers.set(option.value, {
+                            id: option.value,
+                            name: name,
+                            email: email
+                        });
                     }
-                    
-                    // Dodaj okręg do listy unikalnych
-                    this.districts.add(district);
-                    
-                    return {
-                        id: option.value,
-                        name: name,
-                        email: email,
-                        userType: userType,
-                        district: district,
-                        initials: this.getInitials(name),
-                        isCurrentUser: option.hasAttribute('data-current-user') || name === getCurrentUserName()
-                    };
-                }).filter(speaker => speaker !== null);
-                
-                this.filteredSpeakers = [...this.allSpeakers];
-                this.populateDistrictFilter();
+                });
             }
-            
+
+            showInitialMessage() {
+                this.speakersGrid.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">Wpisz minimum 3 znaki aby wyszukać osoby</h6>
+                        <p class="text-muted small mb-0">Rozpocznij wpisywanie imienia lub nazwiska mówcy</p>
+                    </div>
+                `;
+            }
+
             getInitials(name) {
                 return name.split(' ')
                     .map(word => word.charAt(0))
@@ -637,93 +630,115 @@
                     .toUpperCase()
                     .substring(0, 2);
             }
-            
+
             setupEventListeners() {
-                if (this.searchInput) this.searchInput.addEventListener('input', () => this.applyFilters());
-                if (this.typeFilter) this.typeFilter.addEventListener('change', () => this.applyFilters());
-                if (this.districtFilter) this.districtFilter.addEventListener('change', () => this.applyFilters());
+                if (this.searchInput) {
+                    this.searchInput.addEventListener('input', () => this.handleSearch());
+                }
             }
-            
-            populateDistrictFilter() {
-                if (!this.districtFilter) return;
-                
-                const sortedDistricts = Array.from(this.districts).sort();
-                const currentOptions = this.districtFilter.innerHTML;
-                
-                this.districtFilter.innerHTML = '<option value="">Wszystkie okręgi</option>' +
-                    sortedDistricts.map(district => 
-                        `<option value="${district}">${district}</option>`
-                    ).join('');
+
+            handleSearch() {
+                const query = this.searchInput.value.trim();
+
+                // Clear previous timeout
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
+                }
+
+                // Show initial message if less than 3 characters
+                if (query.length < 3) {
+                    this.showInitialMessage();
+                    return;
+                }
+
+                // Debounce search - wait 300ms after user stops typing
+                this.searchTimeout = setTimeout(() => {
+                    this.performSearch(query);
+                }, 300);
             }
-            
-            applyFilters() {
-                const searchTerm = this.searchInput ? this.searchInput.value.toLowerCase() : '';
-                const typeFilter = this.typeFilter ? this.typeFilter.value : '';
-                const districtFilter = this.districtFilter ? this.districtFilter.value : '';
-                
-                this.filteredSpeakers = this.allSpeakers.filter(speaker => {
-                    const matchesSearch = !searchTerm || 
-                        speaker.name.toLowerCase().includes(searchTerm) ||
-                        speaker.email.toLowerCase().includes(searchTerm);
-                    
-                    const matchesType = !typeFilter || speaker.userType === typeFilter;
-                    const matchesDistrict = !districtFilter || speaker.district === districtFilter;
-                    
-                    return matchesSearch && matchesType && matchesDistrict;
-                });
-                
-                this.renderSpeakers();
+
+            async performSearch(query) {
+                this.isSearching = true;
+                this.showLoadingState();
+
+                try {
+                    const response = await fetch(`{{ path('konferencja_prasowa_search_speakers') }}?q=${encodeURIComponent(query)}`);
+                    if (!response.ok) {
+                        throw new Error('Search failed');
+                    }
+
+                    const results = await response.json();
+                    this.searchResults = results;
+                    this.renderSearchResults();
+                } catch (error) {
+                    console.error('Search error:', error);
+                    this.showErrorMessage();
+                } finally {
+                    this.isSearching = false;
+                }
             }
-            
-            renderSpeakers() {
-                if (this.filteredSpeakers.length === 0) {
+
+            showLoadingState() {
+                this.speakersGrid.innerHTML = `
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Wyszukiwanie...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Wyszukiwanie...</p>
+                    </div>
+                `;
+            }
+
+            showErrorMessage() {
+                this.speakersGrid.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Wystąpił błąd podczas wyszukiwania. Spróbuj ponownie.
+                    </div>
+                `;
+            }
+
+            renderSearchResults() {
+                if (this.searchResults.length === 0) {
                     this.speakersGrid.innerHTML = `
-                        <div class="no-speakers-found">
-                            <i class="fas fa-search"></i>
-                            <p>Nie znaleziono mówców spełniających kryteria</p>
+                        <div class="text-center py-4">
+                            <i class="fas fa-user-slash fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Nie znaleziono osób spełniających kryteria</p>
                         </div>
                     `;
                     return;
                 }
-                
-                this.speakersGrid.innerHTML = this.filteredSpeakers
+
+                this.speakersGrid.innerHTML = this.searchResults
                     .map(speaker => this.createSpeakerCard(speaker))
                     .join('');
-                
+
                 // Dodaj event listenery do kart
                 this.speakersGrid.querySelectorAll('.speaker-card').forEach(card => {
                     card.addEventListener('click', (e) => {
                         const speakerId = card.dataset.speakerId;
-                        this.toggleSpeaker(speakerId);
+                        const speakerData = this.searchResults.find(s => s.id == speakerId);
+                        if (speakerData) {
+                            this.toggleSpeaker(speakerId, speakerData);
+                        }
                     });
                 });
             }
-            
+
             createSpeakerCard(speaker) {
-                const isSelected = this.selectedSpeakers.has(speaker.id);
-                let statusText = 'Członek';
-                let statusClass = 'czlonek';
-                
-                if (speaker.userType === 'funkcyjny') {
-                    statusText = 'Funkcyjny';
-                    statusClass = 'funkcyjny';
-                }
-                
-                const currentUserBadge = speaker.isCurrentUser ? 
-                    '<span class="badge bg-info ms-2">Ty</span>' : '';
-                
+                const isSelected = this.selectedSpeakers.has(speaker.id.toString());
+
                 return `
                     <div class="speaker-card ${isSelected ? 'selected' : ''}" data-speaker-id="${speaker.id}">
-                        <div class="speaker-avatar ${statusClass}">
-                            ${speaker.initials}
+                        <div class="speaker-avatar czlonek">
+                            ${this.getInitials(speaker.name)}
                         </div>
                         <div class="speaker-info flex-grow-1">
                             <div class="speaker-name fw-bold d-flex align-items-center">
-                                ${speaker.name}${currentUserBadge}
+                                ${speaker.name}
                             </div>
                             <div class="speaker-details">
-                                <small class="text-muted">${statusText}</small>
-                                ${speaker.district !== 'Nieznany' ? `<small class="text-muted"> • ${speaker.district}</small>` : ''}
+                                <small class="text-muted">${speaker.email}</small>
                             </div>
                         </div>
                         <div class="speaker-actions">
@@ -732,23 +747,25 @@
                     </div>
                 `;
             }
-            
-            toggleSpeaker(speakerId) {
-                if (this.selectedSpeakers.has(speakerId)) {
-                    this.selectedSpeakers.delete(speakerId);
+
+            toggleSpeaker(speakerId, speakerData) {
+                const id = speakerId.toString();
+
+                if (this.selectedSpeakers.has(id)) {
+                    this.selectedSpeakers.delete(id);
                 } else {
-                    this.selectedSpeakers.add(speakerId);
+                    this.selectedSpeakers.set(id, speakerData);
                 }
-                
+
                 this.updateSelectedDisplay();
                 this.updateOriginalSelect();
-                this.renderSpeakers(); // Re-render to update selected states
+                this.renderSearchResults(); // Re-render to update selected states
             }
-            
+
             updateSelectedDisplay() {
                 const count = this.selectedSpeakers.size;
                 this.selectedCount.textContent = count;
-                
+
                 if (count === 0) {
                     this.selectedSpeakersList.innerHTML = `
                         <div class="no-selection text-muted text-center py-2">
@@ -756,15 +773,13 @@
                         </div>
                     `;
                 } else {
-                    const selectedSpeakersData = this.allSpeakers.filter(speaker => 
-                        this.selectedSpeakers.has(speaker.id)
-                    );
-                    
-                    this.selectedSpeakersList.innerHTML = selectedSpeakersData
+                    const selectedArray = Array.from(this.selectedSpeakers.values());
+
+                    this.selectedSpeakersList.innerHTML = selectedArray
                         .map(speaker => `
                             <div class="selected-speaker-item">
                                 <span>${speaker.name}</span>
-                                <button type="button" class="remove-speaker" onclick="speakerSelection.toggleSpeaker('${speaker.id}')">
+                                <button type="button" class="remove-speaker" onclick="speakerSelection.removeSpeaker('${speaker.id}')">
                                     <i class="fas fa-times"></i>
                                 </button>
                             </div>
@@ -772,51 +787,41 @@
                         .join('');
                 }
             }
-            
+
+            removeSpeaker(speakerId) {
+                const id = speakerId.toString();
+                this.selectedSpeakers.delete(id);
+                this.updateSelectedDisplay();
+                this.updateOriginalSelect();
+                this.renderSearchResults();
+            }
+
             updateOriginalSelect() {
-                // Wyczyść wszystkie wybory
-                Array.from(this.originalSelect.options).forEach(option => {
-                    option.selected = this.selectedSpeakers.has(option.value);
+                // Clear the select and add options for selected speakers
+                this.originalSelect.innerHTML = '';
+
+                // Add selected speakers as options
+                this.selectedSpeakers.forEach((speaker, id) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = speaker.name;
+                    option.selected = true;
+                    this.originalSelect.appendChild(option);
                 });
             }
-            
+
             showFallbackMessage() {
                 const speakersGrid = document.getElementById('speakersGrid');
                 if (speakersGrid) {
                     speakersGrid.innerHTML = `
                         <div class="alert alert-warning">
                             <h6><i class="fas fa-exclamation-triangle me-2"></i>Problem z ładowaniem interfejsu</h6>
-                            <p class="mb-0">Nie można załadować ulepszonego interfejsu wyboru mówców. 
+                            <p class="mb-0">Nie można załadować interfejsu wyboru mówców.
                                Proszę odświeżyć stronę lub skontaktować się z administratorem.</p>
                         </div>
                     `;
                 }
             }
-            
-            showNoSpeakersMessage() {
-                const speakersGrid = document.getElementById('speakersGrid');
-                if (speakersGrid) {
-                    speakersGrid.innerHTML = `
-                        <div class="alert alert-info">
-                            <h6><i class="fas fa-info-circle me-2"></i>Brak dostępnych mówców</h6>
-                            <p class="mb-0">W systemie nie ma jeszcze żadnych użytkowników z uprawnieniami mówcy 
-                               (członkowie lub kandydaci). Skontaktuj się z administratorem systemu.</p>
-                        </div>
-                    `;
-                }
-                
-                // Ukryj też sekcję wybranych mówców
-                const selectedSpeakers = document.getElementById('selectedSpeakers');
-                if (selectedSpeakers) {
-                    selectedSpeakers.style.display = 'none';
-                }
-            }
-        }
-        
-        // Helper function to get current user name (if available)
-        function getCurrentUserName() {
-            // Try to extract from page context or other sources
-            return '';
         }
         
         // Initialize speaker selection system

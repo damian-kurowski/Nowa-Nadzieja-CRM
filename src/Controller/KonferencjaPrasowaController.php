@@ -166,17 +166,85 @@ class KonferencjaPrasowaController extends AbstractController
         return $this->redirectToRoute('konferencja_prasowa_index');
     }
 
+    #[Route('/search-speakers', name: 'konferencja_prasowa_search_speakers', methods: ['GET'])]
+    public function searchSpeakers(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $query = $request->query->get('q', '');
+
+        // Require minimum 3 characters
+        if (strlen($query) < 3) {
+            return $this->json([]);
+        }
+
+        /** @var \App\Entity\User $currentUser */
+        $currentUser = $this->getUser();
+
+        $conn = $entityManager->getConnection();
+
+        // Build the base query for members with ROLE_CZLONEK_PARTII or higher roles
+        $sql = "
+            SELECT u.id, u.imie, u.nazwisko, u.email, u.roles FROM \"user\" u
+            WHERE (u.roles::jsonb @> '[\"ROLE_CZLONEK_PARTII\"]'::jsonb
+                   OR u.roles::jsonb @> '[\"ROLE_FUNKCYJNY\"]'::jsonb
+                   OR u.roles::jsonb @> '[\"ROLE_PREZES_PARTII\"]'::jsonb
+                   OR u.roles::jsonb @> '[\"ROLE_SEKRETARZ_PARTII\"]'::jsonb)
+            AND (LOWER(u.imie) LIKE :query OR LOWER(u.nazwisko) LIKE :query OR LOWER(u.email) LIKE :query)
+        ";
+
+        $params = ['query' => '%'.strtolower($query).'%'];
+
+        // Apply restrictions based on user roles
+        if ($this->isGranted('ROLE_ZARZAD_KRAJOWY') || $this->isGranted('ROLE_ADMIN')) {
+            // Zarząd krajowy i admini widzą wszystkich
+        } elseif ($this->isGranted('ROLE_ZARZAD_OKREGU')) {
+            if ($currentUser->getOkreg()) {
+                $sql .= ' AND (u.okreg_id = :okreg_id OR u.id = :current_user_id)';
+                $params['okreg_id'] = $currentUser->getOkreg()->getId();
+                $params['current_user_id'] = $currentUser->getId();
+            }
+        } elseif ($this->isGranted('ROLE_ZARZAD_ODDZIALU')) {
+            if ($currentUser->getOddzial()) {
+                $sql .= ' AND (u.oddzial_id = :oddzial_id OR u.id = :current_user_id)';
+                $params['oddzial_id'] = $currentUser->getOddzial()->getId();
+                $params['current_user_id'] = $currentUser->getId();
+            }
+        } elseif ($this->isGranted('ROLE_FUNKCYJNY') || $this->isGranted('ROLE_CZLONEK_PARTII')) {
+            if ($currentUser->getOkreg()) {
+                $sql .= ' AND (u.okreg_id = :okreg_id OR u.id = :current_user_id)';
+                $params['okreg_id'] = $currentUser->getOkreg()->getId();
+                $params['current_user_id'] = $currentUser->getId();
+            }
+        }
+
+        $sql .= ' ORDER BY u.nazwisko ASC, u.imie ASC LIMIT 50';
+
+        $stmt = $conn->prepare($sql);
+        $resultSet = $stmt->executeQuery($params);
+        $users = $resultSet->fetchAllAssociative();
+
+        // Format results for JSON response
+        $results = array_map(function ($user) {
+            return [
+                'id' => $user['id'],
+                'name' => $user['imie'].' '.$user['nazwisko'],
+                'email' => $user['email'],
+            ];
+        }, $users);
+
+        return $this->json($results);
+    }
+
     private function applyFilters(\Doctrine\ORM\QueryBuilder $queryBuilder, Request $request): void
     {
         // Szybkie wyszukiwanie
         if ($search = $request->query->get('search')) {
             $queryBuilder->andWhere('
-                k.tytulKonferencji LIKE :search 
-                OR k.organizatorWydarzenia LIKE :search 
+                k.tytulKonferencji LIKE :search
+                OR k.organizatorWydarzenia LIKE :search
                 OR k.miejsceWydarzenia LIKE :search
-                OR zglaszajacy.imie LIKE :search 
+                OR zglaszajacy.imie LIKE :search
                 OR zglaszajacy.nazwisko LIKE :search
-                OR mowcy.imie LIKE :search 
+                OR mowcy.imie LIKE :search
                 OR mowcy.nazwisko LIKE :search
             ')
             ->setParameter('search', '%'.$search.'%');

@@ -540,7 +540,7 @@
                         </label>
                     </div>
 
-                    <button type="submit" class="btn-custom btn-primary" id="submitBtn" disabled>
+                    <button type="submit" class="btn-custom btn-primary" id="submitBtn">
                         <i class="fas fa-check-circle"></i>
                         <span>Akceptuję i kontynuuję</span>
                     </button>
@@ -553,22 +553,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        const checkbox1 = document.getElementById('accept_rodo');
-        const checkbox2 = document.getElementById('accept_monitoring');
-        const submitBtn = document.getElementById('submitBtn');
-
-        function updateButtonState() {
-            if (checkbox1.checked && checkbox2.checked) {
-                submitBtn.disabled = false;
-            } else {
-                submitBtn.disabled = true;
-            }
-        }
-
-        checkbox1.addEventListener('change', updateButtonState);
-        checkbox2.addEventListener('change', updateButtonState);
-    </script>
 </body>
 </html>
