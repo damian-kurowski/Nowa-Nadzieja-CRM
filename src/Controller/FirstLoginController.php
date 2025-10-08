@@ -428,9 +428,16 @@ class FirstLoginController extends AbstractController
         if ($token && $token->getUser() instanceof User) {
             // Odśwież dane z bazy
             $this->entityManager->refresh($user);
-            // Zaktualizuj obiekt użytkownika w tokenie
-            $token->setUser($user);
-            $this->tokenStorage->setToken($token);
+
+            // Utwórz nowy token z odświeżonym użytkownikiem
+            // Token jest immutable w Symfony, więc musimy utworzyć nowy
+            $newToken = new \Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken(
+                $user,
+                $token->getFirewallName(),
+                $user->getRoles()
+            );
+
+            $this->tokenStorage->setToken($newToken);
         }
     }
 }
